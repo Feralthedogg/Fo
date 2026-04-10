@@ -40,6 +40,8 @@ TRANSIENT_PATHS := \
 	.seed-genesis.* \
 	.seed-materialize.* \
 	.seed-parity.* \
+	bootstrap/bin \
+	bootstrap/support \
 	build/cmd \
 	build/examples \
 	build/fo-coldseed$(EXE_SUFFIX) \
