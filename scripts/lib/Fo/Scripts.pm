@@ -744,23 +744,19 @@ sub windows_wxs {
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="LocalAppDataFolder">
-        <Directory Id="FoProgramsDir" Name="Programs">
-          <Directory Id="INSTALLFOLDER" Name="Fo">
-            <Component Id="FoExeComponent" Guid="{C0F76C6E-B4B0-4FB0-8F65-41284C62EA21}">
-              <File Id="FoExeFile" Name="fo.exe" Source="__FO_EXE__" KeyPath="yes" />
-            </Component>
-            <Component Id="FoPathComponent" Guid="{0B03E0D2-91F2-44BE-BB3B-F11B364E4FE6}">
-              <RegistryValue Root="HKCU" Key="Software\\Fo" Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
-              <Environment Id="FoAddToPath" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="no" />
-            </Component>
-          </Directory>
+        <Directory Id="INSTALLFOLDER" Name="Fo">
+          <Component Id="FoInstallComponent" Guid="{C0F76C6E-B4B0-4FB0-8F65-41284C62EA21}">
+            <File Id="FoExeFile" Name="fo.exe" Source="__FO_EXE__" KeyPath="no" />
+            <RegistryValue Root="HKCU" Key="Software\\Fo" Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+            <Environment Id="FoAddToPath" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="no" />
+            <RemoveFolder Id="RemoveInstallFolder" On="uninstall" />
+          </Component>
         </Directory>
       </Directory>
     </Directory>
 
     <Feature Id="MainFeature" Title="Fo" Level="1">
-      <ComponentRef Id="FoExeComponent" />
-      <ComponentRef Id="FoPathComponent" />
+      <ComponentRef Id="FoInstallComponent" />
     </Feature>
   </Product>
 </Wix>
