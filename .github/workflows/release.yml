@@ -232,20 +232,24 @@ jobs:
       - name: Refresh release checksums
         run: |
           cd dist/release
-          rm -f checksums.txt
-          sha256sum *.tar.gz *.zip *.msi install.sh install.ps1 release-manifest.json > checksums.txt
+          for file in *.tar.gz *.zip *.msi fo-installer.sh fo-installer.ps1 dist-manifest.json source.tar.gz; do
+            sha256sum "$file" > "$file.sha256"
+          done
+          sha256sum *.tar.gz *.zip *.msi fo-installer.sh fo-installer.ps1 dist-manifest.json source.tar.gz > sha256.sum
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.plan.outputs.version }}
           prerelease: ${{ needs.plan.outputs.prerelease == 'true' }}
-          generate_release_notes: true
+          body_path: dist/release/RELEASE_NOTES.md
           files: |
             dist/release/*.tar.gz
             dist/release/*.zip
             dist/release/*.msi
-            dist/release/checksums.txt
-            dist/release/release-manifest.json
-            dist/release/install.sh
-            dist/release/install.ps1
+            dist/release/*.sha256
+            dist/release/sha256.sum
+            dist/release/dist-manifest.json
+            dist/release/source.tar.gz
+            dist/release/fo-installer.sh
+            dist/release/fo-installer.ps1

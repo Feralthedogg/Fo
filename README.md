@@ -15,7 +15,7 @@ Current status:
 - `scripts/clean-cache.sh` removes the active cache root.
 - `scripts/check-selfhosted-workflow.sh` verifies representative self-hosted `check` and `build` workflows.
 - `.github/workflows/ci.yml` runs hygiene checks on macOS/Linux and can run full seeded self-hosted CI when the repository variable `FO_SEED_URL` is configured.
-- `.github/workflows/release.yml` now uses a staged release pipeline (`plan -> local artifacts -> global assets -> MSI -> publish`) and publishes OS-specific binaries, `install.sh` / `install.ps1`, a release manifest, checksums, and a Windows `.msi` that adds Fo to the user `PATH`.
+- `.github/workflows/release.yml` now uses a staged release pipeline (`plan -> local artifacts -> global assets -> MSI -> publish`) and publishes OS-specific binaries, `fo-installer.sh` / `fo-installer.ps1`, `dist-manifest.json`, per-asset `.sha256`, `sha256.sum`, `source.tar.gz`, and a Windows `.msi` that adds Fo to the user `PATH`.
 - the seeded CI and release workflows expect `FO_SEED_URL`, with optional `FO_SEED_SHA256`, as repository variables.
 - `scripts/freeze-seed-snapshot.sh` freezes a generated Go seed snapshot to a temp target by default.
 - `scripts/publish-seed-snapshot.sh` publishes the optional canonical `bootstrap/seed` artifact.

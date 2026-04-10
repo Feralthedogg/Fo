@@ -608,8 +608,9 @@ sub build_release_artifacts {
       build_release_target_from_workspace($workspace, $version, $target, $out_dir);
     }
 
-    print "[3/3] Writing checksums\n";
-    write_release_checksums("$out_dir/checksums.txt", release_checksum_inputs($out_dir));
+    print "[3/3] Writing checksums and release notes\n";
+    write_release_checksum_sidecars(release_checksum_inputs($out_dir));
+    write_release_checksums("$out_dir/sha256.sum", release_checksum_inputs($out_dir));
     print "$out_dir\n";
     return 1;
   });
@@ -647,9 +648,11 @@ sub build_release_global {
     ? $out_dir_arg
     : File::Spec->catdir($root, $out_dir_arg);
   ensure_dir($out_dir);
-  copy_file("$root/packaging/release/install.sh", "$out_dir/install.sh");
-  copy_file("$root/packaging/release/install.ps1", "$out_dir/install.ps1");
-  write_release_manifest("$out_dir/release-manifest.json", $version);
+  copy_file("$root/packaging/release/install.sh", "$out_dir/" . release_shell_installer_name());
+  copy_file("$root/packaging/release/install.ps1", "$out_dir/" . release_powershell_installer_name());
+  build_release_source_archive($root, $version, $out_dir);
+  write_release_manifest("$out_dir/dist-manifest.json", $version);
+  write_release_notes("$out_dir/RELEASE_NOTES.md", $version, release_repo_slug());
   print "$out_dir\n";
 }
 
@@ -690,11 +693,11 @@ sub build_windows_msi {
 
 sub release_targets {
   return (
-    { os => 'linux',   arch => 'amd64', ext => '',     archive => 'tar.gz' },
-    { os => 'linux',   arch => 'arm64', ext => '',     archive => 'tar.gz' },
-    { os => 'darwin',  arch => 'amd64', ext => '',     archive => 'tar.gz' },
-    { os => 'darwin',  arch => 'arm64', ext => '',     archive => 'tar.gz' },
-    { os => 'windows', arch => 'amd64', ext => '.exe', archive => 'zip' },
+    { os => 'linux',   arch => 'amd64', ext => '',     archive => 'tar.gz', platform => 'x64 Linux' },
+    { os => 'linux',   arch => 'arm64', ext => '',     archive => 'tar.gz', platform => 'ARM64 Linux' },
+    { os => 'darwin',  arch => 'amd64', ext => '',     archive => 'tar.gz', platform => 'Intel macOS' },
+    { os => 'darwin',  arch => 'arm64', ext => '',     archive => 'tar.gz', platform => 'Apple Silicon macOS' },
+    { os => 'windows', arch => 'amd64', ext => '.exe', archive => 'zip',    platform => 'x64 Windows' },
   );
 }
 
@@ -770,13 +773,15 @@ sub package_release_binary {
 sub release_checksum_inputs {
   my ($out_dir) = @_;
   my @files = (
-    "$out_dir/install.sh",
-    "$out_dir/install.ps1",
-    "$out_dir/release-manifest.json",
+    "$out_dir/" . release_shell_installer_name(),
+    "$out_dir/" . release_powershell_installer_name(),
+    "$out_dir/dist-manifest.json",
+    "$out_dir/source.tar.gz",
   );
   for my $target (release_targets()) {
     push @files, release_archive_path($out_dir, '*', $target);
   }
+  push @files, "$out_dir/*.msi";
   my @expanded;
   for my $path (@files) {
     if ($path =~ /\*/) {
@@ -786,6 +791,13 @@ sub release_checksum_inputs {
     push @expanded, $path;
   }
   return @expanded;
+}
+
+sub write_release_checksum_sidecars {
+  for my $file (@_) {
+    next if !-f $file;
+    write_file("$file.sha256", release_checksum_line($file));
+  }
 }
 
 sub write_release_checksums {
@@ -810,19 +822,96 @@ sub release_checksum_line {
 
 sub write_release_manifest {
   my ($path, $version) = @_;
-  my @assets = map { release_archive_name($version, $_) } release_targets();
+  my @asset_rows = map {
+    qq(    {"file":"@{[release_archive_name($version, $_)]}","platform":"@{[$_->{platform}]}","checksum":"@{[release_archive_name($version, $_)]}.sha256"})
+  } release_targets();
+  push @asset_rows, qq(    {"file":"fo-$version-windows-amd64.msi","platform":"x64 Windows","checksum":"fo-$version-windows-amd64.msi.sha256"});
   my $json = "{\n"
     . qq(  "version": "$version",\n)
-    . qq(  "portable_assets": [\n)
-    . join(",\n", map { qq(    "$_") } @assets)
+    . qq(  "repo": "@{[release_repo_slug()]}",\n)
+    . qq(  "installers": {\n)
+    . qq(    "shell": "@{[release_shell_installer_name()]}",\n)
+    . qq(    "powershell": "@{[release_powershell_installer_name()]}"\n)
+    . qq(  },\n)
+    . qq(  "assets": [\n)
+    . join(",\n", @asset_rows)
     . qq(\n  ],\n)
-    . qq(  "installers": [\n)
-    . qq(    "install.sh",\n)
-    . qq(    "install.ps1",\n)
-    . qq(    "fo-$version-windows-amd64.msi"\n)
-    . qq(  ]\n)
+    . qq(  "source": {\n)
+    . qq(    "file": "source.tar.gz",\n)
+    . qq(    "checksum": "source.tar.gz.sha256"\n)
+    . qq(  }\n)
     . "}\n";
   write_file($path, $json);
+}
+
+sub build_release_source_archive {
+  my ($root, $version, $out_dir) = @_;
+  my $target = "$out_dir/source.tar.gz";
+  run_cmd(
+    { dir => $root },
+    'git',
+    'archive',
+    '--format=tar.gz',
+    "--prefix=Fo-$version/",
+    '-o',
+    $target,
+    'HEAD',
+  );
+}
+
+sub release_repo_slug {
+  return 'Feralthedogg/Fo';
+}
+
+sub release_shell_installer_name {
+  return 'fo-installer.sh';
+}
+
+sub release_powershell_installer_name {
+  return 'fo-installer.ps1';
+}
+
+sub release_download_url {
+  my ($version, $file) = @_;
+  return "https://github.com/" . release_repo_slug() . "/releases/download/$version/$file";
+}
+
+sub write_release_notes {
+  my ($path, $version, $repo) = @_;
+  my @rows;
+  for my $target (release_targets()) {
+    my $file = release_archive_name($version, $target);
+    push @rows, "| [$file](" . release_download_url($version, $file) . ") | $target->{platform} | [checksum](" . release_download_url($version, "$file.sha256") . ") |";
+  }
+  push @rows, "| [fo-$version-windows-amd64.msi](" . release_download_url($version, "fo-$version-windows-amd64.msi") . ") | x64 Windows | [checksum](" . release_download_url($version, "fo-$version-windows-amd64.msi.sha256") . ") |";
+  my $notes = <<"MD";
+## Install Fo $version
+
+### Install prebuilt binaries via shell script
+
+```sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/$repo/releases/download/$version/@{[release_shell_installer_name()]} | sh
+```
+
+### Install prebuilt binaries via powershell script
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/$repo/releases/download/$version/@{[release_powershell_installer_name()]} | iex"
+```
+
+## Download Fo $version
+
+| File | Platform | Checksum |
+| --- | --- | --- |
+@{[join("\n", @rows)]}
+
+### Source
+
+- [source.tar.gz](@{[release_download_url($version, "source.tar.gz")]}) ([checksum](@{[release_download_url($version, "source.tar.gz.sha256")]}))
+- [sha256.sum](@{[release_download_url($version, "sha256.sum")]})
+- [dist-manifest.json](@{[release_download_url($version, "dist-manifest.json")]})
+MD
+  write_file($path, $notes);
 }
 
 sub normalize_msi_version {
