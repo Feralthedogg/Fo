@@ -18,23 +18,27 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
-  build-portables:
-    name: Build Portable Assets
+  plan:
+    name: Plan Release
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+      matrix: ${{ steps.meta.outputs.matrix }}
 
     defaults:
       run:
         shell: bash
 
-    outputs:
-      version: ${{ steps.meta.outputs.version }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve release version
+      - name: Resolve release version and target matrix
         id: meta
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
@@ -46,7 +50,37 @@ jobs:
             echo "missing release version" >&2
             exit 1
           fi
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE=true
+          else
+            PRERELEASE=false
+          fi
+          MATRIX_JSON='{"include":[
+            {"runner":"ubuntu-latest","os":"linux","arch":"amd64"},
+            {"runner":"ubuntu-latest","os":"linux","arch":"arm64"},
+            {"runner":"ubuntu-latest","os":"darwin","arch":"amd64"},
+            {"runner":"ubuntu-latest","os":"darwin","arch":"arm64"},
+            {"runner":"ubuntu-latest","os":"windows","arch":"amd64"}
+          ]}'
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+
+  build-local-artifacts:
+    name: Build Local Artifacts (${{ matrix.os }}/${{ matrix.arch }})
+    needs: plan
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -54,7 +88,7 @@ jobs:
           go-version: '1.25.6'
           check-latest: true
 
-      - name: Install Perl zip tooling
+      - name: Install packaging dependencies
         run: sudo apt-get update && sudo apt-get install -y zip
 
       - name: Fetch seed compiler
@@ -74,21 +108,49 @@ jobs:
           fi
           ./build/fo version
 
-      - name: Build portable release assets
+      - name: Build target artifact
         run: |
-          chmod +x scripts/build-release-artifacts.sh
-          perl scripts/build-release-artifacts.sh "${{ steps.meta.outputs.version }}" dist/release
+          chmod +x scripts/build-release-target.sh
+          perl scripts/build-release-target.sh "${{ needs.plan.outputs.version }}" "${{ matrix.os }}" "${{ matrix.arch }}" "dist/release-${{ matrix.os }}-${{ matrix.arch }}"
 
-      - name: Upload portable assets
+      - name: Upload target artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-portables
-          path: dist/release
+          name: release-local-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/release-${{ matrix.os }}-${{ matrix.arch }}
+
+  build-global-artifacts:
+    name: Build Global Artifacts
+    needs:
+      - plan
+      - build-local-artifacts
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build release-global payload
+        run: |
+          chmod +x scripts/build-release-global.sh
+          perl scripts/build-release-global.sh "${{ needs.plan.outputs.version }}" dist/release-global
+
+      - name: Upload global artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-global
+          path: dist/release-global
 
   build-windows-msi:
     name: Build Windows MSI
+    needs:
+      - plan
+      - build-local-artifacts
     runs-on: windows-latest
-    needs: build-portables
 
     defaults:
       run:
@@ -98,11 +160,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download portable assets
+      - name: Download Windows portable asset
         uses: actions/download-artifact@v4
         with:
-          name: release-portables
-          path: dist/release
+          name: release-local-windows-amd64
+          path: dist/release-windows-amd64
 
       - name: Install WiX Toolset
         run: choco install wixtoolset --no-progress -y
@@ -112,30 +174,39 @@ jobs:
 
       - name: Build MSI
         run: |
-          perl scripts/build-windows-msi.sh "${{ needs.build-portables.outputs.version }}" "dist/release/raw/fo-windows-amd64.exe" "dist/release/fo-${{ needs.build-portables.outputs.version }}-windows-amd64.msi"
+          perl scripts/build-windows-msi.sh "${{ needs.plan.outputs.version }}" "dist/release-windows-amd64/raw/fo-windows-amd64.exe" "dist/release-msi/fo-${{ needs.plan.outputs.version }}-windows-amd64.msi"
 
       - name: Upload MSI asset
         uses: actions/upload-artifact@v4
         with:
           name: release-msi
-          path: dist/release/*.msi
+          path: dist/release-msi/*.msi
 
   publish:
     name: Publish GitHub Release
-    runs-on: ubuntu-latest
     needs:
-      - build-portables
+      - plan
+      - build-global-artifacts
+      - build-local-artifacts
       - build-windows-msi
+    runs-on: ubuntu-latest
 
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Download portable assets
+      - name: Download local artifacts
         uses: actions/download-artifact@v4
         with:
-          name: release-portables
+          pattern: release-local-*
+          path: dist/release
+          merge-multiple: true
+
+      - name: Download global artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-global
           path: dist/release
 
       - name: Download MSI asset
@@ -148,16 +219,19 @@ jobs:
         run: |
           cd dist/release
           rm -f checksums.txt
-          sha256sum *.tar.gz *.zip *.msi install.sh install.ps1 > checksums.txt
+          sha256sum *.tar.gz *.zip *.msi install.sh install.ps1 release-manifest.json > checksums.txt
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.build-portables.outputs.version }}
+          tag_name: ${{ needs.plan.outputs.version }}
+          prerelease: ${{ needs.plan.outputs.prerelease == 'true' }}
+          generate_release_notes: true
           files: |
             dist/release/*.tar.gz
             dist/release/*.zip
             dist/release/*.msi
             dist/release/checksums.txt
+            dist/release/release-manifest.json
             dist/release/install.sh
             dist/release/install.ps1

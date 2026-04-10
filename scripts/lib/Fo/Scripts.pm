@@ -22,6 +22,8 @@ sub dispatch_script {
     'build-cli-core.sh'                  => \&build_cli_core,
     'build-cold-seed-cli.sh'            => \&build_cold_seed_cli,
     'build-release-artifacts.sh'        => \&build_release_artifacts,
+    'build-release-global.sh'           => \&build_release_global,
+    'build-release-target.sh'           => \&build_release_target,
     'build-selfhosted-cli.sh'           => \&build_selfhosted_cli,
     'build-windows-msi.sh'              => \&build_windows_msi,
     'clean-cache.sh'                    => \&clean_cache,
@@ -568,20 +570,11 @@ sub build_release_artifacts {
     ? $out_dir_arg
     : File::Spec->catdir($root, $out_dir_arg);
   my $fo_bin = ensure_fo_bin($root);
-  my @targets = (
-    { os => 'linux',   arch => 'amd64', ext => '',     archive => 'tar.gz' },
-    { os => 'linux',   arch => 'arm64', ext => '',     archive => 'tar.gz' },
-    { os => 'darwin',  arch => 'amd64', ext => '',     archive => 'tar.gz' },
-    { os => 'darwin',  arch => 'arm64', ext => '',     archive => 'tar.gz' },
-    { os => 'windows', arch => 'amd64', ext => '.exe', archive => 'zip' },
-  );
+  my @targets = release_targets();
 
   remove_paths($out_dir);
   ensure_dir($out_dir, "$out_dir/raw");
-  copy_file("$root/packaging/release/install.sh", "$out_dir/install.sh");
-  copy_file("$root/packaging/release/install.ps1", "$out_dir/install.ps1");
-
-  my @checksum_files = ("$out_dir/install.sh", "$out_dir/install.ps1");
+  build_release_global($root, $version, $out_dir);
 
   with_temp_build_roots($root, sub {
     print "[1/3] Generating release workspace\n";
@@ -590,39 +583,52 @@ sub build_release_artifacts {
 
     print "[2/3] Building release binaries\n";
     for my $target (@targets) {
-      my $raw_name = release_raw_binary_name($target);
-      my $raw_bin = "$out_dir/raw/$raw_name";
-      my %env = (
-        GO111MODULE   => 'on',
-        GOWORK        => 'off',
-        CGO_ENABLED   => '0',
-        GOOS          => $target->{os},
-        GOARCH        => $target->{arch},
-      );
-      run_cmd(
-        {
-          dir => $workspace,
-          env => \%env,
-        },
-        'go',
-        'build',
-        '-tags',
-        'fo_stage1',
-        '-o',
-        $raw_bin,
-        './cmd/fohost',
-      );
-
-      my $asset = release_archive_path($out_dir, $version, $target);
-      package_release_binary($raw_bin, $asset, $target);
-      push @checksum_files, $asset;
+      build_release_target_from_workspace($workspace, $version, $target, $out_dir);
     }
 
     print "[3/3] Writing checksums\n";
-    write_release_checksums("$out_dir/checksums.txt", @checksum_files);
+    write_release_checksums("$out_dir/checksums.txt", release_checksum_inputs($out_dir));
     print "$out_dir\n";
     return 1;
   });
+}
+
+sub build_release_target {
+  my ($root, @args) = @_;
+  my $version = shift @args or die "usage: build-release-target.sh <version> <os> <arch> [out-dir]\n";
+  my $os = shift @args or die "usage: build-release-target.sh <version> <os> <arch> [out-dir]\n";
+  my $arch = shift @args or die "usage: build-release-target.sh <version> <os> <arch> [out-dir]\n";
+  my $out_dir_arg = shift @args // "$root/dist/release";
+  my $out_dir = File::Spec->file_name_is_absolute($out_dir_arg)
+    ? $out_dir_arg
+    : File::Spec->catdir($root, $out_dir_arg);
+  my $target = find_release_target($os, $arch);
+  my $fo_bin = ensure_fo_bin($root);
+
+  remove_paths($out_dir);
+  ensure_dir($out_dir, "$out_dir/raw");
+
+  with_temp_build_roots($root, sub {
+    build_cli_core($root, $fo_bin);
+    my $workspace = build_workspace_root($root);
+    build_release_target_from_workspace($workspace, $version, $target, $out_dir);
+    print "$out_dir\n";
+    return 1;
+  });
+}
+
+sub build_release_global {
+  my ($root, @args) = @_;
+  my $version = shift @args or die "usage: build-release-global.sh <version> [out-dir]\n";
+  my $out_dir_arg = shift @args // "$root/dist/release";
+  my $out_dir = File::Spec->file_name_is_absolute($out_dir_arg)
+    ? $out_dir_arg
+    : File::Spec->catdir($root, $out_dir_arg);
+  ensure_dir($out_dir);
+  copy_file("$root/packaging/release/install.sh", "$out_dir/install.sh");
+  copy_file("$root/packaging/release/install.ps1", "$out_dir/install.ps1");
+  write_release_manifest("$out_dir/release-manifest.json", $version);
+  print "$out_dir\n";
 }
 
 sub build_windows_msi {
@@ -660,6 +666,24 @@ sub build_windows_msi {
   print "$out_path\n";
 }
 
+sub release_targets {
+  return (
+    { os => 'linux',   arch => 'amd64', ext => '',     archive => 'tar.gz' },
+    { os => 'linux',   arch => 'arm64', ext => '',     archive => 'tar.gz' },
+    { os => 'darwin',  arch => 'amd64', ext => '',     archive => 'tar.gz' },
+    { os => 'darwin',  arch => 'arm64', ext => '',     archive => 'tar.gz' },
+    { os => 'windows', arch => 'amd64', ext => '.exe', archive => 'zip' },
+  );
+}
+
+sub find_release_target {
+  my ($os, $arch) = @_;
+  for my $target (release_targets()) {
+    return $target if $target->{os} eq $os && $target->{arch} eq $arch;
+  }
+  die "unsupported release target: $os/$arch\n";
+}
+
 sub release_raw_binary_name {
   my ($target) = @_;
   return "fo-$target->{os}-$target->{arch}$target->{ext}";
@@ -673,6 +697,36 @@ sub release_archive_name {
 sub release_archive_path {
   my ($out_dir, $version, $target) = @_;
   return "$out_dir/" . release_archive_name($version, $target);
+}
+
+sub build_release_target_from_workspace {
+  my ($workspace, $version, $target, $out_dir) = @_;
+  ensure_dir($out_dir, "$out_dir/raw");
+  my $raw_name = release_raw_binary_name($target);
+  my $raw_bin = "$out_dir/raw/$raw_name";
+  my %env = (
+    GO111MODULE   => 'on',
+    GOWORK        => 'off',
+    CGO_ENABLED   => '0',
+    GOOS          => $target->{os},
+    GOARCH        => $target->{arch},
+  );
+  run_cmd(
+    {
+      dir => $workspace,
+      env => \%env,
+    },
+    'go',
+    'build',
+    '-tags',
+    'fo_stage1',
+    '-o',
+    $raw_bin,
+    './cmd/fohost',
+  );
+  my $asset = release_archive_path($out_dir, $version, $target);
+  package_release_binary($raw_bin, $asset, $target);
+  return ($raw_bin, $asset);
 }
 
 sub package_release_binary {
@@ -689,6 +743,27 @@ sub package_release_binary {
     return;
   }
   die "unknown archive format: $target->{archive}\n";
+}
+
+sub release_checksum_inputs {
+  my ($out_dir) = @_;
+  my @files = (
+    "$out_dir/install.sh",
+    "$out_dir/install.ps1",
+    "$out_dir/release-manifest.json",
+  );
+  for my $target (release_targets()) {
+    push @files, release_archive_path($out_dir, '*', $target);
+  }
+  my @expanded;
+  for my $path (@files) {
+    if ($path =~ /\*/) {
+      push @expanded, glob($path);
+      next;
+    }
+    push @expanded, $path;
+  }
+  return @expanded;
 }
 
 sub write_release_checksums {
@@ -709,6 +784,23 @@ sub release_checksum_line {
   $sha->addfile($fh);
   close $fh or die "failed to close $path: $!";
   return $sha->hexdigest . "  " . basename($path) . "\n";
+}
+
+sub write_release_manifest {
+  my ($path, $version) = @_;
+  my @assets = map { release_archive_name($version, $_) } release_targets();
+  my $json = "{\n"
+    . qq(  "version": "$version",\n)
+    . qq(  "portable_assets": [\n)
+    . join(",\n", map { qq(    "$_") } @assets)
+    . qq(\n  ],\n)
+    . qq(  "installers": [\n)
+    . qq(    "install.sh",\n)
+    . qq(    "install.ps1",\n)
+    . qq(    "fo-$version-windows-amd64.msi"\n)
+    . qq(  ]\n)
+    . "}\n";
+  write_file($path, $json);
 }
 
 sub normalize_msi_version {
