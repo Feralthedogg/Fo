@@ -139,6 +139,27 @@ sub strings_contains {
   return index($text, $needle) >= 0;
 }
 
+sub host_exe_suffix {
+  return $^O eq 'MSWin32' ? '.exe' : '';
+}
+
+sub expected_built_binary_path {
+  my ($root, $target) = @_;
+  my $abs_root = abs_path($root);
+  my $abs_target = abs_path($target);
+  die "failed to resolve build output root\n" if !defined $abs_root;
+  die "failed to resolve build target path\n" if !defined $abs_target;
+  my $rel = File::Spec->abs2rel($abs_target, $abs_root);
+  $rel =~ s{\\}{/}g;
+  $rel =~ s/\.fo$//;
+  my $base = basename($rel);
+  if ($base eq 'main') {
+    my $dir = dirname($rel);
+    $rel = ($dir eq '.' || $dir eq '') ? basename($abs_root) : $dir;
+  }
+  return "$root/build/$rel" . host_exe_suffix();
+}
+
 sub cached_file_hash {
   my ($path) = @_;
   return $FILE_HASH_CACHE{$path} if exists $FILE_HASH_CACHE{$path};
@@ -510,7 +531,8 @@ sub check_bootstrapless_rebuild {
     my (undef, $check_out, $check_err) = run_cmd_capture("$workdir/bin/fo-seeded", 'check', "$workdir/sample.fo");
     assert_regex($check_out . $check_err, qr/check passed/, "seeded check did not report success\n");
     run_cmd("$workdir/bin/fo-seeded", 'build', "$workdir/sample.fo");
-    die "missing built file $workdir/sample.go\n" if !-f "$workdir/sample.go";
+    my $built_bin = expected_built_binary_path($root, "$workdir/sample.fo");
+    die "missing built binary $built_bin\n" if !-f $built_bin;
     run_cmd({ quiet => 1 }, "$workdir/bin/fo-seeded", 'run', "$workdir/sample.fo");
 
     print "Bootstrapless rebuild path verified.\n";
@@ -882,7 +904,8 @@ sub check_cold_seed_cli {
   my (undef, $check_out, $check_err) = run_cmd_capture($cold_bin, 'check', "$tmpdir/sample.fo");
   assert_regex($check_out . $check_err, qr/check passed/, "coldseed check did not report success\n");
   run_cmd($cold_bin, 'build', "$tmpdir/sample.fo");
-  die "missing built file $tmpdir/sample.go\n" if !-f "$tmpdir/sample.go";
+  my $built_bin = expected_built_binary_path($root, "$tmpdir/sample.fo");
+  die "missing built binary $built_bin\n" if !-f $built_bin;
   run_cmd({ quiet => 1 }, $cold_bin, 'run', "$tmpdir/sample.fo");
 
   print "[5/5] Snapshot path verified\n";
