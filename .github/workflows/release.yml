@@ -106,7 +106,19 @@ jobs:
           SEED_TAG="$(printf '%s' "$FO_SEED_URL" | sed -E 's#.*/download/([^/]+)/([^/]+)$#\1#')"
           SEED_ASSET="$(printf '%s' "$FO_SEED_URL" | sed -E 's#.*/download/([^/]+)/([^/]+)$#\2#')"
           mkdir -p build
-          gh release download "$SEED_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$SEED_ASSET" --dir build
+          RELEASE_JSON="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$SEED_TAG")"
+          ASSET_ID="$(python - "$SEED_ASSET" <<'PY'
+import json, sys
+asset_name = sys.argv[1]
+data = json.load(sys.stdin)
+for asset in data.get("assets", []):
+    if asset.get("name") == asset_name:
+        print(asset["id"])
+        raise SystemExit(0)
+raise SystemExit(1)
+PY
+          <<<"$RELEASE_JSON")"
+          gh api "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET_ID" -H "Accept: application/octet-stream" > "build/$SEED_ASSET"
           mv "build/$SEED_ASSET" build/fo
           chmod +x build/fo
           if [ -n "${FO_SEED_SHA256:-}" ]; then
