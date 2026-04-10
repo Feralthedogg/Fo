@@ -64,7 +64,9 @@ jobs:
           ]}'
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
-          echo "matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+          echo "matrix<<EOF" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
   build-local-artifacts:
     name: Build Local Artifacts (${{ matrix.os }}/${{ matrix.arch }})
