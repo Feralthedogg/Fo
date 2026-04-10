@@ -727,14 +727,14 @@ sub normalize_msi_version {
 
 sub windows_wxs {
   my ($version) = @_;
-  return <<"WXS";
+  my $xml = <<"WXS";
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Product
       Id="*"
       Name="Fo"
       Language="1033"
-      Version="$version"
+      Version="__FO_VERSION__"
       Manufacturer="Feralthedogg"
       UpgradeCode="{A5D68D7C-61A1-4F89-BE13-6A70B14E4F31}">
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" />
@@ -747,7 +747,7 @@ sub windows_wxs {
         <Directory Id="FoProgramsDir" Name="Programs">
           <Directory Id="INSTALLFOLDER" Name="Fo">
             <Component Id="FoExeComponent" Guid="{C0F76C6E-B4B0-4FB0-8F65-41284C62EA21}">
-              <File Id="FoExeFile" Name="fo.exe" Source="$(var.FoExe)" KeyPath="yes" />
+              <File Id="FoExeFile" Name="fo.exe" Source="__FO_EXE__" KeyPath="yes" />
             </Component>
             <Component Id="FoPathComponent" Guid="{0B03E0D2-91F2-44BE-BB3B-F11B364E4FE6}">
               <RegistryValue Root="HKCU" Key="Software\\Fo" Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
@@ -765,6 +765,9 @@ sub windows_wxs {
   </Product>
 </Wix>
 WXS
+  $xml =~ s/__FO_VERSION__/$version/g;
+  $xml =~ s/__FO_EXE__/\$\(var.FoExe\)/g;
+  return $xml;
 }
 
 sub check_cold_seed_cli {
