@@ -97,32 +97,28 @@ jobs:
         env:
           FO_SEED_URL: ${{ vars.FO_SEED_URL }}
           FO_SEED_SHA256: ${{ vars.FO_SEED_SHA256 }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -z "${FO_SEED_URL:-}" ]; then
             echo "Repository variable FO_SEED_URL is required for release builds." >&2
             exit 1
           fi
-          SEED_TAG="$(printf '%s' "$FO_SEED_URL" | sed -E 's#.*/download/([^/]+)/([^/]+)$#\1#')"
-          SEED_ASSET="$(printf '%s' "$FO_SEED_URL" | sed -E 's#.*/download/([^/]+)/([^/]+)$#\2#')"
           mkdir -p build
-          RELEASE_JSON="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$SEED_TAG")"
-          ASSET_ID="$(python - "$SEED_ASSET" <<'PY'
-import json, sys
-asset_name = sys.argv[1]
-data = json.load(sys.stdin)
-for asset in data.get("assets", []):
-    if asset.get("name") == asset_name:
-        print(asset["id"])
-        raise SystemExit(0)
-raise SystemExit(1)
-PY
-          <<<"$RELEASE_JSON")"
-          gh api "repos/$GITHUB_REPOSITORY/releases/assets/$ASSET_ID" -H "Accept: application/octet-stream" > "build/$SEED_ASSET"
-          mv "build/$SEED_ASSET" build/fo
+          SEED_ASSET="$(basename "$FO_SEED_URL")"
+          curl -fsSL "$FO_SEED_URL" -o "build/$SEED_ASSET"
+          case "$SEED_ASSET" in
+            *.tar.gz)
+              tar -xzf "build/$SEED_ASSET" -C build
+              ;;
+            *.zip)
+              unzip -q "build/$SEED_ASSET" -d build
+              ;;
+            *)
+              mv "build/$SEED_ASSET" build/fo
+              ;;
+          esac
           chmod +x build/fo
           if [ -n "${FO_SEED_SHA256:-}" ]; then
-            printf '%s  %s\n' "$FO_SEED_SHA256" "build/fo" | sha256sum -c -
+            printf '%s  %s\n' "$FO_SEED_SHA256" "build/$SEED_ASSET" | sha256sum -c -
           fi
           ./build/fo version
 
