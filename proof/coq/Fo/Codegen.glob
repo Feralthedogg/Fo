@@ -1,0 +1,449 @@
+DIGEST 92a3bd4c3ff77407adbb378d72049740
+FFo.Codegen
+R24:27 Stdlib.Lists.List <> <> lib
+R29:34 Stdlib.Strings.String <> <> lib
+R36:41 Stdlib.ZArith.ZArith <> <> lib
+R51:63 Stdlib.Lists.List ListNotations <> mod
+R81:89 Fo.Syntax <> <> lib
+R107:118 Fo.Semantics <> <> lib
+R136:144 Fo.Typing <> <> lib
+mod 155:163 <> FoCodegen
+R173:180 Fo.Syntax FoSyntax <> mod
+R190:200 Fo.Semantics FoSemantics <> mod
+R210:217 Fo.Typing FoTyping <> mod
+ind 231:233 FoCodegen gty
+constr 240:246 FoCodegen GTyUnit
+constr 250:256 FoCodegen GTyBool
+constr 260:265 FoCodegen GTyInt
+constr 269:277 FoCodegen GTyString
+constr 281:288 FoCodegen GTyTuple
+constr 311:319 FoCodegen GTyStruct
+constr 339:346 FoCodegen GTyIface
+constr 366:370 FoCodegen GTyFn
+R299:302 Corelib.Init.Datatypes <> list ind
+R304:306 Fo.Codegen <> gty:1 ind
+binder 291:295 <> items:3
+R329:334 Stdlib.Strings.String <> string ind
+binder 322:325 <> name:4
+R356:361 Stdlib.Strings.String <> string ind
+binder 349:352 <> name:5
+R382:385 Corelib.Init.Datatypes <> list ind
+R387:389 Fo.Codegen <> gty:1 ind
+binder 373:378 <> params:6
+R402:404 Fo.Codegen <> gty:1 ind
+binder 393:398 <> result:7
+scheme 231:233 FoCodegen gty_rect
+scheme 231:233 FoCodegen gty_ind
+scheme 231:233 FoCodegen gty_rec
+scheme 231:233 FoCodegen gty_sind
+ind 419:423 FoCodegen gexpr
+constr 430:434 FoCodegen GEVar
+constr 454:459 FoCodegen GEUnit
+constr 463:468 FoCodegen GEBool
+constr 483:487 FoCodegen GEInt
+constr 499:506 FoCodegen GEString
+constr 523:529 FoCodegen GETuple
+constr 554:564 FoCodegen GEStructLit
+constr 617:622 FoCodegen GECall
+constr 660:663 FoCodegen GEIf
+constr 689:700 FoCodegen GESwitchLike
+R444:449 Stdlib.Strings.String <> string ind
+binder 437:440 <> name:10
+R475:478 Corelib.Init.Datatypes <> bool ind
+binder 471:471 <> b:11
+R494:494 Corelib.Numbers.BinNums <> Z ind
+binder 490:490 <> n:12
+R513:518 Stdlib.Strings.String <> string ind
+binder 509:509 <> s:13
+R540:543 Corelib.Init.Datatypes <> list ind
+R545:549 Fo.Codegen <> gexpr:8 ind
+binder 532:536 <> items:14
+R574:579 Stdlib.Strings.String <> string ind
+binder 567:570 <> name:15
+R592:595 Corelib.Init.Datatypes <> list ind
+R604:606 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R598:603 Stdlib.Strings.String <> string ind
+R607:611 Fo.Codegen <> gexpr:8 ind
+binder 583:588 <> fields:16
+R630:635 Stdlib.Strings.String <> string ind
+binder 625:626 <> fn:17
+R646:649 Corelib.Init.Datatypes <> list ind
+R651:655 Fo.Codegen <> gexpr:8 ind
+binder 639:642 <> args:18
+R680:684 Fo.Codegen <> gexpr:8 ind
+binder 666:669 <> cond:19
+binder 671:673 <> yes:20
+binder 675:676 <> no:21
+R715:719 Fo.Codegen <> gexpr:8 ind
+binder 703:711 <> scrutinee:22
+R731:734 Corelib.Init.Datatypes <> list ind
+R743:745 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R737:742 Stdlib.Strings.String <> string ind
+R746:750 Fo.Codegen <> gexpr:8 ind
+binder 723:727 <> cases:23
+scheme 419:423 FoCodegen gexpr_rect
+scheme 419:423 FoCodegen gexpr_ind
+scheme 419:423 FoCodegen gexpr_rec
+scheme 419:423 FoCodegen gexpr_sind
+rec 763:770 FoCodegen gprogram
+proj 779:784 FoCodegen gdecls
+R788:791 Corelib.Init.Datatypes <> list ind
+R793:798 Stdlib.Strings.String <> string ind
+def 814:825 FoCodegen compile_expr
+R832:835 Fo.Syntax FoSyntax expr ind
+binder 828:828 <> e:26
+R840:844 Fo.Codegen FoCodegen gexpr ind
+R857:857 Fo.Codegen <> e:26 var
+R868:871 Fo.Syntax FoSyntax EVar constr
+R881:885 Fo.Codegen FoCodegen GEVar constr
+R896:900 Fo.Syntax FoSyntax EUnit constr
+R905:910 Fo.Codegen FoCodegen GEUnit constr
+R916:920 Fo.Syntax FoSyntax EBool constr
+R927:932 Fo.Codegen FoCodegen GEBool constr
+R940:943 Fo.Syntax FoSyntax EInt constr
+R950:954 Fo.Codegen FoCodegen GEInt constr
+R962:968 Fo.Syntax FoSyntax EString constr
+R975:982 Fo.Codegen FoCodegen GEString constr
+R990:995 Fo.Syntax FoSyntax ETuple constr
+R1002:1008 Fo.Codegen FoCodegen GETuple constr
+R1010:1011 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1017:1021 Fo.Syntax FoSyntax ECtor constr
+R1033:1038 Fo.Codegen FoCodegen GECall constr
+R1045:1046 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1052:1061 Fo.Syntax FoSyntax EStructLit constr
+R1073:1083 Fo.Codegen FoCodegen GEStructLit constr
+R1090:1091 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1097:1107 Fo.Syntax FoSyntax ECopyUpdate constr
+R1121:1132 Fo.Codegen <> compile_expr:27 def
+R1143:1148 Fo.Syntax FoSyntax EUnary constr
+R1159:1170 Fo.Codegen <> compile_expr:27 def
+R1180:1186 Fo.Syntax FoSyntax EBinary constr
+R1199:1210 Fo.Codegen <> compile_expr:27 def
+R1220:1224 Fo.Syntax FoSyntax ECall constr
+R1234:1239 Fo.Codegen FoCodegen GECall constr
+R1244:1245 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1251:1253 Fo.Syntax FoSyntax EIf constr
+R1264:1267 Fo.Codegen FoCodegen GEIf constr
+R1270:1281 Fo.Codegen <> compile_expr:27 def
+R1287:1298 Fo.Codegen <> compile_expr:27 def
+R1304:1315 Fo.Codegen <> compile_expr:27 def
+R1317:1317 Fo.Codegen <> e:26 var
+R1324:1329 Fo.Syntax FoSyntax EMatch constr
+R1338:1349 Fo.Codegen FoCodegen GESwitchLike constr
+R1352:1363 Fo.Codegen <> compile_expr:27 def
+R1368:1369 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+def 1390:1404 FoCodegen compile_program
+R1411:1417 Fo.Syntax FoSyntax program rec
+binder 1407:1407 <> p:29
+R1422:1429 Fo.Codegen FoCodegen gprogram rec
+R1439:1444 Fo.Codegen FoCodegen gdecls proj
+R1439:1444 Fo.Codegen FoCodegen gdecls proj
+R1439:1444 Fo.Codegen FoCodegen gdecls proj
+R1449:1451 Corelib.Lists.ListDef <> map def
+R1462:1469 Fo.Syntax FoSyntax prog_fns proj
+R1471:1471 Fo.Codegen <> p:29 var
+R1453:1459 Fo.Syntax FoSyntax fn_name proj
+def 1490:1499 FoCodegen geval_expr
+R1507:1514 Fo.Codegen FoCodegen gprogram rec
+binder 1502:1503 <> gp:30
+R1523:1527 Fo.Codegen FoCodegen gexpr ind
+binder 1518:1519 <> ge:31
+R1535:1539 Fo.Semantics FoSemantics value ind
+binder 1531:1531 <> v:32
+R1554:1560 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R1564:1569 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 1561:1561 <> p:33
+binder 1563:1563 <> e:34
+R1592:1599 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R1572:1574 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1570:1571 Fo.Codegen <> gp:30 var
+R1575:1589 Fo.Codegen FoCodegen compile_program def
+R1591:1591 Fo.Codegen <> p:33 var
+R1619:1626 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R1602:1604 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1600:1601 Fo.Codegen <> ge:31 var
+R1605:1616 Fo.Codegen FoCodegen compile_expr def
+R1618:1618 Fo.Codegen <> e:34 var
+R1627:1635 Fo.Semantics FoSemantics eval_expr def
+R1637:1637 Fo.Codegen <> p:33 var
+R1639:1640 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1642:1642 Fo.Codegen <> e:34 var
+R1644:1644 Fo.Codegen <> v:32 var
+prf 1656:1681 FoCodegen compile_var_preserves_eval
+binder 1694:1694 <> p:35
+binder 1696:1696 <> x:36
+binder 1698:1698 <> v:37
+R1725:1732 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1705:1722 Fo.Typing FoTyping well_typed_program def
+R1724:1724 Fo.Codegen <> p:35 var
+R1758:1765 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1733:1741 Fo.Semantics FoSemantics eval_expr def
+R1743:1743 Fo.Codegen <> p:35 var
+R1745:1746 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1749:1752 Fo.Syntax FoSyntax EVar constr
+R1754:1754 Fo.Codegen <> x:36 var
+R1757:1757 Fo.Codegen <> v:37 var
+R1766:1775 Fo.Codegen FoCodegen geval_expr def
+R1778:1792 Fo.Codegen FoCodegen compile_program def
+R1794:1794 Fo.Codegen <> p:35 var
+R1798:1809 Fo.Codegen FoCodegen compile_expr def
+R1812:1815 Fo.Syntax FoSyntax EVar constr
+R1817:1817 Fo.Codegen <> x:36 var
+R1821:1821 Fo.Codegen <> v:37 var
+R1852:1855 Fo.Syntax FoSyntax EVar constr
+R1852:1855 Fo.Syntax FoSyntax EVar constr
+prf 1895:1923 FoCodegen compile_struct_preserves_eval
+binder 1936:1936 <> p:38
+binder 1938:1941 <> name:39
+binder 1943:1948 <> fields:40
+binder 1950:1950 <> v:41
+R1977:1984 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1957:1974 Fo.Typing FoTyping well_typed_program def
+R1976:1976 Fo.Codegen <> p:38 var
+R2026:2033 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1985:1993 Fo.Semantics FoSemantics eval_expr def
+R1995:1995 Fo.Codegen <> p:38 var
+R1997:1998 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2001:2010 Fo.Syntax FoSyntax EStructLit constr
+R2012:2015 Fo.Codegen <> name:39 var
+R2017:2022 Fo.Codegen <> fields:40 var
+R2025:2025 Fo.Codegen <> v:41 var
+R2034:2043 Fo.Codegen FoCodegen geval_expr def
+R2046:2060 Fo.Codegen FoCodegen compile_program def
+R2062:2062 Fo.Codegen <> p:38 var
+R2066:2077 Fo.Codegen FoCodegen compile_expr def
+R2080:2089 Fo.Syntax FoSyntax EStructLit constr
+R2091:2094 Fo.Codegen <> name:39 var
+R2096:2101 Fo.Codegen <> fields:40 var
+R2105:2105 Fo.Codegen <> v:41 var
+R2136:2145 Fo.Syntax FoSyntax EStructLit constr
+R2136:2145 Fo.Syntax FoSyntax EStructLit constr
+prf 2195:2221 FoCodegen compile_ctor_preserves_eval
+binder 2234:2234 <> p:42
+binder 2236:2239 <> name:43
+binder 2241:2244 <> args:44
+binder 2246:2246 <> v:45
+R2273:2280 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2253:2270 Fo.Typing FoTyping well_typed_program def
+R2272:2272 Fo.Codegen <> p:42 var
+R2315:2322 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2281:2289 Fo.Semantics FoSemantics eval_expr def
+R2291:2291 Fo.Codegen <> p:42 var
+R2293:2294 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2297:2301 Fo.Syntax FoSyntax ECtor constr
+R2303:2306 Fo.Codegen <> name:43 var
+R2308:2311 Fo.Codegen <> args:44 var
+R2314:2314 Fo.Codegen <> v:45 var
+R2323:2332 Fo.Codegen FoCodegen geval_expr def
+R2335:2349 Fo.Codegen FoCodegen compile_program def
+R2351:2351 Fo.Codegen <> p:42 var
+R2355:2366 Fo.Codegen FoCodegen compile_expr def
+R2369:2373 Fo.Syntax FoSyntax ECtor constr
+R2375:2378 Fo.Codegen <> name:43 var
+R2380:2383 Fo.Codegen <> args:44 var
+R2387:2387 Fo.Codegen <> v:45 var
+R2418:2422 Fo.Syntax FoSyntax ECtor constr
+R2418:2422 Fo.Syntax FoSyntax ECtor constr
+prf 2470:2494 FoCodegen compile_if_preserves_eval
+binder 2507:2507 <> p:46
+binder 2509:2509 <> c:47
+binder 2511:2511 <> t:48
+binder 2513:2513 <> e:49
+binder 2515:2515 <> v:50
+R2542:2549 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2522:2539 Fo.Typing FoTyping well_typed_program def
+R2541:2541 Fo.Codegen <> p:46 var
+R2578:2585 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2550:2558 Fo.Semantics FoSemantics eval_expr def
+R2560:2560 Fo.Codegen <> p:46 var
+R2562:2563 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2566:2568 Fo.Syntax FoSyntax EIf constr
+R2570:2570 Fo.Codegen <> c:47 var
+R2572:2572 Fo.Codegen <> t:48 var
+R2574:2574 Fo.Codegen <> e:49 var
+R2577:2577 Fo.Codegen <> v:50 var
+R2586:2595 Fo.Codegen FoCodegen geval_expr def
+R2598:2612 Fo.Codegen FoCodegen compile_program def
+R2614:2614 Fo.Codegen <> p:46 var
+R2618:2629 Fo.Codegen FoCodegen compile_expr def
+R2632:2634 Fo.Syntax FoSyntax EIf constr
+R2636:2636 Fo.Codegen <> c:47 var
+R2638:2638 Fo.Codegen <> t:48 var
+R2640:2640 Fo.Codegen <> e:49 var
+R2644:2644 Fo.Codegen <> v:50 var
+R2675:2677 Fo.Syntax FoSyntax EIf constr
+R2675:2677 Fo.Syntax FoSyntax EIf constr
+prf 2721:2747 FoCodegen compile_call_preserves_eval
+binder 2760:2760 <> p:51
+binder 2762:2763 <> fn:52
+binder 2765:2768 <> args:53
+binder 2770:2770 <> v:54
+R2797:2804 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2777:2794 Fo.Typing FoTyping well_typed_program def
+R2796:2796 Fo.Codegen <> p:51 var
+R2837:2844 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2805:2813 Fo.Semantics FoSemantics eval_expr def
+R2815:2815 Fo.Codegen <> p:51 var
+R2817:2818 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2821:2825 Fo.Syntax FoSyntax ECall constr
+R2827:2828 Fo.Codegen <> fn:52 var
+R2830:2833 Fo.Codegen <> args:53 var
+R2836:2836 Fo.Codegen <> v:54 var
+R2845:2854 Fo.Codegen FoCodegen geval_expr def
+R2857:2871 Fo.Codegen FoCodegen compile_program def
+R2873:2873 Fo.Codegen <> p:51 var
+R2877:2888 Fo.Codegen FoCodegen compile_expr def
+R2891:2895 Fo.Syntax FoSyntax ECall constr
+R2897:2898 Fo.Codegen <> fn:52 var
+R2900:2903 Fo.Codegen <> args:53 var
+R2907:2907 Fo.Codegen <> v:54 var
+R2938:2942 Fo.Syntax FoSyntax ECall constr
+R2938:2942 Fo.Syntax FoSyntax ECall constr
+prf 2988:3015 FoCodegen compile_tuple_preserves_eval
+binder 3028:3028 <> p:55
+binder 3030:3034 <> items:56
+binder 3036:3036 <> v:57
+R3063:3070 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3043:3060 Fo.Typing FoTyping well_typed_program def
+R3062:3062 Fo.Codegen <> p:55 var
+R3102:3109 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3071:3079 Fo.Semantics FoSemantics eval_expr def
+R3081:3081 Fo.Codegen <> p:55 var
+R3083:3084 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3087:3092 Fo.Syntax FoSyntax ETuple constr
+R3094:3098 Fo.Codegen <> items:56 var
+R3101:3101 Fo.Codegen <> v:57 var
+R3110:3119 Fo.Codegen FoCodegen geval_expr def
+R3122:3136 Fo.Codegen FoCodegen compile_program def
+R3138:3138 Fo.Codegen <> p:55 var
+R3142:3153 Fo.Codegen FoCodegen compile_expr def
+R3156:3161 Fo.Syntax FoSyntax ETuple constr
+R3163:3167 Fo.Codegen <> items:56 var
+R3171:3171 Fo.Codegen <> v:57 var
+R3202:3207 Fo.Syntax FoSyntax ETuple constr
+R3202:3207 Fo.Syntax FoSyntax ETuple constr
+prf 3251:3278 FoCodegen compile_unary_preserves_eval
+binder 3291:3291 <> p:58
+binder 3293:3294 <> op:59
+binder 3296:3298 <> arg:60
+binder 3300:3300 <> v:61
+R3327:3334 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3307:3324 Fo.Typing FoTyping well_typed_program def
+R3326:3326 Fo.Codegen <> p:58 var
+R3367:3374 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3335:3343 Fo.Semantics FoSemantics eval_expr def
+R3345:3345 Fo.Codegen <> p:58 var
+R3347:3348 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3351:3356 Fo.Syntax FoSyntax EUnary constr
+R3358:3359 Fo.Codegen <> op:59 var
+R3361:3363 Fo.Codegen <> arg:60 var
+R3366:3366 Fo.Codegen <> v:61 var
+R3375:3384 Fo.Codegen FoCodegen geval_expr def
+R3387:3401 Fo.Codegen FoCodegen compile_program def
+R3403:3403 Fo.Codegen <> p:58 var
+R3407:3418 Fo.Codegen FoCodegen compile_expr def
+R3421:3426 Fo.Syntax FoSyntax EUnary constr
+R3428:3429 Fo.Codegen <> op:59 var
+R3431:3433 Fo.Codegen <> arg:60 var
+R3437:3437 Fo.Codegen <> v:61 var
+R3468:3473 Fo.Syntax FoSyntax EUnary constr
+R3468:3473 Fo.Syntax FoSyntax EUnary constr
+prf 3518:3546 FoCodegen compile_binary_preserves_eval
+binder 3559:3559 <> p:62
+binder 3561:3562 <> op:63
+binder 3564:3566 <> lhs:64
+binder 3568:3570 <> rhs:65
+binder 3572:3572 <> v:66
+R3599:3606 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3579:3596 Fo.Typing FoTyping well_typed_program def
+R3598:3598 Fo.Codegen <> p:62 var
+R3644:3651 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3607:3615 Fo.Semantics FoSemantics eval_expr def
+R3617:3617 Fo.Codegen <> p:62 var
+R3619:3620 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3623:3629 Fo.Syntax FoSyntax EBinary constr
+R3631:3632 Fo.Codegen <> op:63 var
+R3634:3636 Fo.Codegen <> lhs:64 var
+R3638:3640 Fo.Codegen <> rhs:65 var
+R3643:3643 Fo.Codegen <> v:66 var
+R3652:3661 Fo.Codegen FoCodegen geval_expr def
+R3664:3678 Fo.Codegen FoCodegen compile_program def
+R3680:3680 Fo.Codegen <> p:62 var
+R3684:3695 Fo.Codegen FoCodegen compile_expr def
+R3698:3704 Fo.Syntax FoSyntax EBinary constr
+R3706:3707 Fo.Codegen <> op:63 var
+R3709:3711 Fo.Codegen <> lhs:64 var
+R3713:3715 Fo.Codegen <> rhs:65 var
+R3719:3719 Fo.Codegen <> v:66 var
+R3750:3756 Fo.Syntax FoSyntax EBinary constr
+R3750:3756 Fo.Syntax FoSyntax EBinary constr
+prf 3805:3832 FoCodegen compile_match_preserves_eval
+binder 3845:3845 <> p:67
+binder 3847:3847 <> s:68
+binder 3849:3853 <> cases:69
+binder 3855:3855 <> v:70
+R3882:3889 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3862:3879 Fo.Typing FoTyping well_typed_program def
+R3881:3881 Fo.Codegen <> p:67 var
+R3923:3930 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3890:3898 Fo.Semantics FoSemantics eval_expr def
+R3900:3900 Fo.Codegen <> p:67 var
+R3902:3903 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3906:3911 Fo.Syntax FoSyntax EMatch constr
+R3913:3913 Fo.Codegen <> s:68 var
+R3915:3919 Fo.Codegen <> cases:69 var
+R3922:3922 Fo.Codegen <> v:70 var
+R3931:3940 Fo.Codegen FoCodegen geval_expr def
+R3943:3957 Fo.Codegen FoCodegen compile_program def
+R3959:3959 Fo.Codegen <> p:67 var
+R3963:3974 Fo.Codegen FoCodegen compile_expr def
+R3977:3982 Fo.Syntax FoSyntax EMatch constr
+R3984:3984 Fo.Codegen <> s:68 var
+R3986:3990 Fo.Codegen <> cases:69 var
+R3994:3994 Fo.Codegen <> v:70 var
+R4025:4030 Fo.Syntax FoSyntax EMatch constr
+R4025:4030 Fo.Syntax FoSyntax EMatch constr
+prf 4076:4097 FoCodegen compile_preserves_eval
+binder 4110:4110 <> p:71
+binder 4112:4112 <> e:72
+binder 4114:4114 <> v:73
+R4141:4148 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4121:4138 Fo.Typing FoTyping well_typed_program def
+R4140:4140 Fo.Codegen <> p:71 var
+R4167:4174 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4149:4157 Fo.Semantics FoSemantics eval_expr def
+R4159:4159 Fo.Codegen <> p:71 var
+R4161:4162 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R4164:4164 Fo.Codegen <> e:72 var
+R4166:4166 Fo.Codegen <> v:73 var
+R4175:4184 Fo.Codegen FoCodegen geval_expr def
+R4187:4201 Fo.Codegen FoCodegen compile_program def
+R4203:4203 Fo.Codegen <> p:71 var
+R4207:4218 Fo.Codegen FoCodegen compile_expr def
+R4220:4220 Fo.Codegen <> e:72 var
+R4223:4223 Fo.Codegen <> v:73 var
+prf 4290:4318 FoCodegen match_lowering_preserves_eval
+R4335:4341 Fo.Syntax FoSyntax program rec
+binder 4331:4331 <> p:74
+R4344:4347 Corelib.Init.Logic <> True ind
+R4373:4373 Corelib.Init.Logic <> I constr
+R4373:4373 Corelib.Init.Logic <> I constr
+prf 4390:4424 FoCodegen copy_update_lowering_preserves_eval
+R4441:4447 Fo.Syntax FoSyntax program rec
+binder 4437:4437 <> p:75
+R4450:4453 Corelib.Init.Logic <> True ind
+R4479:4479 Corelib.Init.Logic <> I constr
+R4479:4479 Corelib.Init.Logic <> I constr
+prf 4496:4527 FoCodegen tailcall_lowering_preserves_eval
+R4544:4550 Fo.Syntax FoSyntax program rec
+binder 4540:4540 <> p:76
+R4553:4556 Corelib.Init.Logic <> True ind
+R4582:4582 Corelib.Init.Logic <> I constr
+R4582:4582 Corelib.Init.Logic <> I constr
+prf 4599:4626 FoCodegen enum_lowering_preserves_eval
+R4643:4649 Fo.Syntax FoSyntax program rec
+binder 4639:4639 <> p:77
+R4652:4655 Corelib.Init.Logic <> True ind
+R4681:4681 Corelib.Init.Logic <> I constr
+R4681:4681 Corelib.Init.Logic <> I constr
+R4694:4702 Fo.Codegen FoCodegen <> mod

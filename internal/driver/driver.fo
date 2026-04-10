@@ -1,0 +1,154 @@
+package driver
+
+import "github.com/Feralthedogg/Fo/internal/ast"
+import "github.com/Feralthedogg/Fo/internal/checker"
+import "github.com/Feralthedogg/Fo/internal/codegen"
+import "github.com/Feralthedogg/Fo/internal/diagnostic"
+import "github.com/Feralthedogg/Fo/internal/parser"
+
+type SourceUnit struct {
+    Filename string
+    Text string
+}
+
+type ParseResult struct {
+    File ast.File
+    ParseDiag diagnostic.Diagnostics
+}
+
+type CompileResult struct {
+    GoSource string
+    ParseDiag diagnostic.Diagnostics
+    CheckDiag diagnostic.Diagnostics
+}
+
+func MakeSourceUnit(filename string, text string) SourceUnit {
+    return SourceUnit{
+        Filename: filename,
+        Text: text,
+    }
+}
+
+func ParseSource(src string, filename string) ParseResult {
+    parsed := parser.ParseSource(src, filename)
+    return ParseResult{
+        File: parsed.File,
+        ParseDiag: parsed.Next.Diag,
+    }
+}
+
+func ParsePackage(sources []SourceUnit) ParseResult {
+    return ParsePackageFrom(sources, 0, ast.EmptyFile(), diagnostic.New())
+}
+
+func ParsePackageFrom(sources []SourceUnit, idx int, acc ast.File, parseDiag diagnostic.Diagnostics) ParseResult {
+    if idx >= len(sources) {
+        return ParseResult{
+            File: acc,
+            ParseDiag: parseDiag,
+        }
+    }
+    parsed := ParseSource(sources[idx].Text, sources[idx].Filename)
+    mergedFile := MergeParsedFile(acc, parsed.File)
+    mergedDiag := MergeDiagnostics(parseDiag, parsed.ParseDiag, 0)
+    pkgDiag := ValidatePackageName(mergedFile, parsed.File, mergedDiag)
+    return ParsePackageFrom(sources, idx + 1, mergedFile, pkgDiag)
+}
+
+func ValidatePackageName(merged ast.File, current ast.File, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    mergedName := ast.FilePackageName(merged)
+    currentName := ast.FilePackageName(current)
+    if mergedName == "" || currentName == "" {
+        return diag
+    }
+    if mergedName == currentName {
+        return diag
+    }
+    return diag.Error(
+        diagnostic.SyntaxCategory(),
+        current.TokenPos(),
+        "package name mismatch: expected '" + mergedName + "', found '" + currentName + "'",
+    )
+}
+
+func MergeParsedFile(acc ast.File, next ast.File) ast.File {
+    withPackage := MergePackageDecl(acc, next)
+    withImports := MergeImportDecls(withPackage, next.Imports, 0)
+    return MergeDecls(withImports, next.Decls, 0)
+}
+
+func MergePackageDecl(acc ast.File, next ast.File) ast.File {
+    if !(ast.FilePackageName(acc) == "") {
+        return acc
+    }
+    if ast.FilePackageName(next) == "" {
+        return acc
+    }
+    return ast.FileWithPackage(acc, ast.MakePackageDecl(next.TokenPos(), ast.FilePackageName(next)))
+}
+
+func MergeImportDecls(acc ast.File, imports []ast.ImportDecl, idx int) ast.File {
+    if idx >= len(imports) {
+        return acc
+    }
+    return MergeImportDecls(ast.FileWithImport(acc, imports[idx]), imports, idx + 1)
+}
+
+func MergeDecls(acc ast.File, decls []ast.Decl, idx int) ast.File {
+    if idx >= len(decls) {
+        return acc
+    }
+    return MergeDecls(ast.FileWithDecl(acc, decls[idx]), decls, idx + 1)
+}
+
+func MergeDiagnostics(acc diagnostic.Diagnostics, next diagnostic.Diagnostics, idx int) diagnostic.Diagnostics {
+    if idx >= len(next.Items) {
+        return acc
+    }
+    return MergeDiagnostics(acc.Add(next.Items[idx]), next, idx + 1)
+}
+
+func CheckFile(file ast.File, parseDiag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    if parseDiag.HasError {
+        return diagnostic.New()
+    }
+    return checker.Check(file)
+}
+
+func GenerateFile(file ast.File) string {
+    return codegen.Generate(file)
+}
+
+func CompileSource(src string, filename string) CompileResult {
+    parsed := ParseSource(src, filename)
+    checkDiag := CheckFile(parsed.File, parsed.ParseDiag)
+    if parsed.ParseDiag.HasError || checkDiag.HasError {
+        return CompileResult{
+            GoSource: "",
+            ParseDiag: parsed.ParseDiag,
+            CheckDiag: checkDiag,
+        }
+    }
+    return CompileResult{
+        GoSource: GenerateFile(parsed.File),
+        ParseDiag: parsed.ParseDiag,
+        CheckDiag: checkDiag,
+    }
+}
+
+func CompilePackage(sources []SourceUnit) CompileResult {
+    parsed := ParsePackage(sources)
+    checkDiag := CheckFile(parsed.File, parsed.ParseDiag)
+    if parsed.ParseDiag.HasError || checkDiag.HasError {
+        return CompileResult{
+            GoSource: "",
+            ParseDiag: parsed.ParseDiag,
+            CheckDiag: checkDiag,
+        }
+    }
+    return CompileResult{
+        GoSource: GenerateFile(parsed.File),
+        ParseDiag: parsed.ParseDiag,
+        CheckDiag: checkDiag,
+    }
+}

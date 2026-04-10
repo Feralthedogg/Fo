@@ -1,0 +1,438 @@
+package lexer
+
+import "github.com/Feralthedogg/Fo/internal/diagnostic"
+import "github.com/Feralthedogg/Fo/internal/token"
+
+type Lexer struct {
+    Src string
+    Filename string
+    Diag diagnostic.Diagnostics
+    Pos int
+    Line int
+    Column int
+    Ch byte
+    LastToken token.Type
+}
+
+type TokenResult struct {
+    Next Lexer
+    Tok token.Token
+}
+
+func New(src string, filename string) Lexer {
+    base := Lexer{
+        Src: src,
+        Filename: filename,
+        Diag: diagnostic.New(),
+        Pos: 0,
+        Line: 1,
+        Column: 1,
+        Ch: ZeroByte(),
+        LastToken: token.IllegalType(),
+    }
+    return base.Advance()
+}
+
+func ZeroByte() byte {
+    return byte(0)
+}
+
+func NewlineByte() byte {
+    return byte(10)
+}
+
+func SpaceByte() byte {
+    return byte(32)
+}
+
+func TabByte() byte {
+    return byte(9)
+}
+
+func CarriageReturnByte() byte {
+    return byte(13)
+}
+
+func UnderscoreByte() byte {
+    return byte(95)
+}
+
+func QuoteByte() byte {
+    return byte(34)
+}
+
+func BackslashByte() byte {
+    return byte(92)
+}
+
+func (l Lexer) Advance() Lexer {
+    if l.Pos >= len(l.Src) {
+        return l{
+            Ch: ZeroByte(),
+        }
+    }
+    return l{
+        Ch: l.Src[l.Pos],
+    }
+}
+
+func (l Lexer) Next() Lexer {
+    if l.Ch == NewlineByte() {
+        next := l{
+            Pos: l.Pos + 1,
+            Line: l.Line + 1,
+            Column: 1,
+        }
+        return next.Advance()
+    }
+    next := l{
+        Pos: l.Pos + 1,
+        Line: l.Line,
+        Column: l.Column + 1,
+    }
+    return next.Advance()
+}
+
+func (l Lexer) Peek() byte {
+    next := l.Pos + 1
+    if next >= len(l.Src) {
+        return ZeroByte()
+    }
+    return l.Src[next]
+}
+
+func (l Lexer) CurrentPos() token.Pos {
+    return token.MakePos(l.Filename, l.Line, l.Column, l.Pos)
+}
+
+func (l Lexer) SkipWhitespace() Lexer {
+    if l.Ch == SpaceByte() || l.Ch == TabByte() || l.Ch == CarriageReturnByte() || l.Ch == NewlineByte() {
+        return l.Next().SkipWhitespace()
+    }
+    return l
+}
+
+func (l Lexer) NextToken() TokenResult {
+    cur := l.SkipWhitespace()
+    pos := cur.CurrentPos()
+
+    if cur.Ch == ZeroByte() {
+        next := SetLastToken(cur, token.EOFType())
+        return TokenResult{
+            Next: next,
+            Tok: token.MakeToken(token.EOFType(), "", pos),
+        }
+    }
+
+    if IsLetter(cur.Ch) || cur.Ch == UnderscoreByte() {
+        res := cur.ScanIdentifier()
+        return TokenResult{
+            Next: SetLastToken(res.Next, res.Tok.Type),
+            Tok: res.Tok,
+        }
+    }
+
+    if IsDigit(cur.Ch) {
+        res := cur.ScanNumber()
+        return TokenResult{
+            Next: SetLastToken(res.Next, res.Tok.Type),
+            Tok: res.Tok,
+        }
+    }
+
+    if cur.Ch == QuoteByte() {
+        res := cur.ScanString()
+        return TokenResult{
+            Next: SetLastToken(res.Next, res.Tok.Type),
+            Tok: res.Tok,
+        }
+    }
+
+    res := cur.ScanOperator()
+    return TokenResult{
+        Next: SetLastToken(res.Next, res.Tok.Type),
+        Tok: res.Tok,
+    }
+}
+
+func (l Lexer) ScanIdentifier() TokenResult {
+    pos := l.CurrentPos()
+    start := l.Pos
+    next := l.ConsumeIdentifier()
+    literal := SliceText(next.Src, start, next.Pos)
+    typ := token.LookupIdent(literal)
+    return TokenResult{
+        Next: next,
+        Tok: token.MakeToken(typ, literal, pos),
+    }
+}
+
+func (l Lexer) ConsumeIdentifier() Lexer {
+    if IsLetter(l.Ch) || IsDigit(l.Ch) || l.Ch == UnderscoreByte() {
+        return l.Next().ConsumeIdentifier()
+    }
+    return l
+}
+
+func (l Lexer) ScanNumber() TokenResult {
+    pos := l.CurrentPos()
+    start := l.Pos
+    next := l.ConsumeDigits()
+    literal := SliceText(next.Src, start, next.Pos)
+    return TokenResult{
+        Next: next,
+        Tok: token.MakeToken(token.IntLitType(), literal, pos),
+    }
+}
+
+func (l Lexer) ScanString() TokenResult {
+    pos := l.CurrentPos()
+    start := l.Pos
+    body := l.Next().ConsumeStringBody()
+
+    if body.Ch == QuoteByte() {
+        next := body.Next()
+        literal := SliceText(next.Src, start, next.Pos)
+        return TokenResult{
+            Next: next,
+            Tok: token.MakeToken(token.StringLitType(), literal, pos),
+        }
+    }
+
+    literal := SliceText(body.Src, start, body.Pos)
+    diag := body.Diag.Error(diagnostic.LexicalCategory(), pos, "unterminated string literal")
+    next := body{
+        Diag: diag,
+    }
+    return TokenResult{
+        Next: next,
+        Tok: token.MakeToken(token.StringLitType(), literal, pos),
+    }
+}
+
+func (l Lexer) ConsumeDigits() Lexer {
+    if IsDigit(l.Ch) || l.Ch == UnderscoreByte() {
+        return l.Next().ConsumeDigits()
+    }
+    return l
+}
+
+func (l Lexer) ConsumeStringBody() Lexer {
+    if l.Ch == ZeroByte() || l.Ch == NewlineByte() || l.Ch == QuoteByte() {
+        return l
+    }
+    if l.Ch == BackslashByte() {
+        escaped := l.Next()
+        if escaped.Ch == ZeroByte() {
+            return escaped
+        }
+        return escaped.Next().ConsumeStringBody()
+    }
+    return l.Next().ConsumeStringBody()
+}
+
+func (l Lexer) ScanOperator() TokenResult {
+    pos := l.CurrentPos()
+
+    if l.Ch == "("[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.LParenType(), "(", pos)}
+    }
+    if l.Ch == ")"[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.RParenType(), ")", pos)}
+    }
+    if l.Ch == "{"[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.LBraceType(), "{", pos)}
+    }
+    if l.Ch == "}"[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.RBraceType(), "}", pos)}
+    }
+    if l.Ch == "["[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.LBracketType(), "[", pos)}
+    }
+    if l.Ch == "]"[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.RBracketType(), "]", pos)}
+    }
+    if l.Ch == ","[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.CommaType(), ",", pos)}
+    }
+    if l.Ch == "."[0] {
+        next := l.Next()
+        if next.Ch == "."[0] {
+            next2 := next.Next()
+            if next2.Ch == "."[0] {
+                return TokenResult{Next: next2.Next(), Tok: token.MakeToken(token.EllipsisType(), "...", pos)}
+            }
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.DotType(), ".", pos)}
+    }
+    if l.Ch == ";"[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.SemicolonType(), ";", pos)}
+    }
+
+    if l.Ch == ":"[0] {
+        next := l.Next()
+        if next.Ch == "="[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.WalrusType(), ":=", pos)}
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.ColonType(), ":", pos)}
+    }
+
+    if l.Ch == "="[0] {
+        next := l.Next()
+        if next.Ch == "="[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.EqType(), "==", pos)}
+        }
+        if next.Ch == ">"[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.ArrowType(), "=>", pos)}
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.AssignType(), "=", pos)}
+    }
+
+    if l.Ch == "!"[0] {
+        next := l.Next()
+        if next.Ch == "="[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.NeqType(), "!=", pos)}
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.NotType(), "!", pos)}
+    }
+
+    if l.Ch == "<"[0] {
+        next := l.Next()
+        if next.Ch == "="[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.LteType(), "<=", pos)}
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.LtType(), "<", pos)}
+    }
+
+    if l.Ch == ">"[0] {
+        next := l.Next()
+        if next.Ch == "="[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.GteType(), ">=", pos)}
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.GtType(), ">", pos)}
+    }
+
+    if l.Ch == "+"[0] {
+        next := l.Next()
+        if next.Ch == "+"[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.IncType(), "++", pos)}
+        }
+        if next.Ch == "="[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.PlusAssignType(), "+=", pos)}
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.PlusType(), "+", pos)}
+    }
+
+    if l.Ch == "-"[0] {
+        next := l.Next()
+        if next.Ch == "-"[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.DecType(), "--", pos)}
+        }
+        if next.Ch == "="[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.MinusAssignType(), "-=", pos)}
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.MinusType(), "-", pos)}
+    }
+
+    if l.Ch == "*"[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.StarType(), "*", pos)}
+    }
+    if l.Ch == "/"[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.SlashType(), "/", pos)}
+    }
+    if l.Ch == "%"[0] {
+        next := l.Next()
+        return TokenResult{Next: next, Tok: token.MakeToken(token.PercentType(), "%", pos)}
+    }
+
+    if l.Ch == "|"[0] {
+        next := l.Next()
+        if next.Ch == ">"[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.PipeArrowType(), "|>", pos)}
+        }
+        if next.Ch == "|"[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.LorType(), "||", pos)}
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.PipeType(), "|", pos)}
+    }
+
+    if l.Ch == "&"[0] {
+        next := l.Next()
+        if next.Ch == "&"[0] {
+            return TokenResult{Next: next.Next(), Tok: token.MakeToken(token.LandType(), "&&", pos)}
+        }
+        return TokenResult{Next: next, Tok: token.MakeToken(token.IllegalType(), "&", pos)}
+    }
+
+    bad := l.Next()
+    return TokenResult{
+        Next: bad,
+        Tok: token.MakeToken(token.IllegalType(), "?", pos),
+    }
+}
+
+func Tokenize(src string, filename string) []token.Token {
+    return TokenizeLoop(New(src, filename), []token.Token{})
+}
+
+func TokenizeLoop(l Lexer, acc []token.Token) []token.Token {
+    res := l.NextToken()
+    items := append(acc, res.Tok)
+    if res.Tok.Type == token.EOFType() {
+        return items
+    }
+    return TokenizeLoop(res.Next, items)
+}
+
+func IsLetter(ch byte) bool {
+    if ch >= "a"[0] {
+        if ch <= "z"[0] {
+            return true
+        }
+    }
+    if ch >= "A"[0] {
+        if ch <= "Z"[0] {
+            return true
+        }
+    }
+    return false
+}
+
+func IsDigit(ch byte) bool {
+    if ch >= "0"[0] {
+        if ch <= "9"[0] {
+            return true
+        }
+    }
+    return false
+}
+
+func SetLastToken(l Lexer, t token.Type) Lexer {
+    return l{
+        LastToken: t,
+    }
+}
+
+func SliceText(src string, start int, end int) string {
+    return SliceTextLoop(src, start, end, 0, "")
+}
+
+func SliceTextLoop(src string, start int, end int, idx int, acc string) string {
+    if idx >= end {
+        return acc
+    }
+    if idx < start {
+        return SliceTextLoop(src, start, end, idx + 1, acc)
+    }
+    return SliceTextLoop(src, start, end, idx + 1, acc + string(src[idx]))
+}

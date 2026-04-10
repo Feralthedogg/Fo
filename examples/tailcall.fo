@@ -1,0 +1,22 @@
+package main
+
+func Factorial(n int, acc int) int {
+	if n <= 0 {
+		return acc
+	}
+	return Factorial(n - 1, acc * n)
+}
+
+func Fibonacci(n int, a int, b int) int {
+	if n <= 0 {
+		return a
+	}
+	return Fibonacci(n - 1, b, a + b)
+}
+
+func Sum(xs []int, acc int, i int) int {
+	if i >= len(xs) {
+		return acc
+	}
+	return Sum(xs, acc + xs[i], i + 1)
+}

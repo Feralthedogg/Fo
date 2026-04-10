@@ -1,0 +1,892 @@
+DIGEST 277a6c957e748f0b668f1dbd493740ad
+FFo.CoreLite
+R24:27 Stdlib.Lists.List <> <> lib
+R29:34 Stdlib.Strings.String <> <> lib
+R36:41 Stdlib.ZArith.ZArith <> <> lib
+R51:63 Stdlib.Lists.List ListNotations <> mod
+mod 74:83 <> FoCoreLite
+ind 97:103 FoCoreLite lite_ty
+constr 110:116 FoCoreLite LTyUnit
+constr 120:126 FoCoreLite LTyBool
+constr 130:135 FoCoreLite LTyInt
+constr 139:147 FoCoreLite LTyString
+constr 151:158 FoCoreLite LTyTuple
+R169:172 Corelib.Init.Datatypes <> list ind
+R174:180 Fo.CoreLite <> lite_ty:1 ind
+binder 161:165 <> items:3
+scheme 97:103 FoCoreLite lite_ty_rect
+scheme 97:103 FoCoreLite lite_ty_ind
+scheme 97:103 FoCoreLite lite_ty_rec
+scheme 97:103 FoCoreLite lite_ty_sind
+ind 195:204 FoCoreLite lite_value
+constr 211:216 FoCoreLite LVUnit
+constr 220:225 FoCoreLite LVBool
+constr 240:244 FoCoreLite LVInt
+constr 256:263 FoCoreLite LVString
+constr 280:286 FoCoreLite LVTuple
+R232:235 Corelib.Init.Datatypes <> bool ind
+binder 228:228 <> b:6
+R251:251 Corelib.Numbers.BinNums <> Z ind
+binder 247:247 <> n:7
+R270:275 Stdlib.Strings.String <> string ind
+binder 266:266 <> s:8
+R297:300 Corelib.Init.Datatypes <> list ind
+R302:311 Fo.CoreLite <> lite_value:4 ind
+binder 289:293 <> items:9
+scheme 195:204 FoCoreLite lite_value_rect
+scheme 195:204 FoCoreLite lite_value_ind
+scheme 195:204 FoCoreLite lite_value_rec
+scheme 195:204 FoCoreLite lite_value_sind
+def 327:334 FoCoreLite lite_env
+R339:342 Corelib.Init.Datatypes <> list ind
+R351:353 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R345:350 Stdlib.Strings.String <> string ind
+R354:363 Fo.CoreLite FoCoreLite lite_value ind
+def 377:387 FoCoreLite lookup_lite
+R395:402 Fo.CoreLite FoCoreLite lite_env def
+binder 390:391 <> ρ:10
+R410:415 Stdlib.Strings.String <> string ind
+binder 406:406 <> x:11
+R420:425 Corelib.Init.Datatypes <> option ind
+R427:436 Fo.CoreLite FoCoreLite lite_value ind
+R449:450 Fo.CoreLite <> ρ:10 var
+R461:462 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R467:470 Corelib.Init.Datatypes <> None constr
+R482:485 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R476:476 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R478:479 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R481:481 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R497:506 Stdlib.Strings.String <> eqb def
+R508:508 Fo.CoreLite <> x:11 var
+R529:539 Fo.CoreLite <> lookup_lite:12 def
+R546:546 Fo.CoreLite <> x:11 var
+R517:520 Corelib.Init.Datatypes <> Some constr
+ind 566:574 FoCoreLite lite_expr
+constr 581:585 FoCoreLite LEVar
+constr 605:610 FoCoreLite LEUnit
+constr 614:619 FoCoreLite LEBool
+constr 634:638 FoCoreLite LEInt
+constr 650:657 FoCoreLite LEString
+constr 674:680 FoCoreLite LETuple
+constr 709:712 FoCoreLite LEIf
+R595:600 Stdlib.Strings.String <> string ind
+binder 588:591 <> name:16
+R626:629 Corelib.Init.Datatypes <> bool ind
+binder 622:622 <> b:17
+R645:645 Corelib.Numbers.BinNums <> Z ind
+binder 641:641 <> n:18
+R664:669 Stdlib.Strings.String <> string ind
+binder 660:660 <> s:19
+R691:694 Corelib.Init.Datatypes <> list ind
+R696:704 Fo.CoreLite <> lite_expr:14 ind
+binder 683:687 <> items:20
+R729:737 Fo.CoreLite <> lite_expr:14 ind
+binder 715:718 <> cond:21
+binder 720:722 <> yes:22
+binder 724:725 <> no:23
+scheme 566:574 FoCoreLite lite_expr_rect
+scheme 566:574 FoCoreLite lite_expr_ind
+scheme 566:574 FoCoreLite lite_expr_rec
+scheme 566:574 FoCoreLite lite_expr_sind
+ind 752:760 FoCoreLite lite_eval
+constr 813:818 FoCoreLite LE_Var
+constr 909:915 FoCoreLite LE_Unit
+constr 963:969 FoCoreLite LE_Bool
+constr 1027:1032 FoCoreLite LE_Int
+constr 1088:1096 FoCoreLite LE_String
+constr 1158:1168 FoCoreLite LE_TupleNil
+constr 1228:1239 FoCoreLite LE_TupleCons
+constr 1403:1411 FoCoreLite LE_IfTrue
+constr 1538:1547 FoCoreLite LE_IfFalse
+R772:775 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R764:771 Fo.CoreLite FoCoreLite lite_env def
+R785:788 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R776:784 Fo.CoreLite FoCoreLite lite_expr ind
+R799:802 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R789:798 Fo.CoreLite FoCoreLite lite_value ind
+binder 833:834 <> ρ:26
+binder 836:836 <> x:27
+binder 838:838 <> v:28
+R872:881 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R863:865 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R847:857 Fo.CoreLite FoCoreLite lookup_lite def
+R859:860 Fo.CoreLite <> ρ:26 var
+R862:862 Fo.CoreLite <> x:27 var
+R866:869 Corelib.Init.Datatypes <> Some constr
+R871:871 Fo.CoreLite <> v:28 var
+R882:890 Fo.CoreLite <> lite_eval:24 ind
+R905:905 Fo.CoreLite <> v:28 var
+R896:900 Fo.CoreLite FoCoreLite LEVar constr
+R902:902 Fo.CoreLite <> x:27 var
+R892:893 Fo.CoreLite <> ρ:26 var
+binder 930:931 <> ρ:29
+R934:942 Fo.CoreLite <> lite_eval:24 ind
+R954:959 Fo.CoreLite FoCoreLite LVUnit constr
+R947:952 Fo.CoreLite FoCoreLite LEUnit constr
+R944:945 Fo.CoreLite <> ρ:29 var
+binder 984:985 <> ρ:30
+binder 987:987 <> b:31
+R990:998 Fo.CoreLite <> lite_eval:24 ind
+R1015:1020 Fo.CoreLite FoCoreLite LVBool constr
+R1022:1022 Fo.CoreLite <> b:31 var
+R1004:1009 Fo.CoreLite FoCoreLite LEBool constr
+R1011:1011 Fo.CoreLite <> b:31 var
+R1000:1001 Fo.CoreLite <> ρ:30 var
+binder 1047:1048 <> ρ:32
+binder 1050:1050 <> n:33
+R1053:1061 Fo.CoreLite <> lite_eval:24 ind
+R1077:1081 Fo.CoreLite FoCoreLite LVInt constr
+R1083:1083 Fo.CoreLite <> n:33 var
+R1067:1071 Fo.CoreLite FoCoreLite LEInt constr
+R1073:1073 Fo.CoreLite <> n:33 var
+R1063:1064 Fo.CoreLite <> ρ:32 var
+binder 1111:1112 <> ρ:34
+binder 1114:1114 <> s:35
+R1117:1125 Fo.CoreLite <> lite_eval:24 ind
+R1144:1151 Fo.CoreLite FoCoreLite LVString constr
+R1153:1153 Fo.CoreLite <> s:35 var
+R1131:1138 Fo.CoreLite FoCoreLite LEString constr
+R1140:1140 Fo.CoreLite <> s:35 var
+R1127:1128 Fo.CoreLite <> ρ:34 var
+binder 1183:1184 <> ρ:36
+R1187:1195 Fo.CoreLite <> lite_eval:24 ind
+R1214:1220 Fo.CoreLite FoCoreLite LVTuple constr
+R1222:1223 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1201:1207 Fo.CoreLite FoCoreLite LETuple constr
+R1209:1210 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1197:1198 Fo.CoreLite <> ρ:36 var
+binder 1254:1255 <> ρ:37
+binder 1257:1257 <> e:38
+binder 1259:1260 <> es:39
+binder 1262:1262 <> v:40
+binder 1264:1265 <> vs:41
+R1290:1299 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1274:1282 Fo.CoreLite <> lite_eval:24 ind
+R1289:1289 Fo.CoreLite <> v:40 var
+R1287:1287 Fo.CoreLite <> e:38 var
+R1284:1285 Fo.CoreLite <> ρ:37 var
+R1338:1347 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1300:1308 Fo.CoreLite <> lite_eval:24 ind
+R1327:1333 Fo.CoreLite FoCoreLite LVTuple constr
+R1335:1336 Fo.CoreLite <> vs:41 var
+R1314:1320 Fo.CoreLite FoCoreLite LETuple constr
+R1322:1323 Fo.CoreLite <> es:39 var
+R1310:1311 Fo.CoreLite <> ρ:37 var
+R1348:1356 Fo.CoreLite <> lite_eval:24 ind
+R1382:1388 Fo.CoreLite FoCoreLite LVTuple constr
+R1392:1395 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R1391:1391 Fo.CoreLite <> v:40 var
+R1396:1397 Fo.CoreLite <> vs:41 var
+R1362:1368 Fo.CoreLite FoCoreLite LETuple constr
+R1372:1375 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R1371:1371 Fo.CoreLite <> e:38 var
+R1376:1377 Fo.CoreLite <> es:39 var
+R1358:1359 Fo.CoreLite <> ρ:37 var
+binder 1426:1427 <> ρ:42
+binder 1429:1429 <> c:43
+binder 1431:1431 <> t:44
+binder 1433:1433 <> e:45
+binder 1435:1435 <> v:46
+R1472:1481 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1444:1452 Fo.CoreLite <> lite_eval:24 ind
+R1460:1465 Fo.CoreLite FoCoreLite LVBool constr
+R1467:1470 Corelib.Init.Datatypes <> true constr
+R1457:1457 Fo.CoreLite <> c:43 var
+R1454:1455 Fo.CoreLite <> ρ:42 var
+R1498:1507 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1482:1490 Fo.CoreLite <> lite_eval:24 ind
+R1497:1497 Fo.CoreLite <> v:46 var
+R1495:1495 Fo.CoreLite <> t:44 var
+R1492:1493 Fo.CoreLite <> ρ:42 var
+R1508:1516 Fo.CoreLite <> lite_eval:24 ind
+R1534:1534 Fo.CoreLite <> v:46 var
+R1522:1525 Fo.CoreLite FoCoreLite LEIf constr
+R1527:1527 Fo.CoreLite <> c:43 var
+R1529:1529 Fo.CoreLite <> t:44 var
+R1531:1531 Fo.CoreLite <> e:45 var
+R1518:1519 Fo.CoreLite <> ρ:42 var
+binder 1562:1563 <> ρ:47
+binder 1565:1565 <> c:48
+binder 1567:1567 <> t:49
+binder 1569:1569 <> e:50
+binder 1571:1571 <> v:51
+R1609:1618 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1580:1588 Fo.CoreLite <> lite_eval:24 ind
+R1596:1601 Fo.CoreLite FoCoreLite LVBool constr
+R1603:1607 Corelib.Init.Datatypes <> false constr
+R1593:1593 Fo.CoreLite <> c:48 var
+R1590:1591 Fo.CoreLite <> ρ:47 var
+R1635:1644 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1619:1627 Fo.CoreLite <> lite_eval:24 ind
+R1634:1634 Fo.CoreLite <> v:51 var
+R1632:1632 Fo.CoreLite <> e:50 var
+R1629:1630 Fo.CoreLite <> ρ:47 var
+R1645:1653 Fo.CoreLite <> lite_eval:24 ind
+R1671:1671 Fo.CoreLite <> v:51 var
+R1659:1662 Fo.CoreLite FoCoreLite LEIf constr
+R1664:1664 Fo.CoreLite <> c:48 var
+R1666:1666 Fo.CoreLite <> t:49 var
+R1668:1668 Fo.CoreLite <> e:50 var
+R1655:1656 Fo.CoreLite <> ρ:47 var
+scheme 752:760 FoCoreLite lite_eval_ind
+scheme 752:760 FoCoreLite lite_eval_sind
+def 1686:1695 FoCoreLite lite_tyenv
+R1700:1703 Corelib.Init.Datatypes <> list ind
+R1712:1714 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R1706:1711 Stdlib.Strings.String <> string ind
+R1715:1721 Fo.CoreLite FoCoreLite lite_ty ind
+def 1735:1748 FoCoreLite lookup_lite_ty
+R1756:1765 Fo.CoreLite FoCoreLite lite_tyenv def
+binder 1751:1752 <> Γ:52
+R1773:1778 Stdlib.Strings.String <> string ind
+binder 1769:1769 <> x:53
+R1783:1788 Corelib.Init.Datatypes <> option ind
+R1790:1796 Fo.CoreLite FoCoreLite lite_ty ind
+R1809:1810 Fo.CoreLite <> Γ:52 var
+R1821:1822 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1827:1830 Corelib.Init.Datatypes <> None constr
+R1842:1845 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R1836:1836 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1838:1839 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1841:1841 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1857:1866 Stdlib.Strings.String <> eqb def
+R1868:1868 Fo.CoreLite <> x:53 var
+R1889:1902 Fo.CoreLite <> lookup_lite_ty:54 def
+R1909:1909 Fo.CoreLite <> x:53 var
+R1877:1880 Corelib.Init.Datatypes <> Some constr
+def 1928:1938 FoCoreLite lite_interp
+R1946:1953 Fo.CoreLite FoCoreLite lite_env def
+binder 1941:1942 <> ρ:56
+R1961:1969 Fo.CoreLite FoCoreLite lite_expr ind
+binder 1957:1957 <> e:57
+R1974:1983 Fo.CoreLite FoCoreLite lite_value ind
+R1996:1996 Fo.CoreLite <> e:57 var
+R2007:2011 Fo.CoreLite FoCoreLite LEVar constr
+R2030:2040 Fo.CoreLite FoCoreLite lookup_lite def
+R2042:2043 Fo.CoreLite <> ρ:56 var
+R2060:2063 Corelib.Init.Datatypes <> Some constr
+R2080:2083 Corelib.Init.Datatypes <> None constr
+R2088:2093 Fo.CoreLite FoCoreLite LVUnit constr
+R2109:2114 Fo.CoreLite FoCoreLite LEUnit constr
+R2119:2124 Fo.CoreLite FoCoreLite LVUnit constr
+R2130:2135 Fo.CoreLite FoCoreLite LEBool constr
+R2142:2147 Fo.CoreLite FoCoreLite LVBool constr
+R2155:2159 Fo.CoreLite FoCoreLite LEInt constr
+R2166:2170 Fo.CoreLite FoCoreLite LVInt constr
+R2178:2185 Fo.CoreLite FoCoreLite LEString constr
+R2192:2199 Fo.CoreLite FoCoreLite LVString constr
+R2207:2213 Fo.CoreLite FoCoreLite LETuple constr
+R2259:2262 Corelib.Init.Datatypes <> list ind
+R2264:2272 Fo.CoreLite FoCoreLite lite_expr ind
+binder 2251:2255 <> items:60
+R2277:2280 Corelib.Init.Datatypes <> list ind
+R2282:2291 Fo.CoreLite FoCoreLite lite_value ind
+R2310:2314 Fo.CoreLite <> items:60 var
+R2331:2332 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2337:2338 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2351:2354 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R2379:2382 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R2363:2373 Fo.CoreLite <> lite_interp:58 def
+R2378:2378 Fo.CoreLite <> e:57 var
+R2375:2376 Fo.CoreLite <> ρ:56 var
+R2383:2393 Fo.CoreLite <> interp_list:61 var
+binder 2238:2248 <> interp_list:63
+R2421:2427 Fo.CoreLite FoCoreLite LVTuple constr
+R2430:2440 Fo.CoreLite <> interp_list:63 var
+R2453:2456 Fo.CoreLite FoCoreLite LEIf constr
+R2482:2492 Fo.CoreLite <> lite_interp:58 def
+R2494:2495 Fo.CoreLite <> ρ:56 var
+R2512:2517 Fo.CoreLite FoCoreLite LVBool constr
+R2519:2522 Corelib.Init.Datatypes <> true constr
+R2527:2537 Fo.CoreLite <> lite_interp:58 def
+R2539:2540 Fo.CoreLite <> ρ:56 var
+R2554:2559 Fo.CoreLite FoCoreLite LVBool constr
+R2561:2565 Corelib.Init.Datatypes <> false constr
+R2570:2580 Fo.CoreLite <> lite_interp:58 def
+R2582:2583 Fo.CoreLite <> ρ:56 var
+R2601:2611 Fo.CoreLite <> lite_interp:58 def
+R2613:2614 Fo.CoreLite <> ρ:56 var
+ind 2647:2659 FoCoreLite lite_has_type
+constr 2711:2716 FoCoreLite LT_Var
+constr 2814:2820 FoCoreLite LT_Unit
+constr 2873:2879 FoCoreLite LT_Bool
+constr 2938:2943 FoCoreLite LT_Int
+constr 3000:3008 FoCoreLite LT_String
+constr 3071:3081 FoCoreLite LT_TupleNil
+constr 3146:3157 FoCoreLite LT_TupleCons
+constr 3335:3339 FoCoreLite LT_If
+R2673:2676 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2663:2672 Fo.CoreLite FoCoreLite lite_tyenv def
+R2686:2689 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2677:2685 Fo.CoreLite FoCoreLite lite_expr ind
+R2697:2700 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2690:2696 Fo.CoreLite FoCoreLite lite_ty ind
+binder 2731:2732 <> Γ:66
+binder 2734:2734 <> x:67
+binder 2736:2736 <> t:68
+R2773:2782 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2764:2766 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2745:2758 Fo.CoreLite FoCoreLite lookup_lite_ty def
+R2760:2761 Fo.CoreLite <> Γ:66 var
+R2763:2763 Fo.CoreLite <> x:67 var
+R2767:2770 Corelib.Init.Datatypes <> Some constr
+R2772:2772 Fo.CoreLite <> t:68 var
+R2783:2795 Fo.CoreLite <> lite_has_type:64 ind
+R2810:2810 Fo.CoreLite <> t:68 var
+R2801:2805 Fo.CoreLite FoCoreLite LEVar constr
+R2807:2807 Fo.CoreLite <> x:67 var
+R2797:2798 Fo.CoreLite <> Γ:66 var
+binder 2835:2836 <> Γ:69
+R2839:2851 Fo.CoreLite <> lite_has_type:64 ind
+R2863:2869 Fo.CoreLite FoCoreLite LTyUnit constr
+R2856:2861 Fo.CoreLite FoCoreLite LEUnit constr
+R2853:2854 Fo.CoreLite <> Γ:69 var
+binder 2894:2895 <> Γ:70
+binder 2897:2897 <> b:71
+R2900:2912 Fo.CoreLite <> lite_has_type:64 ind
+R2928:2934 Fo.CoreLite FoCoreLite LTyBool constr
+R2918:2923 Fo.CoreLite FoCoreLite LEBool constr
+R2925:2925 Fo.CoreLite <> b:71 var
+R2914:2915 Fo.CoreLite <> Γ:70 var
+binder 2958:2959 <> Γ:72
+binder 2961:2961 <> n:73
+R2964:2976 Fo.CoreLite <> lite_has_type:64 ind
+R2991:2996 Fo.CoreLite FoCoreLite LTyInt constr
+R2982:2986 Fo.CoreLite FoCoreLite LEInt constr
+R2988:2988 Fo.CoreLite <> n:73 var
+R2978:2979 Fo.CoreLite <> Γ:72 var
+binder 3023:3024 <> Γ:74
+binder 3026:3026 <> s:75
+R3029:3041 Fo.CoreLite <> lite_has_type:64 ind
+R3059:3067 Fo.CoreLite FoCoreLite LTyString constr
+R3047:3054 Fo.CoreLite FoCoreLite LEString constr
+R3056:3056 Fo.CoreLite <> s:75 var
+R3043:3044 Fo.CoreLite <> Γ:74 var
+binder 3096:3097 <> Γ:76
+R3100:3112 Fo.CoreLite <> lite_has_type:64 ind
+R3131:3138 Fo.CoreLite FoCoreLite LTyTuple constr
+R3140:3141 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3118:3124 Fo.CoreLite FoCoreLite LETuple constr
+R3126:3127 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3114:3115 Fo.CoreLite <> Γ:76 var
+binder 3172:3173 <> Γ:77
+binder 3175:3175 <> e:78
+binder 3177:3178 <> es:79
+binder 3180:3180 <> t:80
+binder 3182:3183 <> ts:81
+R3212:3221 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3192:3204 Fo.CoreLite <> lite_has_type:64 ind
+R3211:3211 Fo.CoreLite <> t:80 var
+R3209:3209 Fo.CoreLite <> e:78 var
+R3206:3207 Fo.CoreLite <> Γ:77 var
+R3265:3274 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3222:3234 Fo.CoreLite <> lite_has_type:64 ind
+R3253:3260 Fo.CoreLite FoCoreLite LTyTuple constr
+R3262:3263 Fo.CoreLite <> ts:81 var
+R3240:3246 Fo.CoreLite FoCoreLite LETuple constr
+R3248:3249 Fo.CoreLite <> es:79 var
+R3236:3237 Fo.CoreLite <> Γ:77 var
+R3275:3287 Fo.CoreLite <> lite_has_type:64 ind
+R3313:3320 Fo.CoreLite FoCoreLite LTyTuple constr
+R3324:3327 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R3323:3323 Fo.CoreLite <> t:80 var
+R3328:3329 Fo.CoreLite <> ts:81 var
+R3293:3299 Fo.CoreLite FoCoreLite LETuple constr
+R3303:3306 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R3302:3302 Fo.CoreLite <> e:78 var
+R3307:3308 Fo.CoreLite <> es:79 var
+R3289:3290 Fo.CoreLite <> Γ:77 var
+binder 3354:3355 <> Γ:82
+binder 3357:3357 <> c:83
+binder 3359:3359 <> t:84
+binder 3361:3361 <> e:85
+binder 3363:3364 <> ty:86
+R3399:3408 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3373:3385 Fo.CoreLite <> lite_has_type:64 ind
+R3392:3398 Fo.CoreLite FoCoreLite LTyBool constr
+R3390:3390 Fo.CoreLite <> c:83 var
+R3387:3388 Fo.CoreLite <> Γ:82 var
+R3430:3439 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3409:3421 Fo.CoreLite <> lite_has_type:64 ind
+R3428:3429 Fo.CoreLite <> ty:86 var
+R3426:3426 Fo.CoreLite <> t:84 var
+R3423:3424 Fo.CoreLite <> Γ:82 var
+R3461:3470 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3440:3452 Fo.CoreLite <> lite_has_type:64 ind
+R3459:3460 Fo.CoreLite <> ty:86 var
+R3457:3457 Fo.CoreLite <> e:85 var
+R3454:3455 Fo.CoreLite <> Γ:82 var
+R3471:3483 Fo.CoreLite <> lite_has_type:64 ind
+R3501:3502 Fo.CoreLite <> ty:86 var
+R3489:3492 Fo.CoreLite FoCoreLite LEIf constr
+R3494:3494 Fo.CoreLite <> c:83 var
+R3496:3496 Fo.CoreLite <> t:84 var
+R3498:3498 Fo.CoreLite <> e:85 var
+R3485:3486 Fo.CoreLite <> Γ:82 var
+scheme 2647:2659 FoCoreLite lite_has_type_ind
+scheme 2647:2659 FoCoreLite lite_has_type_sind
+prf 3512:3526 FoCoreLite lookup_lite_nil
+binder 3539:3539 <> x:87
+R3558:3560 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R3542:3552 Fo.CoreLite FoCoreLite lookup_lite def
+R3554:3555 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3557:3557 Fo.CoreLite <> x:87 var
+R3561:3564 Corelib.Init.Datatypes <> None constr
+prf 3601:3618 FoCoreLite lookup_lite_shadow
+binder 3631:3631 <> x:88
+binder 3633:3633 <> v:89
+binder 3635:3636 <> ρ:90
+R3667:3669 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R3639:3649 Fo.CoreLite FoCoreLite lookup_lite def
+R3658:3661 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R3652:3652 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3654:3655 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3657:3657 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3653:3653 Fo.CoreLite <> x:88 var
+R3656:3656 Fo.CoreLite <> v:89 var
+R3662:3663 Fo.CoreLite <> ρ:90 var
+R3666:3666 Fo.CoreLite <> x:88 var
+R3670:3673 Corelib.Init.Datatypes <> Some constr
+R3675:3675 Fo.CoreLite <> v:89 var
+R3710:3724 Stdlib.Strings.String <> eqb_refl thm
+R3710:3724 Stdlib.Strings.String <> eqb_refl thm
+R3710:3724 Stdlib.Strings.String <> eqb_refl thm
+prf 3752:3769 FoCoreLite lookup_lite_ty_nil
+binder 3782:3782 <> x:91
+R3804:3806 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R3785:3798 Fo.CoreLite FoCoreLite lookup_lite_ty def
+R3800:3801 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3803:3803 Fo.CoreLite <> x:91 var
+R3807:3810 Corelib.Init.Datatypes <> None constr
+prf 3847:3867 FoCoreLite lookup_lite_ty_shadow
+binder 3880:3880 <> x:92
+binder 3882:3882 <> t:93
+binder 3884:3885 <> Γ:94
+R3919:3921 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R3888:3901 Fo.CoreLite FoCoreLite lookup_lite_ty def
+R3910:3913 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R3904:3904 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3906:3907 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3909:3909 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3905:3905 Fo.CoreLite <> x:92 var
+R3908:3908 Fo.CoreLite <> t:93 var
+R3914:3915 Fo.CoreLite <> Γ:94 var
+R3918:3918 Fo.CoreLite <> x:92 var
+R3922:3925 Corelib.Init.Datatypes <> Some constr
+R3927:3927 Fo.CoreLite <> t:93 var
+R3962:3976 Stdlib.Strings.String <> eqb_refl thm
+R3962:3976 Stdlib.Strings.String <> eqb_refl thm
+R3962:3976 Stdlib.Strings.String <> eqb_refl thm
+prf 4004:4028 FoCoreLite lookup_lite_deterministic
+binder 4041:4042 <> ρ:95
+binder 4044:4044 <> x:96
+binder 4046:4047 <> v1:97
+binder 4049:4050 <> v2:98
+R4083:4090 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4073:4075 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4057:4067 Fo.CoreLite FoCoreLite lookup_lite def
+R4069:4070 Fo.CoreLite <> ρ:95 var
+R4072:4072 Fo.CoreLite <> x:96 var
+R4076:4079 Corelib.Init.Datatypes <> Some constr
+R4081:4082 Fo.CoreLite <> v1:97 var
+R4117:4124 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4107:4109 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4091:4101 Fo.CoreLite FoCoreLite lookup_lite def
+R4103:4104 Fo.CoreLite <> ρ:95 var
+R4106:4106 Fo.CoreLite <> x:96 var
+R4110:4113 Corelib.Init.Datatypes <> Some constr
+R4115:4116 Fo.CoreLite <> v2:98 var
+R4127:4129 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4125:4126 Fo.CoreLite <> v1:97 var
+R4130:4131 Fo.CoreLite <> v2:98 var
+prf 4207:4234 FoCoreLite lookup_lite_ty_deterministic
+binder 4247:4248 <> Γ:99
+binder 4250:4250 <> x:100
+binder 4252:4253 <> t1:101
+binder 4255:4256 <> t2:102
+R4292:4299 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4282:4284 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4263:4276 Fo.CoreLite FoCoreLite lookup_lite_ty def
+R4278:4279 Fo.CoreLite <> Γ:99 var
+R4281:4281 Fo.CoreLite <> x:100 var
+R4285:4288 Corelib.Init.Datatypes <> Some constr
+R4290:4291 Fo.CoreLite <> t1:101 var
+R4329:4336 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4319:4321 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4300:4313 Fo.CoreLite FoCoreLite lookup_lite_ty def
+R4315:4316 Fo.CoreLite <> Γ:99 var
+R4318:4318 Fo.CoreLite <> x:100 var
+R4322:4325 Corelib.Init.Datatypes <> Some constr
+R4327:4328 Fo.CoreLite <> t2:102 var
+R4339:4341 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4337:4338 Fo.CoreLite <> t1:101 var
+R4342:4343 Fo.CoreLite <> t2:102 var
+prf 4419:4434 FoCoreLite lite_eval_interp
+binder 4447:4448 <> ρ:103
+binder 4450:4450 <> e:104
+binder 4452:4452 <> v:105
+R4475:4482 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4459:4467 Fo.CoreLite FoCoreLite lite_eval ind
+R4469:4470 Fo.CoreLite <> ρ:103 var
+R4472:4472 Fo.CoreLite <> e:104 var
+R4474:4474 Fo.CoreLite <> v:105 var
+R4499:4501 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4483:4493 Fo.CoreLite FoCoreLite lite_interp def
+R4495:4496 Fo.CoreLite <> ρ:103 var
+R4498:4498 Fo.CoreLite <> e:104 var
+R4502:4502 Fo.CoreLite <> v:105 var
+prf 4845:4867 FoCoreLite lite_eval_deterministic
+binder 4880:4881 <> ρ:106
+binder 4883:4883 <> e:107
+binder 4885:4886 <> v1:108
+binder 4888:4889 <> v2:109
+R4913:4920 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4896:4904 Fo.CoreLite FoCoreLite lite_eval ind
+R4906:4907 Fo.CoreLite <> ρ:106 var
+R4909:4909 Fo.CoreLite <> e:107 var
+R4911:4912 Fo.CoreLite <> v1:108 var
+R4938:4945 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4921:4929 Fo.CoreLite FoCoreLite lite_eval ind
+R4931:4932 Fo.CoreLite <> ρ:106 var
+R4934:4934 Fo.CoreLite <> e:107 var
+R4936:4937 Fo.CoreLite <> v2:109 var
+R4948:4950 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4946:4947 Fo.CoreLite <> v1:108 var
+R4951:4952 Fo.CoreLite <> v2:109 var
+R5003:5018 Fo.CoreLite FoCoreLite lite_eval_interp thm
+R5003:5018 Fo.CoreLite FoCoreLite lite_eval_interp thm
+R5051:5066 Fo.CoreLite FoCoreLite lite_eval_interp thm
+R5051:5066 Fo.CoreLite FoCoreLite lite_eval_interp thm
+prf 5129:5147 FoCoreLite canonical_bool_lite
+binder 5160:5161 <> ρ:110
+binder 5163:5163 <> e:111
+binder 5165:5165 <> v:112
+R5198:5205 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5172:5184 Fo.CoreLite FoCoreLite lite_has_type ind
+R5186:5187 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R5189:5189 Fo.CoreLite <> e:111 var
+R5191:5197 Fo.CoreLite FoCoreLite LTyBool constr
+R5222:5229 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5206:5214 Fo.CoreLite FoCoreLite lite_eval ind
+R5216:5217 Fo.CoreLite <> ρ:110 var
+R5219:5219 Fo.CoreLite <> e:111 var
+R5221:5221 Fo.CoreLite <> v:112 var
+R5230:5236 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R5238:5239 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 5237:5237 <> b:113
+R5241:5243 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5240:5240 Fo.CoreLite <> v:112 var
+R5244:5249 Fo.CoreLite FoCoreLite LVBool constr
+R5251:5251 Fo.CoreLite <> b:113 var
+prf 5577:5595 FoCoreLite canonical_unit_lite
+binder 5608:5609 <> ρ:114
+binder 5611:5611 <> e:115
+binder 5613:5613 <> v:116
+R5646:5653 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5620:5632 Fo.CoreLite FoCoreLite lite_has_type ind
+R5634:5635 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R5637:5637 Fo.CoreLite <> e:115 var
+R5639:5645 Fo.CoreLite FoCoreLite LTyUnit constr
+R5670:5677 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5654:5662 Fo.CoreLite FoCoreLite lite_eval ind
+R5664:5665 Fo.CoreLite <> ρ:114 var
+R5667:5667 Fo.CoreLite <> e:115 var
+R5669:5669 Fo.CoreLite <> v:116 var
+R5679:5681 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5678:5678 Fo.CoreLite <> v:116 var
+R5682:5687 Fo.CoreLite FoCoreLite LVUnit constr
+prf 5998:6015 FoCoreLite canonical_int_lite
+binder 6028:6029 <> ρ:117
+binder 6031:6031 <> e:118
+binder 6033:6033 <> v:119
+R6065:6072 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6040:6052 Fo.CoreLite FoCoreLite lite_has_type ind
+R6054:6055 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R6057:6057 Fo.CoreLite <> e:118 var
+R6059:6064 Fo.CoreLite FoCoreLite LTyInt constr
+R6089:6096 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6073:6081 Fo.CoreLite FoCoreLite lite_eval ind
+R6083:6084 Fo.CoreLite <> ρ:117 var
+R6086:6086 Fo.CoreLite <> e:118 var
+R6088:6088 Fo.CoreLite <> v:119 var
+R6097:6103 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R6105:6106 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 6104:6104 <> n:120
+R6108:6110 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6107:6107 Fo.CoreLite <> v:119 var
+R6111:6115 Fo.CoreLite FoCoreLite LVInt constr
+R6117:6117 Fo.CoreLite <> n:120 var
+prf 6443:6463 FoCoreLite canonical_string_lite
+binder 6476:6477 <> ρ:121
+binder 6479:6479 <> e:122
+binder 6481:6481 <> v:123
+R6516:6523 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6488:6500 Fo.CoreLite FoCoreLite lite_has_type ind
+R6502:6503 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R6505:6505 Fo.CoreLite <> e:122 var
+R6507:6515 Fo.CoreLite FoCoreLite LTyString constr
+R6540:6547 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6524:6532 Fo.CoreLite FoCoreLite lite_eval ind
+R6534:6535 Fo.CoreLite <> ρ:121 var
+R6537:6537 Fo.CoreLite <> e:122 var
+R6539:6539 Fo.CoreLite <> v:123 var
+R6548:6554 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R6556:6557 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 6555:6555 <> s:124
+R6559:6561 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6558:6558 Fo.CoreLite <> v:123 var
+R6562:6569 Fo.CoreLite FoCoreLite LVString constr
+R6571:6571 Fo.CoreLite <> s:124 var
+prf 6897:6916 FoCoreLite canonical_tuple_lite
+binder 6929:6930 <> ρ:125
+binder 6932:6932 <> e:126
+binder 6934:6935 <> ts:127
+binder 6937:6937 <> v:128
+R6976:6983 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6944:6956 Fo.CoreLite FoCoreLite lite_has_type ind
+R6958:6959 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R6961:6961 Fo.CoreLite <> e:126 var
+R6964:6971 Fo.CoreLite FoCoreLite LTyTuple constr
+R6973:6974 Fo.CoreLite <> ts:127 var
+R7000:7007 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6984:6992 Fo.CoreLite FoCoreLite lite_eval ind
+R6994:6995 Fo.CoreLite <> ρ:125 var
+R6997:6997 Fo.CoreLite <> e:126 var
+R6999:6999 Fo.CoreLite <> v:128 var
+R7008:7014 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R7017:7018 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 7015:7016 <> vs:129
+R7020:7022 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R7019:7019 Fo.CoreLite <> v:128 var
+R7023:7029 Fo.CoreLite FoCoreLite LVTuple constr
+R7031:7032 Fo.CoreLite <> vs:129 var
+prf 7405:7422 FoCoreLite progress_unit_lite
+binder 7435:7436 <> ρ:130
+R7439:7445 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R7447:7448 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 7446:7446 <> v:131
+R7449:7457 Fo.CoreLite FoCoreLite lite_eval ind
+R7459:7460 Fo.CoreLite <> ρ:130 var
+R7462:7467 Fo.CoreLite FoCoreLite LEUnit constr
+R7469:7469 Fo.CoreLite <> v:131 var
+R7496:7501 Fo.CoreLite FoCoreLite LVUnit constr
+R7496:7501 Fo.CoreLite FoCoreLite LVUnit constr
+prf 7529:7546 FoCoreLite progress_bool_lite
+binder 7559:7560 <> ρ:132
+binder 7562:7562 <> b:133
+R7565:7571 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R7573:7574 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 7572:7572 <> v:134
+R7575:7583 Fo.CoreLite FoCoreLite lite_eval ind
+R7585:7586 Fo.CoreLite <> ρ:132 var
+R7589:7594 Fo.CoreLite FoCoreLite LEBool constr
+R7596:7596 Fo.CoreLite <> b:133 var
+R7599:7599 Fo.CoreLite <> v:134 var
+R7627:7632 Fo.CoreLite FoCoreLite LVBool constr
+R7627:7632 Fo.CoreLite FoCoreLite LVBool constr
+prf 7663:7679 FoCoreLite progress_int_lite
+binder 7692:7693 <> ρ:135
+binder 7695:7695 <> n:136
+R7698:7704 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R7706:7707 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 7705:7705 <> v:137
+R7708:7716 Fo.CoreLite FoCoreLite lite_eval ind
+R7718:7719 Fo.CoreLite <> ρ:135 var
+R7722:7726 Fo.CoreLite FoCoreLite LEInt constr
+R7728:7728 Fo.CoreLite <> n:136 var
+R7731:7731 Fo.CoreLite <> v:137 var
+R7759:7763 Fo.CoreLite FoCoreLite LVInt constr
+R7759:7763 Fo.CoreLite FoCoreLite LVInt constr
+prf 7794:7813 FoCoreLite progress_string_lite
+binder 7826:7827 <> ρ:138
+binder 7829:7829 <> s:139
+R7832:7838 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R7840:7841 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 7839:7839 <> v:140
+R7842:7850 Fo.CoreLite FoCoreLite lite_eval ind
+R7852:7853 Fo.CoreLite <> ρ:138 var
+R7856:7863 Fo.CoreLite FoCoreLite LEString constr
+R7865:7865 Fo.CoreLite <> s:139 var
+R7868:7868 Fo.CoreLite <> v:140 var
+R7896:7903 Fo.CoreLite FoCoreLite LVString constr
+R7896:7903 Fo.CoreLite FoCoreLite LVString constr
+prf 7934:7956 FoCoreLite progress_tuple_nil_lite
+binder 7969:7970 <> ρ:141
+R7973:7979 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R7981:7982 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 7980:7980 <> v:142
+R7983:7991 Fo.CoreLite FoCoreLite lite_eval ind
+R7993:7994 Fo.CoreLite <> ρ:141 var
+R7997:8003 Fo.CoreLite FoCoreLite LETuple constr
+R8005:8006 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R8009:8009 Fo.CoreLite <> v:142 var
+R8037:8043 Fo.CoreLite FoCoreLite LVTuple constr
+R8045:8046 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R8037:8043 Fo.CoreLite FoCoreLite LVTuple constr
+R8045:8046 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+prf 8075:8098 FoCoreLite progress_tuple_cons_lite
+binder 8111:8112 <> ρ:143
+binder 8114:8114 <> e:144
+binder 8116:8117 <> es:145
+binder 8119:8119 <> v:146
+binder 8121:8122 <> vs:147
+R8145:8152 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8129:8137 Fo.CoreLite FoCoreLite lite_eval ind
+R8139:8140 Fo.CoreLite <> ρ:143 var
+R8142:8142 Fo.CoreLite <> e:144 var
+R8144:8144 Fo.CoreLite <> v:146 var
+R8191:8198 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8153:8161 Fo.CoreLite FoCoreLite lite_eval ind
+R8163:8164 Fo.CoreLite <> ρ:143 var
+R8167:8173 Fo.CoreLite FoCoreLite LETuple constr
+R8175:8176 Fo.CoreLite <> es:145 var
+R8180:8186 Fo.CoreLite FoCoreLite LVTuple constr
+R8188:8189 Fo.CoreLite <> vs:147 var
+R8199:8205 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R8209:8210 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 8206:8208 <> out:148
+R8211:8219 Fo.CoreLite FoCoreLite lite_eval ind
+R8221:8222 Fo.CoreLite <> ρ:143 var
+R8225:8231 Fo.CoreLite FoCoreLite LETuple constr
+R8235:8238 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R8234:8234 Fo.CoreLite <> e:144 var
+R8239:8240 Fo.CoreLite <> es:145 var
+R8244:8246 Fo.CoreLite <> out:148 var
+R8274:8280 Fo.CoreLite FoCoreLite LVTuple constr
+R8284:8287 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R8274:8280 Fo.CoreLite FoCoreLite LVTuple constr
+R8284:8287 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+prf 8327:8347 FoCoreLite progress_if_true_lite
+binder 8360:8361 <> ρ:149
+binder 8363:8363 <> c:150
+binder 8365:8365 <> t:151
+binder 8367:8367 <> e:152
+binder 8369:8369 <> v:153
+R8404:8411 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8376:8384 Fo.CoreLite FoCoreLite lite_eval ind
+R8386:8387 Fo.CoreLite <> ρ:149 var
+R8389:8389 Fo.CoreLite <> c:150 var
+R8392:8397 Fo.CoreLite FoCoreLite LVBool constr
+R8399:8402 Corelib.Init.Datatypes <> true constr
+R8428:8435 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8412:8420 Fo.CoreLite FoCoreLite lite_eval ind
+R8422:8423 Fo.CoreLite <> ρ:149 var
+R8425:8425 Fo.CoreLite <> t:151 var
+R8427:8427 Fo.CoreLite <> v:153 var
+R8436:8442 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R8446:8447 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 8443:8445 <> out:154
+R8448:8456 Fo.CoreLite FoCoreLite lite_eval ind
+R8458:8459 Fo.CoreLite <> ρ:149 var
+R8462:8465 Fo.CoreLite FoCoreLite LEIf constr
+R8467:8467 Fo.CoreLite <> c:150 var
+R8469:8469 Fo.CoreLite <> t:151 var
+R8471:8471 Fo.CoreLite <> e:152 var
+R8474:8476 Fo.CoreLite <> out:154 var
+R8513:8521 Fo.CoreLite FoCoreLite LE_IfTrue constr
+R8513:8521 Fo.CoreLite FoCoreLite LE_IfTrue constr
+prf 8543:8564 FoCoreLite progress_if_false_lite
+binder 8577:8578 <> ρ:155
+binder 8580:8580 <> c:156
+binder 8582:8582 <> t:157
+binder 8584:8584 <> e:158
+binder 8586:8586 <> v:159
+R8622:8629 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8593:8601 Fo.CoreLite FoCoreLite lite_eval ind
+R8603:8604 Fo.CoreLite <> ρ:155 var
+R8606:8606 Fo.CoreLite <> c:156 var
+R8609:8614 Fo.CoreLite FoCoreLite LVBool constr
+R8616:8620 Corelib.Init.Datatypes <> false constr
+R8646:8653 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8630:8638 Fo.CoreLite FoCoreLite lite_eval ind
+R8640:8641 Fo.CoreLite <> ρ:155 var
+R8643:8643 Fo.CoreLite <> e:158 var
+R8645:8645 Fo.CoreLite <> v:159 var
+R8654:8660 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R8664:8665 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 8661:8663 <> out:160
+R8666:8674 Fo.CoreLite FoCoreLite lite_eval ind
+R8676:8677 Fo.CoreLite <> ρ:155 var
+R8680:8683 Fo.CoreLite FoCoreLite LEIf constr
+R8685:8685 Fo.CoreLite <> c:156 var
+R8687:8687 Fo.CoreLite <> t:157 var
+R8689:8689 Fo.CoreLite <> e:158 var
+R8692:8694 Fo.CoreLite <> out:160 var
+R8731:8740 Fo.CoreLite FoCoreLite LE_IfFalse constr
+R8731:8740 Fo.CoreLite FoCoreLite LE_IfFalse constr
+prf 8762:8778 FoCoreLite progress_lite_gen
+binder 8791:8792 <> Γ:161
+binder 8794:8794 <> e:162
+binder 8796:8796 <> t:163
+R8823:8830 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8803:8815 Fo.CoreLite FoCoreLite lite_has_type ind
+R8817:8818 Fo.CoreLite <> Γ:161 var
+R8820:8820 Fo.CoreLite <> e:162 var
+R8822:8822 Fo.CoreLite <> t:163 var
+R8838:8845 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8833:8835 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R8831:8832 Fo.CoreLite <> Γ:161 var
+R8836:8837 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+binder 8853:8854 <> ρ:164
+R8857:8863 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R8865:8866 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 8864:8864 <> v:165
+R8867:8875 Fo.CoreLite FoCoreLite lite_eval ind
+R8877:8878 Fo.CoreLite <> ρ:164 var
+R8880:8880 Fo.CoreLite <> e:162 var
+R8882:8882 Fo.CoreLite <> v:165 var
+R9179:9184 Fo.CoreLite FoCoreLite LVUnit constr
+R9179:9184 Fo.CoreLite FoCoreLite LVUnit constr
+R9212:9217 Fo.CoreLite FoCoreLite LVBool constr
+R9212:9217 Fo.CoreLite FoCoreLite LVBool constr
+R9248:9252 Fo.CoreLite FoCoreLite LVInt constr
+R9248:9252 Fo.CoreLite FoCoreLite LVInt constr
+R9283:9290 Fo.CoreLite FoCoreLite LVString constr
+R9283:9290 Fo.CoreLite FoCoreLite LVString constr
+R9321:9327 Fo.CoreLite FoCoreLite LVTuple constr
+R9329:9330 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R9321:9327 Fo.CoreLite FoCoreLite LVTuple constr
+R9329:9330 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R9376:9382 Corelib.Init.Logic <> eq_refl constr
+R9376:9382 Corelib.Init.Logic <> eq_refl constr
+R9418:9424 Corelib.Init.Logic <> eq_refl constr
+R9418:9424 Corelib.Init.Logic <> eq_refl constr
+R9457:9476 Fo.CoreLite FoCoreLite canonical_tuple_lite thm
+R9482:9488 Fo.CoreLite FoCoreLite LETuple constr
+R9457:9476 Fo.CoreLite FoCoreLite canonical_tuple_lite thm
+R9482:9488 Fo.CoreLite FoCoreLite LETuple constr
+R9562:9568 Fo.CoreLite FoCoreLite LVTuple constr
+R9572:9575 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R9562:9568 Fo.CoreLite FoCoreLite LVTuple constr
+R9572:9575 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R9632:9638 Corelib.Init.Logic <> eq_refl constr
+R9632:9638 Corelib.Init.Logic <> eq_refl constr
+R9670:9688 Fo.CoreLite FoCoreLite canonical_bool_lite thm
+R9670:9688 Fo.CoreLite FoCoreLite canonical_bool_lite thm
+R9768:9774 Corelib.Init.Logic <> eq_refl constr
+R9768:9774 Corelib.Init.Logic <> eq_refl constr
+R9813:9821 Fo.CoreLite FoCoreLite LE_IfTrue constr
+R9813:9821 Fo.CoreLite FoCoreLite LE_IfTrue constr
+R9856:9862 Corelib.Init.Logic <> eq_refl constr
+R9856:9862 Corelib.Init.Logic <> eq_refl constr
+R9901:9910 Fo.CoreLite FoCoreLite LE_IfFalse constr
+R9901:9910 Fo.CoreLite FoCoreLite LE_IfFalse constr
+prf 9939:9951 FoCoreLite progress_lite
+binder 9964:9964 <> e:166
+binder 9966:9966 <> t:167
+R9993:10000 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R9973:9985 Fo.CoreLite FoCoreLite lite_has_type ind
+R9987:9988 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R9990:9990 Fo.CoreLite <> e:166 var
+R9992:9992 Fo.CoreLite <> t:167 var
+binder 10008:10009 <> ρ:168
+R10012:10018 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R10020:10021 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 10019:10019 <> v:169
+R10022:10030 Fo.CoreLite FoCoreLite lite_eval ind
+R10032:10033 Fo.CoreLite <> ρ:168 var
+R10035:10035 Fo.CoreLite <> e:166 var
+R10037:10037 Fo.CoreLite <> v:169 var
+R10076:10092 Fo.CoreLite FoCoreLite progress_lite_gen thm
+R10076:10092 Fo.CoreLite FoCoreLite progress_lite_gen thm
+R10112:10121 Fo.CoreLite FoCoreLite <> mod

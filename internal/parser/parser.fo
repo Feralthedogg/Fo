@@ -1,0 +1,1708 @@
+package parser
+
+import "github.com/Feralthedogg/Fo/internal/ast"
+import "github.com/Feralthedogg/Fo/internal/diagnostic"
+import "github.com/Feralthedogg/Fo/internal/lexer"
+import "github.com/Feralthedogg/Fo/internal/token"
+
+type Parser struct {
+    Tokens []token.Token
+    Index int
+    Diag diagnostic.Diagnostics
+}
+
+type ExpectResult struct {
+    Next Parser
+    Tok token.Token
+}
+
+type FileResult struct {
+    Next Parser
+    File ast.File
+}
+
+type PackageResult struct {
+    Next Parser
+    Decl ast.PackageDecl
+}
+
+type ImportResult struct {
+    Next Parser
+    Decl ast.ImportDecl
+}
+
+type DeclResult struct {
+    Next Parser
+    Decl Option[ast.Decl]
+}
+
+type BlockResult struct {
+    Next Parser
+    Block ast.BlockStmt
+}
+
+type StmtResult struct {
+    Next Parser
+    Stmt Option[ast.Stmt]
+}
+
+type ExprResult struct {
+    Next Parser
+    Expr ast.Expr
+}
+
+type TypeResult struct {
+    Next Parser
+    Type Option[ast.TypeExpr]
+}
+
+type TypeExprListResult struct {
+    Next Parser
+    Types []ast.TypeExpr
+}
+
+func New(tokens []token.Token) Parser {
+    return Parser{
+        Tokens: tokens,
+        Index: 0,
+        Diag: diagnostic.New(),
+    }
+}
+
+func ParseSource(src string, filename string) FileResult {
+    return New(lexer.Tokenize(src, filename)).ParseFile()
+}
+
+func (p Parser) Current() token.Token {
+    if p.Index >= len(p.Tokens) {
+        return token.MakeToken(token.EOFType(), "", ast.ZeroPos())
+    }
+    return p.Tokens[p.Index]
+}
+
+func (p Parser) Advance() Parser {
+    if p.Index >= len(p.Tokens) {
+        return p
+    }
+    return p{
+        Index: p.Index + 1,
+    }
+}
+
+func (p Parser) Peek() token.Token {
+    next := p.Index + 1
+    if next >= len(p.Tokens) {
+        return token.MakeToken(token.EOFType(), "", ast.ZeroPos())
+    }
+    return p.Tokens[next]
+}
+
+func (p Parser) PeekN(offset int) token.Token {
+    next := p.Index + offset
+    if next >= len(p.Tokens) {
+        return token.MakeToken(token.EOFType(), "", ast.ZeroPos())
+    }
+    return p.Tokens[next]
+}
+
+func (p Parser) AddError(pos token.Pos, msg string) Parser {
+    return p{
+        Diag: p.Diag.Error(diagnostic.SyntaxCategory(), pos, msg),
+    }
+}
+
+func (p Parser) Expect(expected token.Type) ExpectResult {
+    cur := p.Current()
+    if cur.Type == expected {
+        return ExpectResult{
+            Next: p.Advance(),
+            Tok: cur,
+        }
+    }
+    return ExpectResult{
+        Next: p.AddError(
+            cur.Pos,
+            "expected '" + token.TypeString(expected) + "', found '" + token.TypeString(cur.Type) + "'",
+        ).Advance(),
+        Tok: cur,
+    }
+}
+
+func (p Parser) ParseFile() FileResult {
+    file := ast.EmptyFile()
+
+    cur := p.Current()
+    if cur.Type == token.PackageType() {
+        pkg := p.ParsePackageDecl()
+        return pkg.Next.ParseImports(ast.FileWithPackage(file, pkg.Decl))
+    }
+
+    return p.ParseImports(file)
+}
+
+func (p Parser) ParsePackageDecl() PackageResult {
+    pkgTok := p.Expect(token.PackageType())
+    nameTok := pkgTok.Next.Expect(token.IdentType())
+    return PackageResult{
+        Next: nameTok.Next,
+        Decl: ast.MakePackageDecl(pkgTok.Tok.Pos, nameTok.Tok.Literal),
+    }
+}
+
+func (p Parser) ParseImports(file ast.File) FileResult {
+    cur := p.Current()
+    if cur.Type == token.ImportType() {
+        imp := p.ParseImportDecl()
+        return imp.Next.ParseImports(ast.FileWithImport(file, imp.Decl))
+    }
+    return p.ParseDecls(file)
+}
+
+func (p Parser) ParseImportDecl() ImportResult {
+    impTok := p.Expect(token.ImportType())
+    pathTok := impTok.Next.Expect(token.StringLitType())
+    return ImportResult{
+        Next: pathTok.Next,
+        Decl: ast.MakeImportDecl(impTok.Tok.Pos, pathTok.Tok.Literal),
+    }
+}
+
+func (p Parser) ParseDecls(file ast.File) FileResult {
+    cur := p.Current()
+    if cur.Type == token.EOFType() {
+        return FileResult{
+            Next: p,
+            File: file,
+        }
+    }
+
+    res := p.ParseTopLevelDecl()
+    if isNone[ast.Decl](res.Decl) {
+        return res.Next.ParseDecls(file)
+    }
+    decl := unwrapOr[ast.Decl](res.Decl, ast.MakePackageDecl(ast.ZeroPos(), ""))
+    return res.Next.ParseDecls(ast.FileWithDecl(file, decl))
+}
+
+func (p Parser) ParseTopLevelDecl() DeclResult {
+    cur := p.Current()
+    if cur.Type == token.ExternType() {
+        return p.ParseExternFuncDecl()
+    }
+    if cur.Type == token.FuncType() {
+        return p.ParseFuncDecl()
+    }
+    if cur.Type == token.TypeDeclType() {
+        return p.ParseTypeDecl()
+    }
+
+    next := p.AddError(
+        cur.Pos,
+        "expected top-level declaration, found '" + token.TypeString(cur.Type) + "'",
+    ).Advance()
+    return DeclResult{
+        Next: next,
+        Decl: None[ast.Decl](),
+    }
+}
+
+func (p Parser) ParseExternFuncDecl() DeclResult {
+    extTok := p.Expect(token.ExternType())
+    if extTok.Next.Current().Type == token.FuncType() {
+        decl := extTok.Next.ParseFuncDecl()
+        if isNone[ast.Decl](decl.Decl) {
+            return decl
+        }
+        d := unwrapOr[ast.Decl](decl.Decl, ast.MakePackageDecl(ast.ZeroPos(), ""))
+        return DeclResult{
+            Next: decl.Next,
+            Decl: Some[ast.Decl](MarkExternDecl(d)),
+        }
+    }
+    bad := extTok.Next.AddError(extTok.Next.Current().Pos, "expected 'func' after 'extern'").Advance()
+    return DeclResult{
+        Next: bad,
+        Decl: None[ast.Decl](),
+    }
+}
+
+func (p Parser) ParseFuncDecl() DeclResult {
+    funcTok := p.Expect(token.FuncType())
+    receiver := funcTok.Next.ParseOptionalReceiver()
+    nameTok := receiver.Next.Expect(token.IdentType())
+    typeParams := nameTok.Next.ParseOptionalTypeParams()
+    params := typeParams.Next.ParseParamList()
+    resultType := params.Next.ParseOptionalResultType()
+    if resultType.Next.Current().Type == token.LBraceType() {
+        block := resultType.Next.ParseBlock()
+        decl := ast.MakeFuncDecl(
+            funcTok.Tok.Pos,
+            nameTok.Tok.Literal,
+            MaybeTypeExprSlice(resultType.Type),
+            block.Block,
+        )
+        declWithParams := decl{
+            Params: params.Fields,
+            Receiver: receiver.Receiver,
+            TypeParams: typeParams.Params,
+        }
+        return DeclResult{
+            Next: block.Next,
+            Decl: Some[ast.Decl](declWithParams),
+        }
+    }
+
+    decl := ast.MakeFuncDecl(
+        funcTok.Tok.Pos,
+        nameTok.Tok.Literal,
+        MaybeTypeExprSlice(resultType.Type),
+        ast.MakeBlockStmt(funcTok.Tok.Pos),
+    )
+    declWithParams := decl{
+        Params: params.Fields,
+        Receiver: receiver.Receiver,
+        TypeParams: typeParams.Params,
+        Body: None[ast.BlockStmt](),
+    }
+    return DeclResult{
+        Next: resultType.Next,
+        Decl: Some[ast.Decl](declWithParams),
+    }
+}
+
+func MarkExternDecl(decl ast.Decl) ast.Decl {
+    return ast.DeclWithExtern(decl, true)
+}
+
+type ReceiverResult struct {
+    Next Parser
+    Receiver Option[ast.FieldDef]
+}
+
+func (p Parser) ParseOptionalReceiver() ReceiverResult {
+    if p.Current().Type == token.LParenType() {
+        open := p.Expect(token.LParenType())
+        nameTok := open.Next.Expect(token.IdentType())
+        typ := nameTok.Next.ParseTypeExpr()
+        close := typ.Next.Expect(token.RParenType())
+        return ReceiverResult{
+            Next: close.Next,
+            Receiver: Some[ast.FieldDef](ast.MakeFieldDef(nameTok.Tok.Pos, nameTok.Tok.Literal, TypeOrAny(typ.Type))),
+        }
+    }
+    return ReceiverResult{
+        Next: p,
+        Receiver: None[ast.FieldDef](),
+    }
+}
+
+type ParamListResult struct {
+    Next Parser
+    Fields []ast.FieldDef
+}
+
+type TypeParamsResult struct {
+    Next Parser
+    Params []ast.TypeParam
+}
+
+func (p Parser) ParseOptionalTypeParams() TypeParamsResult {
+    if p.Current().Type == token.LBracketType() {
+        open := p.Expect(token.LBracketType())
+        return open.Next.ParseTypeParams([]ast.TypeParam{})
+    }
+    return TypeParamsResult{
+        Next: p,
+        Params: []ast.TypeParam{},
+    }
+}
+
+func (p Parser) ParseTypeParams(acc []ast.TypeParam) TypeParamsResult {
+    cur := p.Current()
+    if cur.Type == token.RBracketType() {
+        end := p.Expect(token.RBracketType())
+        return TypeParamsResult{
+            Next: end.Next,
+            Params: acc,
+        }
+    }
+    nameTok := p.Expect(token.IdentType())
+    constraint := nameTok.Next.ParseOptionalTypeParamConstraint()
+    nextAcc := append(acc, ast.MakeTypeParam(nameTok.Tok.Pos, nameTok.Tok.Literal, constraint.Type))
+    nextParser := constraint.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseTypeParams(nextAcc)
+    }
+    return nextParser.ParseTypeParams(nextAcc)
+}
+
+func (p Parser) ParseOptionalTypeParamConstraint() TypeResult {
+    cur := p.Current()
+    if cur.Type == token.CommaType() || cur.Type == token.RBracketType() {
+        return TypeResult{
+            Next: p,
+            Type: None[ast.TypeExpr](),
+        }
+    }
+    return p.ParseTypeExpr()
+}
+
+func (p Parser) ParseParamList() ParamListResult {
+    start := p.Expect(token.LParenType())
+    return start.Next.ParseParamFields([]ast.FieldDef{})
+}
+
+func (p Parser) ParseParamFields(acc []ast.FieldDef) ParamListResult {
+    cur := p.Current()
+    if cur.Type == token.RParenType() {
+        end := p.Expect(token.RParenType())
+        return ParamListResult{
+            Next: end.Next,
+            Fields: acc,
+        }
+    }
+
+    nameTok := p.Expect(token.IdentType())
+    if nameTok.Next.Current().Type == token.EllipsisType() {
+        ellipsis := nameTok.Next.Expect(token.EllipsisType())
+        elem := ellipsis.Next.ParseTypeExpr()
+        field := ast.MakeVariadicFieldDef(
+            nameTok.Tok.Pos,
+            nameTok.Tok.Literal,
+            ast.MakeSliceType(ellipsis.Tok.Pos, TypeOrAny(elem.Type)),
+        )
+        nextAcc := append(acc, field)
+        nextParser := elem.Next
+        if nextParser.Current().Type == token.CommaType() {
+            return nextParser.Expect(token.CommaType()).Next.ParseParamFields(nextAcc)
+        }
+        return nextParser.ParseParamFields(nextAcc)
+    }
+    typ := nameTok.Next.ParseTypeExpr()
+    field := ast.MakeFieldDef(nameTok.Tok.Pos, nameTok.Tok.Literal, TypeOrAny(typ.Type))
+    nextAcc := append(acc, field)
+    nextParser := typ.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseParamFields(nextAcc)
+    }
+    return nextParser.ParseParamFields(nextAcc)
+}
+
+func (p Parser) ParseOptionalResultType() TypeResult {
+    cur := p.Current()
+    if cur.Type == token.LBraceType() || cur.Type == token.RBraceType() || cur.Type == token.RParenType() || cur.Type == token.CommaType() || cur.Type == token.RBracketType() || cur.Type == token.EOFType() {
+        return TypeResult{
+            Next: p,
+            Type: None[ast.TypeExpr](),
+        }
+    }
+    return p.ParseTypeExpr()
+}
+
+func (p Parser) ParseTypeExpr() TypeResult {
+    cur := p.Current()
+    if cur.Type == token.AnyType() {
+        tok := p.Expect(token.AnyType())
+        return TypeResult{
+            Next: tok.Next,
+            Type: Some[ast.TypeExpr](ast.MakeNamedType(tok.Tok.Pos, "any")),
+        }
+    }
+    if cur.Type == token.ChanType() {
+        return p.ParseChanTypeExpr(false)
+    }
+    if cur.Type == token.LtType() {
+        if p.Peek().Type == token.MinusType() {
+            if p.PeekN(2).Type == token.ChanType() {
+                return p.ParseChanTypeExpr(true)
+            }
+        }
+    }
+    if cur.Type == token.IdentType() {
+        if cur.Literal == "map" {
+            if p.Peek().Type == token.LBracketType() {
+                return p.ParseMapTypeExpr()
+            }
+        }
+    }
+    if cur.Type == token.FuncType() {
+        return p.ParseFuncTypeExpr()
+    }
+    if cur.Type == token.LParenType() {
+        open := p.Expect(token.LParenType())
+        elems := open.Next.ParseTypeExprList(token.RParenType(), []ast.TypeExpr{})
+        return TypeResult{
+            Next: elems.Next,
+            Type: Some[ast.TypeExpr](ast.MakeTupleType(open.Tok.Pos, elems.Types)),
+        }
+    }
+    if cur.Type == token.LBracketType() {
+        open := p.Expect(token.LBracketType())
+        close := open.Next.Expect(token.RBracketType())
+        elem := close.Next.ParseTypeExpr()
+        return TypeResult{
+            Next: elem.Next,
+            Type: Some[ast.TypeExpr](ast.MakeSliceType(open.Tok.Pos, TypeOrAny(elem.Type))),
+        }
+    }
+    return p.ParseNamedType()
+}
+
+func (p Parser) ParseMapTypeExpr() TypeResult {
+    mapTok := p.Expect(token.IdentType())
+    open := mapTok.Next.Expect(token.LBracketType())
+    keyType := open.Next.ParseTypeExpr()
+    close := keyType.Next.Expect(token.RBracketType())
+    valueType := close.Next.ParseTypeExpr()
+    return TypeResult{
+        Next: valueType.Next,
+        Type: Some[ast.TypeExpr](ast.MakeMapType(
+            mapTok.Tok.Pos,
+            TypeOrAny(keyType.Type),
+            TypeOrAny(valueType.Type),
+        )),
+    }
+}
+
+func (p Parser) ParseChanTypeExpr(receiveOnly bool) TypeResult {
+    if receiveOnly {
+        return p.ParseRecvChanTypeExpr()
+    }
+    pos := p.Current().Pos
+    chanTok := p.Expect(token.ChanType())
+    elem := chanTok.Next.ParseTypeExpr()
+    return TypeResult{
+        Next: elem.Next,
+        Type: Some[ast.TypeExpr](ast.MakeChanType(pos, TypeOrAny(elem.Type), receiveOnly)),
+    }
+}
+
+func (p Parser) ParseRecvChanTypeExpr() TypeResult {
+    pos := p.Current().Pos
+    next := p.Expect(token.LtType()).Next.Expect(token.MinusType()).Next
+    chanTok := next.Expect(token.ChanType())
+    elem := chanTok.Next.ParseTypeExpr()
+    return TypeResult{
+        Next: elem.Next,
+        Type: Some[ast.TypeExpr](ast.MakeChanType(pos, TypeOrAny(elem.Type), true)),
+    }
+}
+
+func (p Parser) ParseTypeExprList(end token.Type, acc []ast.TypeExpr) TypeExprListResult {
+    cur := p.Current()
+    if end == cur.Type {
+        endTok := p.Expect(end)
+        return TypeExprListResult{
+            Next: endTok.Next,
+            Types: acc,
+        }
+    }
+    typ := p.ParseTypeExpr()
+    nextAcc := append(acc, TypeOrAny(typ.Type))
+    nextParser := typ.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseTypeExprList(end, nextAcc)
+    }
+    return nextParser.ParseTypeExprList(end, nextAcc)
+}
+
+func (p Parser) ParseFuncTypeExpr() TypeResult {
+    fnTok := p.Expect(token.FuncType())
+    open := fnTok.Next.Expect(token.LParenType())
+    params := open.Next.ParseTypeExprList(token.RParenType(), []ast.TypeExpr{})
+    result := params.Next.ParseOptionalResultType()
+    return TypeResult{
+        Next: result.Next,
+        Type: Some[ast.TypeExpr](ast.MakeFuncType(
+            fnTok.Tok.Pos,
+            params.Types,
+            MaybeTypeExprSlice(result.Type),
+        )),
+    }
+}
+
+func (p Parser) ParseNamedType() TypeResult {
+    cur := p.Current()
+    if cur.Type == token.IdentType() {
+        next := p.Advance()
+        if next.Current().Type == token.DotType() {
+            nameTok := next.Expect(token.DotType()).Next.Expect(token.IdentType())
+            if nameTok.Next.Current().Type == token.LBracketType() {
+                open := nameTok.Next.Expect(token.LBracketType())
+                typeArgs := open.Next.ParseTypeExprList(token.RBracketType(), []ast.TypeExpr{})
+                return TypeResult{
+                    Next: typeArgs.Next,
+                    Type: Some[ast.TypeExpr](ast.MakeQualifiedTypeWithArgs(cur.Pos, cur.Literal, nameTok.Tok.Literal, typeArgs.Types)),
+                }
+            }
+            return TypeResult{
+                Next: nameTok.Next,
+                Type: Some[ast.TypeExpr](ast.MakeQualifiedType(cur.Pos, cur.Literal, nameTok.Tok.Literal)),
+            }
+        }
+
+        if next.Current().Type == token.LBracketType() {
+            open := next.Expect(token.LBracketType())
+            typeArgs := open.Next.ParseTypeExprList(token.RBracketType(), []ast.TypeExpr{})
+            return TypeResult{
+                Next: typeArgs.Next,
+                Type: Some[ast.TypeExpr](ast.MakeNamedTypeWithArgs(cur.Pos, cur.Literal, typeArgs.Types)),
+            }
+        }
+
+        return TypeResult{
+            Next: next,
+            Type: Some[ast.TypeExpr](ast.MakeNamedType(cur.Pos, cur.Literal)),
+        }
+    }
+    next := p.AddError(
+        cur.Pos,
+        "expected type name, found '" + token.TypeString(cur.Type) + "'",
+    ).Advance()
+    return TypeResult{
+        Next: next,
+        Type: None[ast.TypeExpr](),
+    }
+}
+
+func (p Parser) ParseTypeDecl() DeclResult {
+    typeTok := p.Expect(token.TypeDeclType())
+    nameTok := typeTok.Next.Expect(token.IdentType())
+    typeParams := nameTok.Next.ParseOptionalTypeParams()
+    declRes := typeParams.Next.ParseTypeDeclBody(typeTok.Tok.Pos, nameTok.Tok.Literal)
+    withParams := WithTypeDeclParams(declRes.Decl, typeParams.Params)
+    return DeclResult{
+        Next: declRes.Next,
+        Decl: Some[ast.Decl](withParams),
+    }
+}
+
+func WithTypeDeclParams(decl ast.Decl, params []ast.TypeParam) ast.Decl {
+    return ast.DeclWithTypeParams(decl, params)
+}
+
+type TypeDeclBodyResult struct {
+    Next Parser
+    Decl ast.Decl
+}
+
+type InterfaceMethodsResult struct {
+    Next Parser
+    Methods []ast.MethodSig
+}
+
+func (p Parser) ParseTypeDeclBody(pos token.Pos, name string) TypeDeclBodyResult {
+    cur := p.Current()
+    if cur.Type == token.StructType() {
+        structTok := p.Expect(token.StructType())
+        fields := structTok.Next.ParseStructFields([]ast.FieldDef{})
+        return TypeDeclBodyResult{
+            Next: fields.Next,
+            Decl: ast.MakeTypeDeclStruct(pos, name, fields.Fields),
+        }
+    }
+    if cur.Type == token.EnumType() {
+        enumTok := p.Expect(token.EnumType())
+        variants := enumTok.Next.ParseEnumVariants([]ast.Variant{})
+        return TypeDeclBodyResult{
+            Next: variants.Next,
+            Decl: ast.MakeTypeDeclEnum(pos, name, variants.Variants),
+        }
+    }
+    if cur.Type == token.InterfaceType() {
+        ifaceTok := p.Expect(token.InterfaceType())
+        methods := ifaceTok.Next.ParseInterfaceMethods([]ast.MethodSig{})
+        return TypeDeclBodyResult{
+            Next: methods.Next,
+            Decl: ast.MakeTypeDeclInterface(pos, name, methods.Methods),
+        }
+    }
+    bad := p.AddError(cur.Pos, "expected type definition body").Advance()
+    return TypeDeclBodyResult{
+        Next: bad,
+        Decl: ast.MakeTypeDeclStruct(pos, name, []ast.FieldDef{}),
+    }
+}
+
+func (p Parser) ParseInterfaceMethods(acc []ast.MethodSig) InterfaceMethodsResult {
+    cur := p.Current()
+    if cur.Type == token.LBraceType() {
+        return p.Expect(token.LBraceType()).Next.ParseInterfaceMethods(acc)
+    }
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return InterfaceMethodsResult{
+            Next: end.Next,
+            Methods: acc,
+        }
+    }
+    nameTok := p.Expect(token.IdentType())
+    params := nameTok.Next.ParseParamList()
+    resultType := params.Next.ParseOptionalInterfaceResultType()
+    nextAcc := append(acc, ast.MakeMethodSig(
+        nameTok.Tok.Pos,
+        nameTok.Tok.Literal,
+        params.Fields,
+        MaybeTypeExprSlice(resultType.Type),
+    ))
+    return resultType.Next.ParseInterfaceMethods(nextAcc)
+}
+
+func (p Parser) ParseOptionalInterfaceResultType() TypeResult {
+    cur := p.Current()
+    if cur.Type == token.RBraceType() || cur.Type == token.RParenType() || cur.Type == token.CommaType() || cur.Type == token.RBracketType() || cur.Type == token.EOFType() {
+        return TypeResult{
+            Next: p,
+            Type: None[ast.TypeExpr](),
+        }
+    }
+    if cur.Type == token.IdentType() {
+        if p.Peek().Type == token.LParenType() {
+            return TypeResult{
+                Next: p,
+                Type: None[ast.TypeExpr](),
+            }
+        }
+    }
+    return p.ParseTypeExpr()
+}
+
+type EnumVariantsResult struct {
+    Next Parser
+    Variants []ast.Variant
+}
+
+func (p Parser) ParseEnumVariants(acc []ast.Variant) EnumVariantsResult {
+    cur := p.Current()
+    if cur.Type == token.LBraceType() {
+        return p.Expect(token.LBraceType()).Next.ParseEnumVariants(acc)
+    }
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return EnumVariantsResult{
+            Next: end.Next,
+            Variants: acc,
+        }
+    }
+    nameTok := p.Expect(token.IdentType())
+    fields := nameTok.Next.ParseVariantFieldTypes()
+    nextAcc := append(acc, ast.MakeVariant(nameTok.Tok.Pos, nameTok.Tok.Literal, fields.Types))
+    return fields.Next.ParseEnumVariants(nextAcc)
+}
+
+func (p Parser) ParseVariantFieldTypes() TypeExprListResult {
+    if p.Current().Type == token.LParenType() {
+        open := p.Expect(token.LParenType())
+        return open.Next.ParseTypeExprList(token.RParenType(), []ast.TypeExpr{})
+    }
+    return TypeExprListResult{
+        Next: p,
+        Types: []ast.TypeExpr{},
+    }
+}
+
+type StructFieldsResult struct {
+    Next Parser
+    Fields []ast.FieldDef
+}
+
+func (p Parser) ParseStructFields(acc []ast.FieldDef) StructFieldsResult {
+    cur := p.Current()
+    if cur.Type == token.LBraceType() {
+        return p.Expect(token.LBraceType()).Next.ParseStructFields(acc)
+    }
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return StructFieldsResult{
+            Next: end.Next,
+            Fields: acc,
+        }
+    }
+    nameTok := p.Expect(token.IdentType())
+    typ := nameTok.Next.ParseTypeExpr()
+    nextAcc := append(acc, ast.MakeFieldDef(nameTok.Tok.Pos, nameTok.Tok.Literal, TypeOrAny(typ.Type)))
+    return typ.Next.ParseStructFields(nextAcc)
+}
+
+func (p Parser) ParseBlock() BlockResult {
+    lbrace := p.Expect(token.LBraceType())
+    block := ast.MakeBlockStmt(lbrace.Tok.Pos)
+    return lbrace.Next.ParseBlockStmts(block)
+}
+
+func (p Parser) ParseBlockStmts(block ast.BlockStmt) BlockResult {
+    cur := p.Current()
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return BlockResult{
+            Next: end.Next,
+            Block: block,
+        }
+    }
+    if cur.Type == token.EOFType() {
+        return BlockResult{
+            Next: p.AddError(cur.Pos, "expected '}', found EOF"),
+            Block: block,
+        }
+    }
+
+    res := p.ParseStmt()
+    if isNone[ast.Stmt](res.Stmt) {
+        return res.Next.ParseBlockStmts(block)
+    }
+    stmt := unwrapOr[ast.Stmt](res.Stmt, ast.MakeExprStmt(ast.ZeroPos(), ast.MakeIdent(ast.ZeroPos(), "_")))
+    return res.Next.ParseBlockStmts(ast.BlockWithStmt(block, stmt))
+}
+
+func (p Parser) ParseStmt() StmtResult {
+    cur := p.Current()
+    if cur.Type == token.ReturnType() {
+        return p.ParseReturnStmt()
+    }
+    if cur.Type == token.IfType() {
+        return p.ParseIfStmt()
+    }
+    if cur.Type == token.SwitchType() {
+        return p.ParseSwitchStmt()
+    }
+    if cur.Type == token.MatchType() {
+        return p.ParseMatchStmt()
+    }
+    if p.IsBindStart() {
+            return p.ParseBindStmt()
+    }
+    return p.ParseExprStmt()
+}
+
+func (p Parser) IsBindStart() bool {
+    if p.Current().Type == token.IdentType() {
+        if p.Peek().Type == token.WalrusType() {
+            return true
+        }
+        return p.IsBindStartTail(1, false)
+    }
+    return false
+}
+
+func (p Parser) IsBindStartTail(offset int, sawComma bool) bool {
+    tok := p.PeekN(offset)
+    if tok.Type == token.CommaType() {
+        return p.IsBindStartTail(offset + 1, true)
+    }
+    if tok.Type == token.IdentType() {
+        return p.IsBindStartTail(offset + 1, sawComma)
+    }
+    if tok.Type == token.WalrusType() {
+        return sawComma
+    }
+    return false
+}
+
+func (p Parser) ParseMatchStmt() StmtResult {
+    matchTok := p.Expect(token.MatchType())
+    tag := matchTok.Next.ParseExpr()
+    open := tag.Next.Expect(token.LBraceType())
+    cases := open.Next.ParseMatchCases([]ast.MatchCase{})
+    stmt := ast.MakeMatchStmt(matchTok.Tok.Pos, tag.Expr, cases.Cases)
+    return StmtResult{
+        Next: cases.Next,
+        Stmt: Some[ast.Stmt](stmt),
+    }
+}
+
+type MatchCasesResult struct {
+    Next Parser
+    Cases []ast.MatchCase
+}
+
+func (p Parser) ParseMatchCases(acc []ast.MatchCase) MatchCasesResult {
+    cur := p.Current()
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return MatchCasesResult{
+            Next: end.Next,
+            Cases: acc,
+        }
+    }
+    clause := p.ParseMatchCase()
+    return clause.Next.ParseMatchCases(append(acc, clause.Case))
+}
+
+type MatchCaseResult struct {
+    Next Parser
+    Case ast.MatchCase
+}
+
+func (p Parser) ParseMatchCase() MatchCaseResult {
+    caseTok := p.Expect(token.CaseType())
+    pat := caseTok.Next.ParsePattern()
+    colon := pat.Next.Expect(token.ColonType())
+    body := colon.Next.ParseCaseBody([]ast.Stmt{})
+    return MatchCaseResult{
+        Next: body.Next,
+        Case: ast.MakeMatchCase(caseTok.Tok.Pos, pat.Pattern, body.Stmts),
+    }
+}
+
+type PatternResult struct {
+    Next Parser
+    Pattern ast.Pattern
+}
+
+type StructPatternFieldsResult struct {
+    Next Parser
+    Fields []ast.FieldPattern
+}
+
+func (p Parser) ParsePattern() PatternResult {
+    cur := p.Current()
+    if cur.Type == token.IntLitType() || cur.Type == token.StringLitType() || cur.Type == token.TrueType() || cur.Type == token.FalseType() {
+        return PatternResult{
+            Next: p.Advance(),
+            Pattern: ast.MakeLitPattern(cur.Pos, cur.Type, cur.Literal),
+        }
+    }
+    if cur.Type == token.LParenType() {
+        open := p.Expect(token.LParenType())
+        elems := open.Next.ParsePatterns(token.RParenType(), []ast.Pattern{})
+        return PatternResult{
+            Next: elems.Next,
+            Pattern: ast.MakeTuplePattern(open.Tok.Pos, elems.Patterns),
+        }
+    }
+    if cur.Type == token.IdentType() {
+        if cur.Literal == "_" {
+            return PatternResult{
+                Next: p.Advance(),
+                Pattern: ast.MakeWildcardPattern(cur.Pos),
+            }
+        }
+        if p.Peek().Type == token.LBraceType() {
+            nameTok := p.Expect(token.IdentType())
+            fields := nameTok.Next.ParseStructPatternFields([]ast.FieldPattern{})
+            return PatternResult{
+                Next: fields.Next,
+                Pattern: ast.MakeStructPattern(nameTok.Tok.Pos, nameTok.Tok.Literal, fields.Fields),
+            }
+        }
+        if p.Peek().Type == token.LParenType() {
+            nameTok := p.Expect(token.IdentType())
+            subPats := nameTok.Next.ParsePatternList()
+            return PatternResult{
+                Next: subPats.Next,
+                Pattern: ast.MakeEnumPattern(nameTok.Tok.Pos, nameTok.Tok.Literal, subPats.Patterns),
+            }
+        }
+        if IsConstructorPatternName(cur.Literal) {
+            return PatternResult{
+                Next: p.Advance(),
+                Pattern: ast.MakeEnumPattern(cur.Pos, cur.Literal, []ast.Pattern{}),
+            }
+        }
+        return PatternResult{
+            Next: p.Advance(),
+            Pattern: ast.MakeIdentPattern(cur.Pos, cur.Literal),
+        }
+    }
+    return PatternResult{
+        Next: p.AddError(cur.Pos, "expected pattern").Advance(),
+        Pattern: ast.MakeWildcardPattern(cur.Pos),
+    }
+}
+
+func (p Parser) ParseStructPatternFields(acc []ast.FieldPattern) StructPatternFieldsResult {
+    cur := p.Current()
+    if cur.Type == token.LBraceType() {
+        return p.Expect(token.LBraceType()).Next.ParseStructPatternFields(acc)
+    }
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return StructPatternFieldsResult{
+            Next: end.Next,
+            Fields: acc,
+        }
+    }
+    nameTok := p.Expect(token.IdentType())
+    colon := nameTok.Next.Expect(token.ColonType())
+    pat := colon.Next.ParsePattern()
+    nextAcc := append(acc, ast.MakeFieldPattern(nameTok.Tok.Literal, pat.Pattern))
+    nextParser := pat.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseStructPatternFields(nextAcc)
+    }
+    return nextParser.ParseStructPatternFields(nextAcc)
+}
+
+func IsConstructorPatternName(name string) bool {
+    if len(name) == 0 {
+        return false
+    }
+    first := name[0]
+    if first >= "A"[0] {
+        if first <= "Z"[0] {
+            return true
+        }
+    }
+    return false
+}
+
+type PatternListResult struct {
+    Next Parser
+    Patterns []ast.Pattern
+}
+
+func (p Parser) ParsePatternList() PatternListResult {
+    open := p.Expect(token.LParenType())
+    return open.Next.ParsePatterns(token.RParenType(), []ast.Pattern{})
+}
+
+func (p Parser) ParsePatterns(end token.Type, acc []ast.Pattern) PatternListResult {
+    cur := p.Current()
+    if end == cur.Type {
+        close := p.Expect(end)
+        return PatternListResult{
+            Next: close.Next,
+            Patterns: acc,
+        }
+    }
+    pat := p.ParsePattern()
+    nextAcc := append(acc, pat.Pattern)
+    nextParser := pat.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParsePatterns(end, nextAcc)
+    }
+    return nextParser.ParsePatterns(end, nextAcc)
+}
+
+func (p Parser) ParseIfStmt() StmtResult {
+    ifTok := p.Expect(token.IfType())
+    cond := ifTok.Next.ParseExpr()
+    body := cond.Next.ParseBlock()
+    stmt := ast.MakeIfStmt(ifTok.Tok.Pos, cond.Expr, body.Block)
+    return StmtResult{
+        Next: body.Next,
+        Stmt: Some[ast.Stmt](stmt),
+    }
+}
+
+func (p Parser) ParseSwitchStmt() StmtResult {
+    switchTok := p.Expect(token.SwitchType())
+    switchStart := switchTok.Next
+    tagRes := switchStart.ParseOptionalSwitchTag()
+    open := tagRes.Next.Expect(token.LBraceType())
+    cases := open.Next.ParseSwitchCases([]ast.CaseClause{})
+    stmt := ast.MakeSwitchStmt(switchTok.Tok.Pos, tagRes.Tag, cases.Cases)
+    return StmtResult{
+        Next: cases.Next,
+        Stmt: Some[ast.Stmt](stmt),
+    }
+}
+
+type OptionalSwitchTagResult struct {
+    Next Parser
+    Tag Option[ast.Expr]
+}
+
+func (p Parser) ParseOptionalSwitchTag() OptionalSwitchTagResult {
+    if p.Current().Type == token.LBraceType() {
+        return OptionalSwitchTagResult{
+            Next: p,
+            Tag: None[ast.Expr](),
+        }
+    }
+    tagExpr := p.ParseExpr()
+    return OptionalSwitchTagResult{
+        Next: tagExpr.Next,
+        Tag: Some[ast.Expr](tagExpr.Expr),
+    }
+}
+
+type SwitchCasesResult struct {
+    Next Parser
+    Cases []ast.CaseClause
+}
+
+func (p Parser) ParseSwitchCases(acc []ast.CaseClause) SwitchCasesResult {
+    cur := p.Current()
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return SwitchCasesResult{
+            Next: end.Next,
+            Cases: acc,
+        }
+    }
+    clause := p.ParseCaseClause()
+    return clause.Next.ParseSwitchCases(append(acc, clause.Case))
+}
+
+type CaseClauseResult struct {
+    Next Parser
+    Case ast.CaseClause
+}
+
+func (p Parser) ParseCaseClause() CaseClauseResult {
+    cur := p.Current()
+    if cur.Type == token.DefaultType() {
+        defTok := p.Expect(token.DefaultType())
+        colon := defTok.Next.Expect(token.ColonType())
+        body := colon.Next.ParseCaseBody([]ast.Stmt{})
+        return CaseClauseResult{
+            Next: body.Next,
+            Case: ast.MakeCaseClause(defTok.Tok.Pos, true, []ast.Expr{}, body.Stmts),
+        }
+    }
+
+    caseTok := p.Expect(token.CaseType())
+    expr := caseTok.Next.ParseExpr()
+    colon := expr.Next.Expect(token.ColonType())
+    body := colon.Next.ParseCaseBody([]ast.Stmt{})
+    return CaseClauseResult{
+        Next: body.Next,
+        Case: ast.MakeCaseClause(caseTok.Tok.Pos, false, []ast.Expr{expr.Expr}, body.Stmts),
+    }
+}
+
+type CaseBodyResult struct {
+    Next Parser
+    Stmts []ast.Stmt
+}
+
+func (p Parser) ParseCaseBody(acc []ast.Stmt) CaseBodyResult {
+    cur := p.Current()
+    if cur.Type == token.CaseType() || cur.Type == token.DefaultType() || cur.Type == token.RBraceType() {
+        return CaseBodyResult{
+            Next: p,
+            Stmts: acc,
+        }
+    }
+    stmt := p.ParseStmt()
+    if isNone[ast.Stmt](stmt.Stmt) {
+        return stmt.Next.ParseCaseBody(acc)
+    }
+    s := unwrapOr[ast.Stmt](stmt.Stmt, ast.MakeExprStmt(ast.ZeroPos(), ast.MakeIdent(ast.ZeroPos(), "_")))
+    return stmt.Next.ParseCaseBody(append(acc, s))
+}
+
+func (p Parser) ParseBindStmt() StmtResult {
+    names := p.ParseBindNames([]string{})
+    walrus := names.Next.Expect(token.WalrusType())
+    expr := walrus.Next.ParseExpr()
+    stmt := ast.MakeBindStmtNames(names.Pos, names.Names, expr.Expr)
+    return StmtResult{
+        Next: expr.Next,
+        Stmt: Some[ast.Stmt](stmt),
+    }
+}
+
+type BindNamesResult struct {
+    Next Parser
+    Names []string
+    Pos token.Pos
+}
+
+func (p Parser) ParseBindNames(acc []string) BindNamesResult {
+    nameTok := p.Expect(token.IdentType())
+    nextAcc := append(acc, nameTok.Tok.Literal)
+    nextParser := nameTok.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseBindNames(nextAcc)
+    }
+    return BindNamesResult{
+        Next: nextParser,
+        Names: nextAcc,
+        Pos: nameTok.Tok.Pos,
+    }
+}
+
+func (p Parser) ParseExprStmt() StmtResult {
+    expr := p.ParseExpr()
+    return StmtResult{
+        Next: expr.Next,
+        Stmt: Some[ast.Stmt](ast.MakeExprStmt(expr.Expr.TokenPos(), expr.Expr)),
+    }
+}
+
+func (p Parser) ParseReturnStmt() StmtResult {
+    retTok := p.Expect(token.ReturnType())
+    cur := retTok.Next.Current()
+
+    if cur.Type == token.RBraceType() || cur.Type == token.EOFType() {
+        stmt := ast.MakeReturnStmt(retTok.Tok.Pos, []ast.Expr{})
+        return StmtResult{
+            Next: retTok.Next,
+            Stmt: Some[ast.Stmt](stmt),
+        }
+    }
+
+    expr := retTok.Next.ParseExpr()
+    stmt := ast.MakeReturnStmt(retTok.Tok.Pos, []ast.Expr{expr.Expr})
+    return StmtResult{
+        Next: expr.Next,
+        Stmt: Some[ast.Stmt](stmt),
+    }
+}
+
+func (p Parser) ParseExpr() ExprResult {
+    return p.ParsePipeline()
+}
+
+func (p Parser) ParsePipeline() ExprResult {
+    left := p.ParseLogicalOr()
+    return left.Next.ParsePipelineTail(left.Expr)
+}
+
+func (p Parser) ParsePipelineTail(left ast.Expr) ExprResult {
+    cur := p.Current()
+    if cur.Type == token.PipeArrowType() {
+        right := p.Advance().ParseLogicalOr()
+        expr := ast.MakePipelineExpr(cur.Pos, left, right.Expr)
+        return right.Next.ParsePipelineTail(expr)
+    }
+    return ExprResult{
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) ParseLogicalOr() ExprResult {
+    left := p.ParseComparison()
+    return left.Next.ParseLogicalOrTail(left.Expr)
+}
+
+func (p Parser) ParseLogicalOrTail(left ast.Expr) ExprResult {
+    cur := p.Current()
+    if cur.Type == token.LorType() {
+        right := p.Advance().ParseComparison()
+        expr := ast.MakeBinaryExpr(cur.Pos, cur.Type, left, right.Expr)
+        return right.Next.ParseLogicalOrTail(expr)
+    }
+    return ExprResult{
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) ParseComparison() ExprResult {
+    left := p.ParseEquality()
+    return left.Next.ParseComparisonTail(left.Expr)
+}
+
+func (p Parser) ParseComparisonTail(left ast.Expr) ExprResult {
+    cur := p.Current()
+    if IsComparisonOp(cur.Type) {
+        right := p.Advance().ParseEquality()
+        expr := ast.MakeBinaryExpr(cur.Pos, cur.Type, left, right.Expr)
+        return right.Next.ParseComparisonTail(expr)
+    }
+    return ExprResult{
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) ParseEquality() ExprResult {
+    left := p.ParseSum()
+    return left.Next.ParseEqualityTail(left.Expr)
+}
+
+func (p Parser) ParseEqualityTail(left ast.Expr) ExprResult {
+    cur := p.Current()
+    if cur.Type == token.EqType() {
+        right := p.Advance().ParseSum()
+        expr := ast.MakeBinaryExpr(cur.Pos, cur.Type, left, right.Expr)
+        return right.Next.ParseEqualityTail(expr)
+    }
+    return ExprResult{
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) ParseSum() ExprResult {
+    left := p.ParseProduct()
+    return left.Next.ParseSumTail(left.Expr)
+}
+
+func (p Parser) ParseSumTail(left ast.Expr) ExprResult {
+    cur := p.Current()
+    if IsSumOp(cur.Type) {
+        right := p.Advance().ParseProduct()
+        expr := ast.MakeBinaryExpr(cur.Pos, cur.Type, left, right.Expr)
+        return right.Next.ParseSumTail(expr)
+    }
+    return ExprResult{
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) ParseProduct() ExprResult {
+    left := p.ParseUnary()
+    return left.Next.ParseProductTail(left.Expr)
+}
+
+func (p Parser) ParseProductTail(left ast.Expr) ExprResult {
+    cur := p.Current()
+    if IsProductOp(cur.Type) {
+        right := p.Advance().ParseUnary()
+        expr := ast.MakeBinaryExpr(cur.Pos, cur.Type, left, right.Expr)
+        return right.Next.ParseProductTail(expr)
+    }
+    return ExprResult{
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) ParseUnary() ExprResult {
+    cur := p.Current()
+    if cur.Type == token.MinusType() || cur.Type == token.NotType() {
+        operand := p.Advance().ParseUnary()
+        return ExprResult{
+            Next: operand.Next,
+            Expr: ast.MakeUnaryExpr(cur.Pos, cur.Type, operand.Expr),
+        }
+    }
+    return p.ParsePostfix()
+}
+
+func (p Parser) ParsePostfix() ExprResult {
+    primary := p.ParsePrimary()
+    return primary.Next.ParsePostfixTail(primary.Expr)
+}
+
+type GenericCallResult struct {
+    Ok bool
+    Next Parser
+    Expr ast.Expr
+}
+
+func (p Parser) ParsePostfixTail(left ast.Expr) ExprResult {
+    cur := p.Current()
+    if cur.Type == token.LBracketType() {
+        generic := p.TryParseGenericCall(left)
+        if generic.Ok {
+            return generic.Next.ParsePostfixTail(generic.Expr)
+        }
+    }
+    if cur.Type == token.DotType() {
+        fieldTok := p.Advance().Expect(token.IdentType())
+        expr := ast.MakeSelectorExpr(cur.Pos, left, fieldTok.Tok.Literal)
+        return fieldTok.Next.ParsePostfixTail(expr)
+    }
+    if cur.Type == token.LParenType() {
+        args := p.ParseCallArgs()
+        expr := ast.MakeCallExpr(cur.Pos, left, args.Args)
+        return args.Next.ParsePostfixTail(expr)
+    }
+    if cur.Type == token.LBracketType() {
+        idx := p.ParseIndexOrSlice(left)
+        return idx.Next.ParsePostfixTail(idx.Expr)
+    }
+    if cur.Type == token.LBraceType() {
+        if ast.ExprIsIdent(left) {
+            if p.IsStructLiteralStart() {
+                if IsConstructorPatternName(ast.ExprIdentName(left)) {
+                    lit := p.ParseStructLiteral(ast.ExprIdentName(left), left.TokenPos())
+                    return ExprResult{
+                        Next: lit.Next,
+                        Expr: lit.Expr,
+                    }
+                }
+                update := p.ParseCopyUpdate(left, left.TokenPos())
+                return ExprResult{
+                    Next: update.Next,
+                    Expr: update.Expr,
+                }
+            }
+        }
+    }
+    return ExprResult{
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) TryParseGenericCall(left ast.Expr) GenericCallResult {
+    if ast.ExprIsIdent(left) {
+        open := p.Expect(token.LBracketType())
+        typeArgs := open.Next.ParseTypeExprList(token.RBracketType(), []ast.TypeExpr{})
+        if typeArgs.Next.Current().Type == token.LParenType() {
+            args := typeArgs.Next.ParseCallArgs()
+            return GenericCallResult{
+                Ok: true,
+                Next: args.Next,
+                Expr: ast.MakeCallExprWithTypeArgs(left.TokenPos(), left, typeArgs.Types, args.Args),
+            }
+        }
+        return GenericCallResult{
+            Ok: false,
+            Next: p,
+            Expr: left,
+        }
+    }
+    if ast.ExprIsSelector(left) {
+        open := p.Expect(token.LBracketType())
+        typeArgs := open.Next.ParseTypeExprList(token.RBracketType(), []ast.TypeExpr{})
+        if typeArgs.Next.Current().Type == token.LParenType() {
+            args := typeArgs.Next.ParseCallArgs()
+            return GenericCallResult{
+                Ok: true,
+                Next: args.Next,
+                Expr: ast.MakeCallExprWithTypeArgs(left.TokenPos(), left, typeArgs.Types, args.Args),
+            }
+        }
+        return GenericCallResult{
+            Ok: false,
+            Next: p,
+            Expr: left,
+        }
+    }
+    return GenericCallResult{
+        Ok: false,
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) IsStructLiteralStart() bool {
+    next := p.Peek()
+    if next.Type == token.RBraceType() {
+        return true
+    }
+    if next.Type == token.IdentType() {
+        after := p.PeekN(2)
+        if after.Type == token.ColonType() {
+            return true
+        }
+        if after.Type == token.DotType() {
+            return true
+        }
+    }
+    return false
+}
+
+type ArgsResult struct {
+    Next Parser
+    Args []ast.Expr
+}
+
+func (p Parser) ParseCallArgs() ArgsResult {
+    open := p.Expect(token.LParenType())
+    return open.Next.ParseArgs([]ast.Expr{})
+}
+
+func (p Parser) ParseArgs(acc []ast.Expr) ArgsResult {
+    cur := p.Current()
+    if cur.Type == token.RParenType() {
+        end := p.Expect(token.RParenType())
+        return ArgsResult{
+            Next: end.Next,
+            Args: acc,
+        }
+    }
+    expr := p.ParseExpr()
+    nextAcc := append(acc, expr.Expr)
+    nextParser := expr.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseArgs(nextAcc)
+    }
+    return nextParser.ParseArgs(nextAcc)
+}
+
+type StructLitResult struct {
+    Next Parser
+    Expr ast.Expr
+}
+
+func (p Parser) ParseStructLiteral(name string, pos token.Pos) StructLitResult {
+    open := p.Expect(token.LBraceType())
+    fields := open.Next.ParseStructLiteralFields([]ast.FieldInit{})
+    return StructLitResult{
+        Next: fields.Next,
+        Expr: ast.MakeStructLit(pos, name, fields.Fields),
+    }
+}
+
+func (p Parser) ParseCopyUpdate(source ast.Expr, pos token.Pos) StructLitResult {
+    open := p.Expect(token.LBraceType())
+    updates := open.Next.ParseCopyUpdateFields([]ast.FieldUpdate{})
+    return StructLitResult{
+        Next: updates.Next,
+        Expr: ast.MakeCopyUpdateExpr(pos, source, updates.Updates),
+    }
+}
+
+type StructLiteralFieldsResult struct {
+    Next Parser
+    Fields []ast.FieldInit
+}
+
+func (p Parser) ParseStructLiteralFields(acc []ast.FieldInit) StructLiteralFieldsResult {
+    cur := p.Current()
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return StructLiteralFieldsResult{
+            Next: end.Next,
+            Fields: acc,
+        }
+    }
+    nameTok := p.Expect(token.IdentType())
+    colon := nameTok.Next.Expect(token.ColonType())
+    expr := colon.Next.ParseExpr()
+    nextAcc := append(acc, ast.MakeFieldInit(nameTok.Tok.Literal, expr.Expr))
+    nextParser := expr.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseStructLiteralFields(nextAcc)
+    }
+    return nextParser.ParseStructLiteralFields(nextAcc)
+}
+
+type CopyUpdateFieldsResult struct {
+    Next Parser
+    Updates []ast.FieldUpdate
+}
+
+func (p Parser) ParseCopyUpdateFields(acc []ast.FieldUpdate) CopyUpdateFieldsResult {
+    cur := p.Current()
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return CopyUpdateFieldsResult{
+            Next: end.Next,
+            Updates: acc,
+        }
+    }
+    path := p.ParseFieldPath([]string{})
+    colon := path.Next.Expect(token.ColonType())
+    expr := colon.Next.ParseExpr()
+    nextAcc := append(acc, ast.MakeFieldUpdate(path.Path, expr.Expr))
+    nextParser := expr.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseCopyUpdateFields(nextAcc)
+    }
+    return nextParser.ParseCopyUpdateFields(nextAcc)
+}
+
+type FieldPathResult struct {
+    Next Parser
+    Path []string
+}
+
+func (p Parser) ParseFieldPath(acc []string) FieldPathResult {
+    nameTok := p.Expect(token.IdentType())
+    nextAcc := append(acc, nameTok.Tok.Literal)
+    nextParser := nameTok.Next
+    if nextParser.Current().Type == token.DotType() {
+        return nextParser.Expect(token.DotType()).Next.ParseFieldPath(nextAcc)
+    }
+    return FieldPathResult{
+        Next: nextParser,
+        Path: nextAcc,
+    }
+}
+
+type IndexOrSliceResult struct {
+    Next Parser
+    Expr ast.Expr
+}
+
+func (p Parser) ParseIndexOrSlice(left ast.Expr) IndexOrSliceResult {
+    open := p.Expect(token.LBracketType())
+    first := open.Next.ParseExpr()
+    if first.Next.Current().Type == token.ColonType() {
+        close := first.Next.Expect(token.ColonType()).Next.Expect(token.RBracketType())
+        return IndexOrSliceResult{
+            Next: close.Next,
+            Expr: ast.MakeSliceExpr(open.Tok.Pos, left, Some[ast.Expr](first.Expr), None[ast.Expr]()),
+        }
+    }
+    close := first.Next.Expect(token.RBracketType())
+    return IndexOrSliceResult{
+        Next: close.Next,
+        Expr: ast.MakeIndexExpr(open.Tok.Pos, left, first.Expr),
+    }
+}
+
+func (p Parser) ParsePrimary() ExprResult {
+    cur := p.Current()
+    next := p.AddError(
+        cur.Pos,
+        "expected expression, found '" + token.TypeString(cur.Type) + "'",
+    ).Advance()
+    if cur.Type == token.IdentType() {
+        return ExprResult{
+            Next: p.Advance(),
+            Expr: ast.MakeIdent(cur.Pos, cur.Literal),
+        }
+    }
+    if cur.Type == token.IntLitType() || cur.Type == token.StringLitType() || cur.Type == token.TrueType() || cur.Type == token.FalseType() {
+        return ExprResult{
+            Next: p.Advance(),
+            Expr: ast.MakeBasicLit(cur.Pos, cur.Type, cur.Literal),
+        }
+    }
+    if cur.Type == token.LParenType() {
+        return p.ParseParenOrTuple()
+    }
+    if cur.Type == token.FuncType() {
+        return p.ParseFuncLiteral()
+    }
+    if cur.Type == token.LBracketType() {
+        if p.Peek().Type == token.RBracketType() {
+            return p.ParseSliceLiteral()
+        }
+    }
+    return ExprResult{
+        Next: next,
+        Expr: ast.MakeIdent(cur.Pos, "<error>"),
+    }
+}
+
+func (p Parser) ParseFuncLiteral() ExprResult {
+    fnTok := p.Expect(token.FuncType())
+    params := fnTok.Next.ParseParamList()
+    result := params.Next.ParseOptionalResultType()
+    body := result.Next.ParseBlock()
+    return ExprResult{
+        Next: body.Next,
+        Expr: ast.MakeFuncLit(
+            fnTok.Tok.Pos,
+            params.Fields,
+            MaybeTypeExprSlice(result.Type),
+            body.Block,
+        ),
+    }
+}
+
+func (p Parser) ParseParenOrTuple() ExprResult {
+    open := p.Expect(token.LParenType())
+    if open.Next.Current().Type == token.RParenType() {
+        close := open.Next.Expect(token.RParenType())
+        return ExprResult{
+            Next: close.Next,
+            Expr: ast.MakeTupleLit(open.Tok.Pos, []ast.Expr{}),
+        }
+    }
+
+    first := open.Next.ParseExpr()
+    if first.Next.Current().Type == token.CommaType() {
+        elems := first.Next.Expect(token.CommaType()).Next.ParseTupleElems([]ast.Expr{first.Expr})
+        return ExprResult{
+            Next: elems.Next,
+            Expr: ast.MakeTupleLit(open.Tok.Pos, elems.Exprs),
+        }
+    }
+
+    close := first.Next.Expect(token.RParenType())
+    return ExprResult{
+        Next: close.Next,
+        Expr: first.Expr,
+    }
+}
+
+func (p Parser) ParseTupleElems(acc []ast.Expr) ExprListResult {
+    cur := p.Current()
+    if cur.Type == token.RParenType() {
+        end := p.Expect(token.RParenType())
+        return ExprListResult{
+            Next: end.Next,
+            Exprs: acc,
+        }
+    }
+    expr := p.ParseExpr()
+    nextAcc := append(acc, expr.Expr)
+    nextParser := expr.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseTupleElems(nextAcc)
+    }
+    return nextParser.ParseTupleElems(nextAcc)
+}
+
+func (p Parser) ParseSliceLiteral() ExprResult {
+    open := p.Expect(token.LBracketType())
+    close := open.Next.Expect(token.RBracketType())
+    elem := close.Next.ParseTypeExpr()
+    lbrace := elem.Next.Expect(token.LBraceType())
+    elems := lbrace.Next.ParseExprList([]ast.Expr{})
+    return ExprResult{
+        Next: elems.Next,
+        Expr: ast.MakeSliceLit(open.Tok.Pos, TypeOrAny(elem.Type), elems.Exprs),
+    }
+}
+
+type ExprListResult struct {
+    Next Parser
+    Exprs []ast.Expr
+}
+
+func (p Parser) ParseExprList(acc []ast.Expr) ExprListResult {
+    cur := p.Current()
+    if cur.Type == token.RBraceType() {
+        end := p.Expect(token.RBraceType())
+        return ExprListResult{
+            Next: end.Next,
+            Exprs: acc,
+        }
+    }
+    expr := p.ParseExpr()
+    nextAcc := append(acc, expr.Expr)
+    nextParser := expr.Next
+    if nextParser.Current().Type == token.CommaType() {
+        return nextParser.Expect(token.CommaType()).Next.ParseExprList(nextAcc)
+    }
+    return nextParser.ParseExprList(nextAcc)
+}
+
+func MaybeTypeExprSlice(value Option[ast.TypeExpr]) []ast.TypeExpr {
+    if isNone[ast.TypeExpr](value) {
+        return []ast.TypeExpr{}
+    }
+    v := unwrapOr[ast.TypeExpr](value, ast.MakeNamedType(ast.ZeroPos(), "any"))
+    return []ast.TypeExpr{v}
+}
+
+func TypeOrAny(value Option[ast.TypeExpr]) ast.TypeExpr {
+    if isNone[ast.TypeExpr](value) {
+        return ast.MakeNamedType(ast.ZeroPos(), "any")
+    }
+    return unwrapOr[ast.TypeExpr](value, ast.MakeNamedType(ast.ZeroPos(), "any"))
+}
+
+func IsComparisonOp(t token.Type) bool {
+    if t == token.LtType() {
+        return true
+    }
+    if t == token.GtType() {
+        return true
+    }
+    if t == token.LteType() {
+        return true
+    }
+    if t == token.GteType() {
+        return true
+    }
+    return false
+}
+
+func IsSumOp(t token.Type) bool {
+    if t == token.PlusType() {
+        return true
+    }
+    if t == token.MinusType() {
+        return true
+    }
+    return false
+}
+
+func IsProductOp(t token.Type) bool {
+    if t == token.StarType() {
+        return true
+    }
+    if t == token.SlashType() {
+        return true
+    }
+    if t == token.PercentType() {
+        return true
+    }
+    return false
+}

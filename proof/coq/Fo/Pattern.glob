@@ -1,0 +1,317 @@
+DIGEST 822b34e2949240fcdeaa68ce9a65ca6c
+FFo.Pattern
+R24:27 Stdlib.Lists.List <> <> lib
+R29:34 Stdlib.Strings.String <> <> lib
+R36:40 Stdlib.Arith.Arith <> <> lib
+R42:44 Stdlib.micromega.Lia <> <> lib
+R54:66 Stdlib.Lists.List ListNotations <> mod
+R84:92 Fo.Syntax <> <> lib
+R110:121 Fo.Semantics <> <> lib
+R139:144 Fo.Env <> <> lib
+mod 155:163 <> FoPattern
+R173:180 Fo.Syntax FoSyntax <> mod
+R190:200 Fo.Semantics FoSemantics <> mod
+R210:214 Fo.Env FoEnv <> mod
+def 229:233 FoPattern subst
+R238:241 Corelib.Init.Datatypes <> list ind
+R250:252 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R244:249 Stdlib.Strings.String <> string ind
+R253:257 Fo.Semantics FoSemantics value ind
+def 271:282 FoPattern subst_domain
+R290:294 Fo.Pattern FoPattern subst def
+binder 285:286 <> σ:1
+R299:302 Corelib.Init.Datatypes <> list ind
+R304:309 Stdlib.Strings.String <> string ind
+R322:323 Fo.Pattern <> σ:1 var
+R334:335 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R340:341 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R353:356 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R347:347 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R349:350 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R352:352 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R366:369 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R370:381 Fo.Pattern <> subst_domain:2 def
+def 407:418 FoPattern subst_unique
+R426:430 Fo.Pattern FoPattern subst def
+binder 421:422 <> σ:4
+R445:448 Corelib.Init.Logic <> True ind
+ind 462:474 FoPattern pattern_match
+constr 517:523 FoPattern PM_Wild
+constr 568:576 FoPattern PM_Binder
+constr 635:642 FoPattern PM_Tuple
+constr 729:735 FoPattern PM_Ctor
+constr 835:843 FoPattern PM_Struct
+R485:488 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R478:484 Fo.Syntax FoSyntax pattern ind
+R494:497 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R489:493 Fo.Semantics FoSemantics value ind
+R503:506 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R498:502 Fo.Pattern FoPattern subst def
+binder 538:538 <> v:7
+R541:553 Fo.Pattern <> pattern_match:5 ind
+R563:564 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R561:561 Fo.Pattern <> v:7 var
+R555:559 Fo.Syntax FoSyntax PWild constr
+binder 591:591 <> x:8
+binder 593:593 <> v:9
+R596:608 Fo.Pattern <> pattern_match:5 ind
+R624:624 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R631:631 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R625:625 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R627:628 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R630:630 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R626:626 Fo.Pattern <> x:8 var
+R629:629 Fo.Pattern <> v:9 var
+R622:622 Fo.Pattern <> v:9 var
+R611:617 Fo.Syntax FoSyntax PBinder constr
+R619:619 Fo.Pattern <> x:8 var
+binder 657:658 <> ps:10
+binder 660:661 <> vs:11
+binder 663:664 <> σ:12
+R682:685 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R667:678 Fo.Pattern FoPattern subst_unique def
+R680:681 Fo.Pattern <> σ:12 var
+R686:698 Fo.Pattern <> pattern_match:5 ind
+R724:725 Fo.Pattern <> σ:12 var
+R713:718 Fo.Semantics FoSemantics VTuple constr
+R720:721 Fo.Pattern <> vs:11 var
+R701:706 Fo.Syntax FoSyntax PTuple constr
+R708:709 Fo.Pattern <> ps:10 var
+binder 750:753 <> name:13
+binder 755:756 <> ps:14
+binder 758:759 <> vs:15
+binder 761:762 <> σ:16
+R780:783 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R765:776 Fo.Pattern FoPattern subst_unique def
+R778:779 Fo.Pattern <> σ:16 var
+R784:796 Fo.Pattern <> pattern_match:5 ind
+R830:831 Fo.Pattern <> σ:16 var
+R815:819 Fo.Semantics FoSemantics VCtor constr
+R821:824 Fo.Pattern <> name:13 var
+R826:827 Fo.Pattern <> vs:15 var
+R799:803 Fo.Syntax FoSyntax PCtor constr
+R805:808 Fo.Pattern <> name:13 var
+R810:811 Fo.Pattern <> ps:14 var
+binder 858:861 <> name:17
+binder 863:864 <> fs:18
+binder 866:867 <> vs:19
+binder 869:870 <> σ:20
+R888:891 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R873:884 Fo.Pattern FoPattern subst_unique def
+R886:887 Fo.Pattern <> σ:20 var
+R892:904 Fo.Pattern <> pattern_match:5 ind
+R942:943 Fo.Pattern <> σ:20 var
+R925:931 Fo.Semantics FoSemantics VStruct constr
+R933:936 Fo.Pattern <> name:17 var
+R938:939 Fo.Pattern <> vs:19 var
+R907:913 Fo.Syntax FoSyntax PStruct constr
+R915:918 Fo.Pattern <> name:17 var
+R920:921 Fo.Pattern <> fs:18 var
+scheme 462:474 FoPattern pattern_match_ind
+scheme 462:474 FoPattern pattern_match_sind
+prf 953:968 FoPattern subst_domain_nil
+R989:991 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R974:985 Fo.Pattern FoPattern subst_domain def
+R987:988 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R992:993 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+prf 1030:1051 FoPattern subst_domain_singleton
+binder 1064:1064 <> x:21
+binder 1066:1066 <> v:22
+R1090:1092 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1069:1080 Fo.Pattern FoPattern subst_domain def
+R1082:1082 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1089:1089 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1083:1083 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1085:1086 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1088:1088 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1084:1084 Fo.Pattern <> x:21 var
+R1087:1087 Fo.Pattern <> v:22 var
+R1093:1093 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1095:1095 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1094:1094 Fo.Pattern <> x:21 var
+prf 1132:1150 FoPattern pattern_wild_domain
+R1171:1173 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1156:1167 Fo.Pattern FoPattern subst_domain def
+R1169:1170 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1174:1175 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+prf 1212:1232 FoPattern pattern_binder_domain
+binder 1245:1245 <> x:23
+binder 1247:1247 <> v:24
+R1271:1273 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1250:1261 Fo.Pattern FoPattern subst_domain def
+R1263:1263 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1270:1270 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1264:1264 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1266:1267 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1269:1269 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1265:1265 Fo.Pattern <> x:23 var
+R1268:1268 Fo.Pattern <> v:24 var
+R1274:1274 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1276:1276 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1275:1275 Fo.Pattern <> x:23 var
+prf 1313:1328 FoPattern subst_unique_nil
+R1334:1345 Fo.Pattern FoPattern subst_unique def
+R1347:1348 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1366:1366 Corelib.Init.Logic <> I constr
+R1366:1366 Corelib.Init.Logic <> I constr
+prf 1381:1402 FoPattern subst_unique_singleton
+binder 1415:1415 <> x:25
+binder 1417:1417 <> v:26
+R1420:1431 Fo.Pattern FoPattern subst_unique def
+R1433:1433 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1440:1440 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1434:1434 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1436:1437 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1439:1439 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1435:1435 Fo.Pattern <> x:25 var
+R1438:1438 Fo.Pattern <> v:26 var
+R1466:1466 Corelib.Init.Logic <> I constr
+R1466:1466 Corelib.Init.Logic <> I constr
+prf 1481:1498 FoPattern pattern_wild_empty
+binder 1511:1511 <> v:27
+R1514:1526 Fo.Pattern FoPattern pattern_match ind
+R1528:1532 Fo.Syntax FoSyntax PWild constr
+R1534:1534 Fo.Pattern <> v:27 var
+R1536:1537 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+prf 1582:1605 FoPattern pattern_binder_singleton
+binder 1618:1618 <> x:28
+binder 1620:1620 <> v:29
+R1623:1635 Fo.Pattern FoPattern pattern_match ind
+R1638:1644 Fo.Syntax FoSyntax PBinder constr
+R1646:1646 Fo.Pattern <> x:28 var
+R1649:1649 Fo.Pattern <> v:29 var
+R1651:1651 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1658:1658 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1652:1652 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1654:1655 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1657:1657 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1653:1653 Fo.Pattern <> x:28 var
+R1656:1656 Fo.Pattern <> v:29 var
+prf 1703:1721 FoPattern pattern_wild_unique
+R1738:1742 Fo.Semantics FoSemantics value ind
+binder 1734:1734 <> v:30
+R1745:1756 Fo.Pattern FoPattern subst_unique def
+R1758:1759 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1785:1800 Fo.Pattern FoPattern subst_unique_nil thm
+R1785:1800 Fo.Pattern FoPattern subst_unique_nil thm
+prf 1815:1835 FoPattern pattern_binder_unique
+binder 1848:1848 <> x:31
+binder 1850:1850 <> v:32
+R1853:1864 Fo.Pattern FoPattern subst_unique def
+R1866:1866 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1873:1873 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1867:1867 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1869:1870 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1872:1872 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1868:1868 Fo.Pattern <> x:31 var
+R1871:1871 Fo.Pattern <> v:32 var
+R1899:1920 Fo.Pattern FoPattern subst_unique_singleton thm
+R1899:1920 Fo.Pattern FoPattern subst_unique_singleton thm
+prf 1935:1952 FoPattern pattern_wild_sound
+binder 1965:1965 <> v:33
+R1968:1974 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R1977:1978 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 1975:1976 <> σ:34
+R1979:1991 Fo.Pattern FoPattern pattern_match ind
+R1993:1997 Fo.Syntax FoSyntax PWild constr
+R1999:1999 Fo.Pattern <> v:33 var
+R2001:2002 Fo.Pattern <> σ:34 var
+R2029:2030 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2029:2030 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+prf 2058:2077 FoPattern pattern_binder_sound
+binder 2090:2090 <> x:35
+binder 2092:2092 <> v:36
+R2095:2101 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R2104:2105 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 2102:2103 <> σ:37
+R2106:2118 Fo.Pattern FoPattern pattern_match ind
+R2121:2127 Fo.Syntax FoSyntax PBinder constr
+R2129:2129 Fo.Pattern <> x:35 var
+R2132:2132 Fo.Pattern <> v:36 var
+R2134:2135 Fo.Pattern <> σ:37 var
+R2162:2162 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R2169:2169 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R2163:2163 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R2165:2166 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R2168:2168 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R2162:2162 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R2169:2169 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R2163:2163 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R2165:2166 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R2168:2168 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+prf 2197:2215 FoPattern pattern_tuple_sound
+binder 2228:2229 <> ps:38
+binder 2231:2232 <> vs:39
+binder 2234:2235 <> σ:40
+R2282:2289 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2242:2254 Fo.Pattern FoPattern pattern_match ind
+R2257:2262 Fo.Syntax FoSyntax PTuple constr
+R2264:2265 Fo.Pattern <> ps:38 var
+R2269:2274 Fo.Semantics FoSemantics VTuple constr
+R2276:2277 Fo.Pattern <> vs:39 var
+R2280:2281 Fo.Pattern <> σ:40 var
+R2290:2293 Corelib.Init.Logic <> True ind
+R2319:2319 Corelib.Init.Logic <> I constr
+R2319:2319 Corelib.Init.Logic <> I constr
+prf 2334:2351 FoPattern pattern_ctor_sound
+binder 2364:2367 <> name:41
+binder 2369:2370 <> ps:42
+binder 2372:2373 <> vs:43
+binder 2375:2376 <> σ:44
+R2431:2438 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2383:2395 Fo.Pattern FoPattern pattern_match ind
+R2398:2402 Fo.Syntax FoSyntax PCtor constr
+R2404:2407 Fo.Pattern <> name:41 var
+R2409:2410 Fo.Pattern <> ps:42 var
+R2414:2418 Fo.Semantics FoSemantics VCtor constr
+R2420:2423 Fo.Pattern <> name:41 var
+R2425:2426 Fo.Pattern <> vs:43 var
+R2429:2430 Fo.Pattern <> σ:44 var
+R2439:2442 Corelib.Init.Logic <> True ind
+R2468:2468 Corelib.Init.Logic <> I constr
+R2468:2468 Corelib.Init.Logic <> I constr
+prf 2483:2502 FoPattern pattern_struct_sound
+binder 2515:2518 <> name:45
+binder 2520:2521 <> fs:46
+binder 2523:2524 <> vs:47
+binder 2526:2527 <> σ:48
+R2586:2593 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2534:2546 Fo.Pattern FoPattern pattern_match ind
+R2549:2555 Fo.Syntax FoSyntax PStruct constr
+R2557:2560 Fo.Pattern <> name:45 var
+R2562:2563 Fo.Pattern <> fs:46 var
+R2567:2573 Fo.Semantics FoSemantics VStruct constr
+R2575:2578 Fo.Pattern <> name:45 var
+R2580:2581 Fo.Pattern <> vs:47 var
+R2584:2585 Fo.Pattern <> σ:48 var
+R2594:2597 Corelib.Init.Logic <> True ind
+R2623:2623 Corelib.Init.Logic <> I constr
+R2623:2623 Corelib.Init.Logic <> I constr
+prf 2640:2659 FoPattern pattern_binds_unique
+binder 2672:2672 <> p:49
+binder 2674:2674 <> v:50
+binder 2676:2677 <> σ:51
+R2704:2711 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2684:2696 Fo.Pattern FoPattern pattern_match ind
+R2698:2698 Fo.Pattern <> p:49 var
+R2700:2700 Fo.Pattern <> v:50 var
+R2702:2703 Fo.Pattern <> σ:51 var
+R2712:2723 Fo.Pattern FoPattern subst_unique def
+R2725:2726 Fo.Pattern <> σ:51 var
+R2787:2802 Fo.Pattern FoPattern subst_unique_nil thm
+R2787:2802 Fo.Pattern FoPattern subst_unique_nil thm
+R2815:2836 Fo.Pattern FoPattern subst_unique_singleton thm
+R2815:2836 Fo.Pattern FoPattern subst_unique_singleton thm
+prf 2901:2919 FoPattern pattern_match_sound
+binder 2932:2932 <> p:52
+binder 2934:2934 <> v:53
+binder 2936:2937 <> σ:54
+R2964:2971 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2944:2956 Fo.Pattern FoPattern pattern_match ind
+R2958:2958 Fo.Pattern <> p:52 var
+R2960:2960 Fo.Pattern <> v:53 var
+R2962:2963 Fo.Pattern <> σ:54 var
+R2972:2975 Corelib.Init.Logic <> True ind
+R3001:3001 Corelib.Init.Logic <> I constr
+R3001:3001 Corelib.Init.Logic <> I constr
+R3014:3022 Fo.Pattern FoPattern <> mod

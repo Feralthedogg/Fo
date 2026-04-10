@@ -1,0 +1,246 @@
+DIGEST 977645946bfd040fed7006fa6a0209ba
+FFo.Semantics
+R24:27 Stdlib.Lists.List <> <> lib
+R29:34 Stdlib.Strings.String <> <> lib
+R36:41 Stdlib.ZArith.ZArith <> <> lib
+R51:63 Stdlib.Lists.List ListNotations <> mod
+R81:89 Fo.Syntax <> <> lib
+mod 100:110 <> FoSemantics
+R120:127 Fo.Syntax FoSyntax <> mod
+ind 141:145 FoSemantics value
+constr 152:156 FoSemantics VUnit
+constr 160:164 FoSemantics VBool
+constr 179:182 FoSemantics VInt
+constr 194:200 FoSemantics VString
+constr 217:222 FoSemantics VTuple
+constr 247:253 FoSemantics VStruct
+constr 306:310 FoSemantics VCtor
+R171:174 Corelib.Init.Datatypes <> bool ind
+binder 167:167 <> b:3
+R189:189 Corelib.Numbers.BinNums <> Z ind
+binder 185:185 <> n:4
+R207:212 Stdlib.Strings.String <> string ind
+binder 203:203 <> s:5
+R233:236 Corelib.Init.Datatypes <> list ind
+R238:242 Fo.Semantics <> value:1 ind
+binder 225:229 <> items:6
+R263:268 Stdlib.Strings.String <> string ind
+binder 256:259 <> name:7
+R281:284 Corelib.Init.Datatypes <> list ind
+R293:295 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R287:292 Stdlib.Strings.String <> string ind
+R296:300 Fo.Semantics <> value:1 ind
+binder 272:277 <> fields:8
+R320:325 Stdlib.Strings.String <> string ind
+binder 313:316 <> name:9
+R336:339 Corelib.Init.Datatypes <> list ind
+R341:345 Fo.Semantics <> value:1 ind
+binder 329:332 <> args:10
+scheme 141:145 FoSemantics value_rect
+scheme 141:145 FoSemantics value_ind
+scheme 141:145 FoSemantics value_rec
+scheme 141:145 FoSemantics value_sind
+def 361:363 FoSemantics env
+R368:371 Corelib.Init.Datatypes <> list ind
+R380:382 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R374:379 Stdlib.Strings.String <> string ind
+R383:387 Fo.Semantics FoSemantics value ind
+ind 402:407 FoSemantics result
+constr 414:422 FoSemantics RContinue
+constr 437:443 FoSemantics RReturn
+R430:432 Fo.Semantics FoSemantics env def
+binder 425:426 <> ρ:13
+R450:454 Fo.Semantics FoSemantics value ind
+binder 446:446 <> v:14
+scheme 402:407 FoSemantics result_rect
+scheme 402:407 FoSemantics result_ind
+scheme 402:407 FoSemantics result_rec
+scheme 402:407 FoSemantics result_sind
+def 468:478 FoSemantics interp_expr
+R485:488 Fo.Syntax FoSyntax expr ind
+binder 481:481 <> e:15
+R493:497 Fo.Semantics FoSemantics value ind
+R510:510 Fo.Semantics <> e:15 var
+R521:524 Fo.Syntax FoSyntax EVar constr
+R531:535 Fo.Semantics FoSemantics VUnit constr
+R541:545 Fo.Syntax FoSyntax EUnit constr
+R550:554 Fo.Semantics FoSemantics VUnit constr
+R560:564 Fo.Syntax FoSyntax EBool constr
+R571:575 Fo.Semantics FoSemantics VBool constr
+R583:586 Fo.Syntax FoSyntax EInt constr
+R593:596 Fo.Semantics FoSemantics VInt constr
+R604:610 Fo.Syntax FoSyntax EString constr
+R617:623 Fo.Semantics FoSemantics VString constr
+R631:636 Fo.Syntax FoSyntax ETuple constr
+R643:648 Fo.Semantics FoSemantics VTuple constr
+R650:651 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R657:661 Fo.Syntax FoSyntax ECtor constr
+R673:677 Fo.Semantics FoSemantics VCtor constr
+R684:685 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R691:700 Fo.Syntax FoSyntax EStructLit constr
+R712:718 Fo.Semantics FoSemantics VStruct constr
+R725:726 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R732:742 Fo.Syntax FoSyntax ECopyUpdate constr
+R756:766 Fo.Semantics <> interp_expr:16 def
+R777:782 Fo.Syntax FoSyntax EUnary constr
+R791:795 Fo.Semantics FoSemantics VUnit constr
+R801:807 Fo.Syntax FoSyntax EBinary constr
+R818:822 Fo.Semantics FoSemantics VUnit constr
+R828:832 Fo.Syntax FoSyntax ECall constr
+R841:845 Fo.Semantics FoSemantics VUnit constr
+R851:853 Fo.Syntax FoSyntax EIf constr
+R866:876 Fo.Semantics <> interp_expr:16 def
+R886:891 Fo.Syntax FoSyntax EMatch constr
+R900:904 Fo.Semantics FoSemantics VUnit constr
+def 925:935 FoSemantics interp_stmt
+R943:945 Fo.Semantics FoSemantics env def
+binder 938:939 <> ρ:18
+R953:956 Fo.Syntax FoSyntax stmt ind
+binder 949:949 <> s:19
+R961:966 Fo.Semantics FoSemantics result ind
+R979:979 Fo.Semantics <> s:19 var
+R990:994 Fo.Syntax FoSyntax SBind constr
+R1003:1011 Fo.Semantics FoSemantics RContinue constr
+R1013:1014 Fo.Semantics <> ρ:18 var
+R1020:1026 Fo.Syntax FoSyntax SReturn constr
+R1033:1039 Fo.Semantics FoSemantics RReturn constr
+R1042:1052 Fo.Semantics FoSemantics interp_expr def
+R1061:1063 Fo.Syntax FoSyntax SIf constr
+R1074:1082 Fo.Semantics FoSemantics RContinue constr
+R1084:1085 Fo.Semantics <> ρ:18 var
+R1091:1096 Fo.Syntax FoSyntax SMatch constr
+R1105:1113 Fo.Semantics FoSemantics RContinue constr
+R1115:1116 Fo.Semantics <> ρ:18 var
+def 1137:1148 FoSemantics interp_block
+R1156:1158 Fo.Semantics FoSemantics env def
+binder 1151:1152 <> ρ:21
+R1167:1170 Corelib.Init.Datatypes <> list ind
+R1172:1175 Fo.Syntax FoSyntax stmt ind
+binder 1162:1163 <> ss:22
+R1180:1185 Fo.Semantics FoSemantics result ind
+R1198:1199 Fo.Semantics <> ss:22 var
+R1210:1211 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1216:1224 Fo.Semantics FoSemantics RContinue constr
+R1226:1227 Fo.Semantics <> ρ:21 var
+R1234:1237 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R1243:1253 Fo.Semantics FoSemantics interp_stmt def
+R1255:1256 Fo.Semantics <> ρ:21 var
+def 1279:1287 FoSemantics eval_expr
+R1295:1301 Fo.Syntax FoSyntax program rec
+binder 1290:1291 <> _p:24
+R1311:1313 Fo.Semantics FoSemantics env def
+binder 1305:1307 <> _ρ:25
+R1321:1324 Fo.Syntax FoSyntax expr ind
+binder 1317:1317 <> e:26
+R1332:1336 Fo.Semantics FoSemantics value ind
+binder 1328:1328 <> v:27
+R1364:1366 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1351:1361 Fo.Semantics FoSemantics interp_expr def
+R1363:1363 Fo.Semantics <> e:26 var
+R1367:1367 Fo.Semantics <> v:27 var
+def 1382:1390 FoSemantics eval_stmt
+R1398:1404 Fo.Syntax FoSyntax program rec
+binder 1393:1394 <> _p:28
+R1413:1415 Fo.Semantics FoSemantics env def
+binder 1408:1409 <> ρ:29
+R1423:1426 Fo.Syntax FoSyntax stmt ind
+binder 1419:1419 <> s:30
+R1434:1439 Fo.Semantics FoSemantics result ind
+binder 1430:1430 <> r:31
+R1470:1472 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1454:1464 Fo.Semantics FoSemantics interp_stmt def
+R1466:1467 Fo.Semantics <> ρ:29 var
+R1469:1469 Fo.Semantics <> s:30 var
+R1473:1473 Fo.Semantics <> r:31 var
+def 1488:1497 FoSemantics eval_block
+R1505:1511 Fo.Syntax FoSyntax program rec
+binder 1500:1501 <> _p:32
+R1520:1522 Fo.Semantics FoSemantics env def
+binder 1515:1516 <> ρ:33
+R1531:1534 Corelib.Init.Datatypes <> list ind
+R1536:1539 Fo.Syntax FoSyntax stmt ind
+binder 1526:1527 <> ss:34
+R1547:1552 Fo.Semantics FoSemantics result ind
+binder 1543:1543 <> r:35
+R1585:1587 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1567:1578 Fo.Semantics FoSemantics interp_block def
+R1580:1581 Fo.Semantics <> ρ:33 var
+R1583:1584 Fo.Semantics <> ss:34 var
+R1588:1588 Fo.Semantics <> r:35 var
+prf 1598:1615 FoSemantics continue_injective
+binder 1628:1630 <> ρ1:36
+binder 1632:1634 <> ρ2:37
+R1670:1677 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1654:1656 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1641:1649 Fo.Semantics FoSemantics RContinue constr
+R1651:1653 Fo.Semantics <> ρ1:36 var
+R1657:1665 Fo.Semantics FoSemantics RContinue constr
+R1667:1669 Fo.Semantics <> ρ2:37 var
+R1681:1683 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1678:1680 Fo.Semantics <> ρ1:36 var
+R1684:1686 Fo.Semantics <> ρ2:37 var
+prf 1744:1756 FoSemantics ret_injective
+binder 1769:1770 <> v1:38
+binder 1772:1773 <> v2:39
+R1803:1810 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1790:1792 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1780:1786 Fo.Semantics FoSemantics RReturn constr
+R1788:1789 Fo.Semantics <> v1:38 var
+R1793:1799 Fo.Semantics FoSemantics RReturn constr
+R1801:1802 Fo.Semantics <> v2:39 var
+R1813:1815 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1811:1812 Fo.Semantics <> v1:38 var
+R1816:1817 Fo.Semantics <> v2:39 var
+prf 1875:1893 FoSemantics continue_not_return
+binder 1906:1907 <> ρ:40
+binder 1909:1909 <> v:41
+R1924:1927 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R1912:1920 Fo.Semantics FoSemantics RContinue constr
+R1922:1923 Fo.Semantics <> ρ:40 var
+R1928:1934 Fo.Semantics FoSemantics RReturn constr
+R1936:1936 Fo.Semantics <> v:41 var
+prf 1990:2012 FoSemantics eval_expr_deterministic
+binder 2025:2025 <> p:42
+binder 2027:2028 <> ρ:43
+binder 2030:2030 <> e:44
+binder 2032:2033 <> v1:45
+binder 2035:2036 <> v2:46
+R2062:2069 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2043:2051 Fo.Semantics FoSemantics eval_expr def
+R2053:2053 Fo.Semantics <> p:42 var
+R2055:2056 Fo.Semantics <> ρ:43 var
+R2058:2058 Fo.Semantics <> e:44 var
+R2060:2061 Fo.Semantics <> v1:45 var
+R2089:2096 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2070:2078 Fo.Semantics FoSemantics eval_expr def
+R2080:2080 Fo.Semantics <> p:42 var
+R2082:2083 Fo.Semantics <> ρ:43 var
+R2085:2085 Fo.Semantics <> e:44 var
+R2087:2088 Fo.Semantics <> v2:46 var
+R2099:2101 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2097:2098 Fo.Semantics <> v1:45 var
+R2102:2103 Fo.Semantics <> v2:46 var
+R2151:2159 Fo.Semantics FoSemantics eval_expr def
+prf 2213:2236 FoSemantics eval_block_deterministic
+binder 2249:2249 <> p:47
+binder 2251:2252 <> ρ:48
+binder 2254:2255 <> ss:49
+binder 2257:2258 <> r1:50
+binder 2260:2261 <> r2:51
+R2289:2296 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2268:2277 Fo.Semantics FoSemantics eval_block def
+R2279:2279 Fo.Semantics <> p:47 var
+R2281:2282 Fo.Semantics <> ρ:48 var
+R2284:2285 Fo.Semantics <> ss:49 var
+R2287:2288 Fo.Semantics <> r1:50 var
+R2318:2325 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2297:2306 Fo.Semantics FoSemantics eval_block def
+R2308:2308 Fo.Semantics <> p:47 var
+R2310:2311 Fo.Semantics <> ρ:48 var
+R2313:2314 Fo.Semantics <> ss:49 var
+R2316:2317 Fo.Semantics <> r2:51 var
+R2328:2330 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2326:2327 Fo.Semantics <> r1:50 var
+R2331:2332 Fo.Semantics <> r2:51 var
+R2381:2390 Fo.Semantics FoSemantics eval_block def
+R2440:2450 Fo.Semantics FoSemantics <> mod

@@ -1,0 +1,214 @@
+package fo
+
+import "github.com/Feralthedogg/Fo/internal/project"
+import "github.com/Feralthedogg/Fo/internal/toolchain"
+import "github.com/Feralthedogg/Fo/internal/hostplan"
+
+type RunResult struct {
+    ExitCode int
+    Output string
+    Generated string
+    GoCommand string
+    GoArgs []string
+    HasExecAction bool
+    ExecAction project.ExecAction
+    HasProjectAction bool
+    ProjectAction project.ProjectAction
+}
+
+func MakeRunResult(exitCode int, output string, generated string, goCommand string, goArgs []string, hasExecAction bool, execAction project.ExecAction, hasProjectAction bool, projectAction project.ProjectAction) RunResult {
+    return RunResult{
+        ExitCode: exitCode,
+        Output: output,
+        Generated: generated,
+        GoCommand: goCommand,
+        GoArgs: goArgs,
+        HasExecAction: hasExecAction,
+        ExecAction: execAction,
+        HasProjectAction: hasProjectAction,
+        ProjectAction: projectAction,
+    }
+}
+
+func Version() string {
+    return toolchain.VersionString()
+}
+
+func hostPlanMarker() string {
+    return hostplan.PackageMarker()
+}
+
+func Usage() string {
+    return toolchain.UsageString()
+}
+
+func RunSource(args []string, src string, filename string) RunResult {
+    return FromToolResult(toolchain.PlanCommand(args, src, filename))
+}
+
+func ProjectCommandResult(action project.ProjectAction) RunResult {
+    return RunResult{
+        ExitCode: 0,
+        Output: action.Output,
+        Generated: "",
+        GoCommand: "",
+        GoArgs: []string{},
+        HasExecAction: false,
+        ExecAction: project.ExecMessage(""),
+        HasProjectAction: true,
+        ProjectAction: action,
+    }
+}
+
+func ExecCommandResult(action project.ExecAction) RunResult {
+    return RunResult{
+        ExitCode: 0,
+        Output: project.ExecActionOutput(action),
+        Generated: project.ExecActionGenerated(action),
+        GoCommand: project.ExecActionCommand(action),
+        GoArgs: project.ExecActionArgs(action),
+        HasExecAction: true,
+        ExecAction: action,
+        HasProjectAction: false,
+        ProjectAction: project.MessageAction(""),
+    }
+}
+
+func HelpResult() RunResult {
+    return FromToolResult(toolchain.HelpResult())
+}
+
+func VersionResult() RunResult {
+    return FromToolResult(toolchain.VersionResult())
+}
+
+func CompileForGo(goCmd string, args []string, src string, filename string) RunResult {
+    plan := toolchain.CompilePlan(goCmd, args, src, filename)
+    if plan.HasError {
+        return FailureResult(plan.Error)
+    }
+    return ExecCommandResult(plan.Action)
+}
+
+func CheckSource(src string, filename string) RunResult {
+    plan := toolchain.CheckPlan(src, filename)
+    if plan.HasError {
+        return FailureResult(plan.Error)
+    }
+    return ExecCommandResult(plan.Action)
+}
+
+func FormatPlan(args []string) RunResult {
+    return RunResult{
+        ExitCode: 0,
+        Output: "format planned",
+        Generated: "",
+        GoCommand: "",
+        GoArgs: toolchain.DefaultPathArgs(args),
+        HasExecAction: false,
+        ExecAction: project.ExecMessage(""),
+        HasProjectAction: false,
+        ProjectAction: project.MessageAction(""),
+    }
+}
+
+func FailureResult(msg string) RunResult {
+    return FromToolResult(toolchain.FailureResult(msg))
+}
+
+func UnknownCommand(cmd string) RunResult {
+    return FromToolResult(toolchain.UnknownCommand(cmd))
+}
+
+func InitPlan(args []string) RunResult {
+    plan := toolchain.InitProject(args)
+    if plan.HasError {
+        return FailureResult(plan.Error)
+    }
+    return ProjectCommandResult(plan.Action)
+}
+
+func NewPlan(args []string) RunResult {
+    plan := toolchain.NewProject(args)
+    if plan.HasError {
+        return FailureResult(plan.Error)
+    }
+    return ProjectCommandResult(plan.Action)
+}
+
+func ModPlan(args []string) RunResult {
+    plan := toolchain.ModProject(args)
+    if plan.HasError {
+        return FailureResult(plan.Error)
+    }
+    return ProjectCommandResult(plan.Action)
+}
+
+func HasProjectAction(result RunResult) bool {
+    return result.HasProjectAction
+}
+
+func HasExecAction(result RunResult) bool {
+    return result.HasExecAction
+}
+
+func ExecActionKind(result RunResult) string {
+    if result.HasExecAction {
+        return project.ExecActionKind(result.ExecAction)
+    }
+    return ""
+}
+
+func ExecActionCommand(result RunResult) string {
+    if result.HasExecAction {
+        return project.ExecActionCommand(result.ExecAction)
+    }
+    return ""
+}
+
+func ExecActionArgCount(result RunResult) int {
+    if result.HasExecAction {
+        return len(project.ExecActionArgs(result.ExecAction))
+    }
+    return 0
+}
+
+func ExecActionArgAt(result RunResult, idx int) string {
+    if result.HasExecAction {
+        args := project.ExecActionArgs(result.ExecAction)
+        if idx >= 0 {
+            if idx < len(args) {
+                return args[idx]
+            }
+        }
+    }
+    return ""
+}
+
+func ProjectActionFileCount(result RunResult) int {
+    if result.HasProjectAction {
+        return len(project.ProjectActionFiles(result.ProjectAction))
+    }
+    return 0
+}
+
+func ProjectActionTarget(result RunResult) string {
+    if result.HasProjectAction {
+        return project.ProjectActionTargetDir(result.ProjectAction)
+    }
+    return ""
+}
+
+func FromToolResult(result toolchain.ToolResult) RunResult {
+    return RunResult{
+        ExitCode: result.ExitCode,
+        Output: result.Output,
+        Generated: project.ExecActionGenerated(result.ExecAction),
+        GoCommand: project.ExecActionCommand(result.ExecAction),
+        GoArgs: project.ExecActionArgs(result.ExecAction),
+        HasExecAction: result.HasExecAction,
+        ExecAction: result.ExecAction,
+        HasProjectAction: result.HasProjectAction,
+        ProjectAction: result.ProjectAction,
+    }
+}

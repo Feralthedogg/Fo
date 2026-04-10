@@ -1,0 +1,282 @@
+package main
+
+import "github.com/Feralthedogg/Fo/cmd/fo"
+import "github.com/Feralthedogg/Fo/internal/genesis"
+
+func SmokeCore() bool {
+    env := []genesis.EnvEntry{
+        genesis.Bind("flag", genesis.BoolValue(true)),
+        genesis.Bind("answer", genesis.IntValue(42)),
+    }
+
+    person := genesis.StructExpr("Person", []genesis.ExprField{
+        genesis.ExprFieldEntry("name", genesis.TextExpr("Kim")),
+        genesis.ExprFieldEntry("age", genesis.IntExpr(30)),
+    })
+
+    condExpr := genesis.IfExpr(
+        genesis.VarExpr("flag"),
+        genesis.IntExpr(7),
+        genesis.IntExpr(9),
+    )
+
+    tupleExpr := genesis.TupleExpr([]genesis.Expr{
+        genesis.BoolExpr(true),
+        condExpr,
+    })
+
+    expectedTuple := genesis.TupleValue([]genesis.Value{
+        genesis.BoolValue(true),
+        genesis.IntValue(7),
+    })
+
+    program := genesis.NewProgram([]genesis.FuncDef{
+        genesis.Function("answerFn", []string{}, []genesis.Stmt{
+            genesis.ReturnStmt(genesis.IntExpr(42)),
+        }),
+        genesis.Function("personName", []string{"person"}, []genesis.Stmt{
+            genesis.LetStmt("name", genesis.SelectExpr(genesis.VarExpr("person"), "name")),
+            genesis.ReturnStmt(genesis.VarExpr("name")),
+        }),
+        genesis.Function("sumTuple", []string{"xs"}, []genesis.Stmt{
+            genesis.ReturnStmt(
+                genesis.IfExpr(
+                    genesis.IsEmptyExpr(genesis.VarExpr("xs")),
+                    genesis.IntExpr(0),
+                    genesis.BinaryExpr(
+                        "+",
+                        genesis.HeadExpr(genesis.VarExpr("xs")),
+                        genesis.CallExpr("sumTuple", []genesis.Expr{
+                            genesis.TailExpr(genesis.VarExpr("xs")),
+                        }),
+                    ),
+                ),
+            ),
+        }),
+        genesis.Function("joinTuple", []string{"xs"}, []genesis.Stmt{
+            genesis.ReturnStmt(
+                genesis.IfExpr(
+                    genesis.IsEmptyExpr(genesis.VarExpr("xs")),
+                    genesis.TextExpr(""),
+                    genesis.BinaryExpr(
+                        "+",
+                        genesis.HeadExpr(genesis.VarExpr("xs")),
+                        genesis.CallExpr("joinTuple", []genesis.Expr{
+                            genesis.TailExpr(genesis.VarExpr("xs")),
+                        }),
+                    ),
+                ),
+            ),
+        }),
+    })
+
+    intTuple := genesis.TupleExpr([]genesis.Expr{
+        genesis.IntExpr(1),
+        genesis.IntExpr(2),
+        genesis.IntExpr(3),
+    })
+
+    textTuple := genesis.TupleExpr([]genesis.Expr{
+        genesis.TextExpr("fo"),
+        genesis.TextExpr("-"),
+        genesis.TextExpr("genesis"),
+    })
+
+    if genesis.Expect(env, genesis.VarExpr("answer"), genesis.IntValue(42)) == false {
+        return false
+    }
+    if genesis.Expect(env, condExpr, genesis.IntValue(7)) == false {
+        return false
+    }
+    if genesis.Expect(env, tupleExpr, expectedTuple) == false {
+        return false
+    }
+    if genesis.Expect(env, genesis.SelectExpr(person, "name"), genesis.TextValue("Kim")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(program, env, genesis.CallExpr("answerFn", []genesis.Expr{}), genesis.IntValue(42)) == false {
+        return false
+    }
+    if genesis.ExpectProgram(program, env, genesis.CallExpr("personName", []genesis.Expr{person}), genesis.TextValue("Kim")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(program, env, genesis.CallExpr("sumTuple", []genesis.Expr{intTuple}), genesis.IntValue(6)) == false {
+        return false
+    }
+    if genesis.ExpectProgram(program, env, genesis.CallExpr("joinTuple", []genesis.Expr{textTuple}), genesis.TextValue("fo-genesis")) == false {
+        return false
+    }
+    if genesis.ExpectProgramErr(program, env, genesis.CallExpr("missing", []genesis.Expr{})) == false {
+        return false
+    }
+    if genesis.ExpectErr(env, genesis.VarExpr("missing")) == false {
+        return false
+    }
+    return true
+}
+
+func SmokeToolchainSelf() bool {
+    env := []genesis.EnvEntry{
+        genesis.Bind("flag", genesis.BoolValue(true)),
+        genesis.Bind("answer", genesis.IntValue(42)),
+    }
+
+    toolchain := genesis.BuildToolchainProgram()
+    moduleExpr := genesis.TextExpr("example.com/demo")
+
+    if genesis.ExpectProgram(toolchain, env, genesis.CallExpr("version", []genesis.Expr{}), genesis.TextValue("fo-selfhost-dev")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.CallExpr("help", []genesis.Expr{}), genesis.TextValue(
+        "Fo - self-hosted Fo toolchain core\n\n" +
+            "Usage:\n" +
+            "  fo init [module]\n" +
+            "  fo new <module|name>\n" +
+            "  fo mod <cmd>\n" +
+            "  fo build [path...]\n" +
+            "  fo check [path...]\n" +
+            "  fo run [path...]\n" +
+            "  fo test [path...]\n" +
+            "  fo fmt [path...]\n" +
+            "  fo format [path...]\n" +
+            "  fo version\n" +
+            "  fo help\n",
+    )) == false {
+        return false
+    }
+    if genesis.ExpectProgram(
+        toolchain,
+        env,
+        genesis.CallExpr("defaultArgs", []genesis.Expr{genesis.TupleExpr([]genesis.Expr{})}),
+        genesis.TupleValue([]genesis.Value{genesis.TextValue(".")}),
+    ) == false {
+        return false
+    }
+
+    newPlan := genesis.CallExpr("newPlan", []genesis.Expr{moduleExpr})
+    initPlan := genesis.CallExpr("initPlan", []genesis.Expr{moduleExpr})
+    modInitPlan := genesis.CallExpr("modInitPlan", []genesis.Expr{moduleExpr})
+    modTidyPlan := genesis.CallExpr("modTidyPlan", []genesis.Expr{moduleExpr})
+    modGraphPlan := genesis.CallExpr("modGraphPlan", []genesis.Expr{moduleExpr})
+
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(newPlan, "target"), genesis.TextValue("demo")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(initPlan, "target"), genesis.TextValue(".")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(modInitPlan, "target"), genesis.TextValue(".")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(modTidyPlan, "kind"), genesis.TextValue("mod_tidy")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(modGraphPlan, "output"), genesis.TextValue("mod graph planned")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(
+        toolchain,
+        env,
+        genesis.SelectExpr(genesis.HeadExpr(genesis.SelectExpr(newPlan, "files")), "path"),
+        genesis.TextValue("fo.mod"),
+    ) == false {
+        return false
+    }
+    if genesis.ExpectProgram(
+        toolchain,
+        env,
+        genesis.SelectExpr(genesis.HeadExpr(genesis.TailExpr(genesis.TailExpr(genesis.TailExpr(genesis.SelectExpr(newPlan, "files"))))), "path"),
+        genesis.TextValue("main.fo"),
+    ) == false {
+        return false
+    }
+    return true
+}
+
+func SmokeToolchainParity() bool {
+    env := []genesis.EnvEntry{
+        genesis.Bind("flag", genesis.BoolValue(true)),
+        genesis.Bind("answer", genesis.IntValue(42)),
+    }
+    toolchain := genesis.BuildToolchainProgram()
+    moduleExpr := genesis.TextExpr("example.com/demo")
+
+    versionResult := genesis.CallExpr("runSource", []genesis.Expr{genesis.TextExpr("version"), moduleExpr})
+    modInitResult := genesis.CallExpr("runSource", []genesis.Expr{genesis.TextExpr("mod-init"), moduleExpr})
+    modTidyResult := genesis.CallExpr("runSource", []genesis.Expr{genesis.TextExpr("mod-tidy"), moduleExpr})
+    graphResult := genesis.CallExpr("runSource", []genesis.Expr{genesis.TextExpr("mod-graph"), moduleExpr})
+    unknownResult := genesis.CallExpr("runSource", []genesis.Expr{genesis.TextExpr("wat"), moduleExpr})
+
+    realVersion := fo.RunSource([]string{"version"}, "", "")
+    realHelp := fo.RunSource([]string{"help"}, "", "")
+    realModInit := fo.RunSource([]string{"mod", "init", "example.com/demo"}, "", "")
+    realModTidy := fo.RunSource([]string{"mod", "tidy"}, "", "")
+    realGraph := fo.RunSource([]string{"mod", "graph"}, "", "")
+    realUnknown := fo.RunSource([]string{"wat"}, "", "")
+
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(versionResult, "output"), genesis.TextValue(realVersion.Output)) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(genesis.CallExpr("runSource", []genesis.Expr{genesis.TextExpr("help"), moduleExpr}), "output"), genesis.TextValue(realHelp.Output)) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(modInitResult, "output"), genesis.TextValue(realModInit.Output)) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(modTidyResult, "output"), genesis.TextValue(realModTidy.Output)) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(graphResult, "output"), genesis.TextValue(realGraph.Output)) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(genesis.SelectExpr(graphResult, "projectAction"), "kind"), genesis.TextValue("mod_graph")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(unknownResult, "exitCode"), genesis.IntValue(1)) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(unknownResult, "output"), genesis.TextValue(realUnknown.Output)) == false {
+        return false
+    }
+    seedPlan := genesis.SeedPlanExpr()
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(seedPlan, "kind"), genesis.TextValue("seed_snapshot")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(toolchain, env, genesis.SelectExpr(seedPlan, "target"), genesis.TextValue("bootstrap/seed")) == false {
+        return false
+    }
+    if genesis.ExpectProgram(
+        toolchain,
+        env,
+        genesis.SelectExpr(genesis.HeadExpr(genesis.SelectExpr(seedPlan, "files")), "path"),
+        genesis.TextValue("go.mod"),
+    ) == false {
+        return false
+    }
+    if genesis.ExpectProgram(
+        toolchain,
+        env,
+        genesis.SelectExpr(genesis.HeadExpr(genesis.TailExpr(genesis.SelectExpr(seedPlan, "files"))), "path"),
+        genesis.TextValue("SEED.txt"),
+    ) == false {
+        return false
+    }
+    return true
+}
+
+func Smoke() bool {
+    if SmokeCore() == false {
+        return false
+    }
+    if SmokeToolchainSelf() == false {
+        return false
+    }
+    if SmokeToolchainParity() == false {
+        return false
+    }
+    return true
+}
+
+func main() {
+    return
+}

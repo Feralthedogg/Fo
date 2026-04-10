@@ -1,0 +1,243 @@
+package base
+
+import "strings"
+
+type Option[T] enum {
+    Some(T)
+    None
+}
+
+type Result[T, E] enum {
+    Ok(T)
+    Err(E)
+}
+
+type Unit struct {
+}
+
+type IOResult[T] struct {
+    Ok bool
+    Value T
+    Error string
+}
+
+type StringResult struct {
+    Ok bool
+    Value string
+    Error string
+}
+
+type UnitResult struct {
+    Ok bool
+    Error string
+}
+
+type StringsResult struct {
+    Ok bool
+    Items []string
+    Error string
+}
+
+type Ordering enum {
+    Less
+    Equal
+    Greater
+}
+
+func unwrapOr[T any](opt Option[T], def T) T {
+    match opt {
+    case Some(v):
+        return v
+    case None:
+        return def
+    }
+}
+
+func UnwrapOr[T any](opt Option[T], def T) T {
+    return unwrapOr(opt, def)
+}
+
+func mapOption[A any, B any](opt Option[A], f func(A) B) Option[B] {
+    match opt {
+    case Some(v):
+        return Some[B](f(v))
+    case None:
+        return None[B]()
+    }
+}
+
+func MapOption[A any, B any](opt Option[A], f func(A) B) Option[B] {
+    return mapOption(opt, f)
+}
+
+func flatMapOption[A any, B any](opt Option[A], f func(A) Option[B]) Option[B] {
+    match opt {
+    case Some(v):
+        return f(v)
+    case None:
+        return None[B]()
+    }
+}
+
+func FlatMapOption[A any, B any](opt Option[A], f func(A) Option[B]) Option[B] {
+    return flatMapOption(opt, f)
+}
+
+func isSome[T any](opt Option[T]) bool {
+    match opt {
+    case Some(_):
+        return true
+    case None:
+        return false
+    }
+}
+
+func IsSome[T any](opt Option[T]) bool {
+    return isSome(opt)
+}
+
+func isNone[T any](opt Option[T]) bool {
+    match opt {
+    case Some(_):
+        return false
+    case None:
+        return true
+    }
+}
+
+func IsNone[T any](opt Option[T]) bool {
+    return isNone(opt)
+}
+
+func unwrapResult[T any, E any](res Result[T, E], def T) T {
+    match res {
+    case Ok(v):
+        return v
+    case Err(_):
+        return def
+    }
+}
+
+func UnwrapResult[T any, E any](res Result[T, E], def T) T {
+    return unwrapResult(res, def)
+}
+
+func mapResult[A any, B any, E any](res Result[A, E], f func(A) B) Result[B, E] {
+    match res {
+    case Ok(v):
+        return Ok[B, E](f(v))
+    case Err(err):
+        return Err[B, E](err)
+    }
+}
+
+func MapResult[A any, B any, E any](res Result[A, E], f func(A) B) Result[B, E] {
+    return mapResult(res, f)
+}
+
+func flatMapResult[A any, B any, E any](res Result[A, E], f func(A) Result[B, E]) Result[B, E] {
+    match res {
+    case Ok(v):
+        return f(v)
+    case Err(err):
+        return Err[B, E](err)
+    }
+}
+
+func FlatMapResult[A any, B any, E any](res Result[A, E], f func(A) Result[B, E]) Result[B, E] {
+    return flatMapResult(res, f)
+}
+
+func MakeSome[T any](v T) Option[T] {
+    return Some[T](v)
+}
+
+func MakeNone[T any]() Option[T] {
+    return None[T]()
+}
+
+func MakeOk[T any, E any](v T) Result[T, E] {
+    return Ok[T, E](v)
+}
+
+func MakeErr[T any, E any](err E) Result[T, E] {
+    return Err[T, E](err)
+}
+
+func MakeStringResult(ok bool, value string, err string) StringResult {
+    return StringResult{
+        Ok: ok,
+        Value: value,
+        Error: err,
+    }
+}
+
+func MakeUnitResult(ok bool, err string) UnitResult {
+    return UnitResult{
+        Ok: ok,
+        Error: err,
+    }
+}
+
+func MakeStringsResult(ok bool, items []string, err string) StringsResult {
+    return StringsResult{
+        Ok: ok,
+        Items: items,
+        Error: err,
+    }
+}
+
+func isOk[T any, E any](res Result[T, E]) bool {
+    match res {
+    case Ok(_):
+        return true
+    case Err(_):
+        return false
+    }
+}
+
+func IsOk[T any, E any](res Result[T, E]) bool {
+    return isOk(res)
+}
+
+func isErr[T any, E any](res Result[T, E]) bool {
+    match res {
+    case Ok(_):
+        return false
+    case Err(_):
+        return true
+    }
+}
+
+func IsErr[T any, E any](res Result[T, E]) bool {
+    return isErr(res)
+}
+
+func NormalizeText(src string) string {
+    return strings.ReplaceAll(strings.ReplaceAll(src, "\\n", "\n"), "\\t", "\t")
+}
+
+func GoOutputPath(path string) string {
+    if strings.HasSuffix(path, ".go") {
+        return path
+    }
+    if strings.HasSuffix(path, ".fo") {
+        return strings.TrimSuffix(path, ".fo") + ".go"
+    }
+    return path + ".go"
+}
+
+func DetectModulePath(src string) string {
+    return detectModuleLine(strings.Split(src, "\n"), 0)
+}
+
+func detectModuleLine(lines []string, idx int) string {
+    if idx >= len(lines) {
+        return ""
+    }
+    line := strings.TrimSpace(lines[idx])
+    if strings.HasPrefix(line, "module ") {
+        return strings.TrimSpace(strings.TrimPrefix(line, "module "))
+    }
+    return detectModuleLine(lines, idx + 1)
+}

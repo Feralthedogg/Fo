@@ -1,0 +1,26 @@
+package main
+
+import "fmt"
+
+type User struct {
+	Name string
+	Age  int
+	City string
+}
+
+func Birthday(u User) User {
+	return u{Age: u.Age + 1}
+}
+
+func Relocate(u User, city string) User {
+	return u{City: city}
+}
+
+func main() {
+	alice := User{Name: "Alice", Age: 30, City: "Seoul"}
+	older := Birthday(alice)
+	moved := Relocate(alice, "Busan")
+	fmt.Println(alice.Name, alice.Age, alice.City)
+	fmt.Println(older.Name, older.Age, older.City)
+	fmt.Println(moved.Name, moved.Age, moved.City)
+}

@@ -1,0 +1,21 @@
+package main
+
+func Double(x int) int {
+	return x * 2
+}
+
+func Inc(x int) int {
+	return x + 1
+}
+
+func Negate(x int) int {
+	return -x
+}
+
+func Transform(x int) int {
+	return x |> Double |> Inc |> Negate
+}
+
+func Apply(x int, f func(int) int) int {
+	return x |> f
+}

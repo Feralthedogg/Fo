@@ -1,0 +1,410 @@
+DIGEST 005fe439b1879b60aa758441e6e73fef
+FFo.CoreMatch
+R24:27 Stdlib.Lists.List <> <> lib
+R29:34 Stdlib.Strings.String <> <> lib
+R44:56 Stdlib.Lists.List ListNotations <> mod
+R74:82 Fo.Syntax <> <> lib
+R100:111 Fo.Semantics <> <> lib
+mod 122:132 <> FoCoreMatch
+R142:149 Fo.Syntax FoSyntax <> mod
+R159:169 Fo.Semantics FoSemantics <> mod
+def 184:194 FoCoreMatch match_subst
+R199:202 Corelib.Init.Datatypes <> list ind
+R211:213 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R205:210 Stdlib.Strings.String <> string ind
+R214:218 Fo.Semantics FoSemantics value ind
+def 232:243 FoCoreMatch match_domain
+R251:261 Fo.CoreMatch FoCoreMatch match_subst def
+binder 246:247 <> σ:1
+R266:269 Corelib.Init.Datatypes <> list ind
+R271:276 Stdlib.Strings.String <> string ind
+R289:290 Fo.CoreMatch <> σ:1 var
+R301:302 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R307:308 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R320:323 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R314:314 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R316:317 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R319:319 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R333:336 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R337:348 Fo.CoreMatch <> match_domain:2 def
+def 374:391 FoCoreMatch match_subst_unique
+R399:409 Fo.CoreMatch FoCoreMatch match_subst def
+binder 394:395 <> σ:4
+R424:428 Stdlib.Lists.List <> NoDup ind
+R431:442 Fo.CoreMatch FoCoreMatch match_domain def
+R444:445 Fo.CoreMatch <> σ:4 var
+ind 460:473 FoCoreMatch core_match_rel
+constr 522:529 FoCoreMatch CMR_Wild
+constr 575:584 FoCoreMatch CMR_Binder
+constr 644:657 FoCoreMatch CMR_TupleExact
+constr 751:763 FoCoreMatch CMR_CtorExact
+constr 870:884 FoCoreMatch CMR_StructExact
+R484:487 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R477:483 Fo.Syntax FoSyntax pattern ind
+R493:496 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R488:492 Fo.Semantics FoSemantics value ind
+R508:511 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R497:507 Fo.CoreMatch FoCoreMatch match_subst def
+binder 544:544 <> v:7
+R547:560 Fo.CoreMatch <> core_match_rel:5 ind
+R570:571 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R568:568 Fo.CoreMatch <> v:7 var
+R562:566 Fo.Syntax FoSyntax PWild constr
+binder 599:599 <> x:8
+binder 601:601 <> v:9
+R604:617 Fo.CoreMatch <> core_match_rel:5 ind
+R633:633 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R640:640 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R634:634 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R636:637 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R639:639 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R635:635 Fo.CoreMatch <> x:8 var
+R638:638 Fo.CoreMatch <> v:9 var
+R631:631 Fo.CoreMatch <> v:9 var
+R620:626 Fo.Syntax FoSyntax PBinder constr
+R628:628 Fo.CoreMatch <> x:8 var
+binder 672:673 <> ps:10
+binder 675:676 <> vs:11
+binder 678:679 <> σ:12
+R703:706 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R682:699 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R701:702 Fo.CoreMatch <> σ:12 var
+R707:720 Fo.CoreMatch <> core_match_rel:5 ind
+R746:747 Fo.CoreMatch <> σ:12 var
+R735:740 Fo.Semantics FoSemantics VTuple constr
+R742:743 Fo.CoreMatch <> vs:11 var
+R723:728 Fo.Syntax FoSyntax PTuple constr
+R730:731 Fo.CoreMatch <> ps:10 var
+binder 778:781 <> name:13
+binder 783:784 <> ps:14
+binder 786:787 <> vs:15
+binder 789:790 <> σ:16
+R814:817 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R793:810 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R812:813 Fo.CoreMatch <> σ:16 var
+R818:831 Fo.CoreMatch <> core_match_rel:5 ind
+R865:866 Fo.CoreMatch <> σ:16 var
+R850:854 Fo.Semantics FoSemantics VCtor constr
+R856:859 Fo.CoreMatch <> name:13 var
+R861:862 Fo.CoreMatch <> vs:15 var
+R834:838 Fo.Syntax FoSyntax PCtor constr
+R840:843 Fo.CoreMatch <> name:13 var
+R845:846 Fo.CoreMatch <> ps:14 var
+binder 899:902 <> name:17
+binder 904:905 <> fs:18
+binder 907:908 <> vs:19
+binder 910:911 <> σ:20
+R935:938 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R914:931 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R933:934 Fo.CoreMatch <> σ:20 var
+R939:952 Fo.CoreMatch <> core_match_rel:5 ind
+R990:991 Fo.CoreMatch <> σ:20 var
+R973:979 Fo.Semantics FoSemantics VStruct constr
+R981:984 Fo.CoreMatch <> name:17 var
+R986:987 Fo.CoreMatch <> vs:19 var
+R955:961 Fo.Syntax FoSyntax PStruct constr
+R963:966 Fo.CoreMatch <> name:17 var
+R968:969 Fo.CoreMatch <> fs:18 var
+scheme 460:473 FoCoreMatch core_match_rel_ind
+scheme 460:473 FoCoreMatch core_match_rel_sind
+def 1006:1019 FoCoreMatch branch_matches
+R1026:1032 Fo.Syntax FoSyntax pattern ind
+binder 1022:1022 <> p:21
+R1040:1044 Fo.Semantics FoSemantics value ind
+binder 1036:1036 <> v:22
+R1059:1065 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R1068:1069 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 1066:1067 <> σ:23
+R1070:1083 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R1085:1085 Fo.CoreMatch <> p:21 var
+R1087:1087 Fo.CoreMatch <> v:22 var
+R1089:1090 Fo.CoreMatch <> σ:23 var
+prf 1102:1125 FoCoreMatch core_match_branch_unique
+binder 1138:1138 <> p:24
+binder 1140:1140 <> v:25
+binder 1142:1144 <> σ1:26
+binder 1146:1148 <> σ2:27
+R1155:1155 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1192:1200 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1165:1168 Corelib.Init.Logic <> ::type_scope:x_'\/'_x not
+R1157:1159 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1156:1156 Fo.CoreMatch <> p:24 var
+R1160:1164 Fo.Syntax FoSyntax PWild constr
+R1169:1175 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R1177:1178 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 1176:1176 <> x:28
+R1180:1182 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1179:1179 Fo.CoreMatch <> p:24 var
+R1183:1189 Fo.Syntax FoSyntax PBinder constr
+R1191:1191 Fo.CoreMatch <> x:28 var
+R1223:1230 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1201:1214 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R1216:1216 Fo.CoreMatch <> p:24 var
+R1218:1218 Fo.CoreMatch <> v:25 var
+R1220:1222 Fo.CoreMatch <> σ1:26 var
+R1253:1260 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1231:1244 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R1246:1246 Fo.CoreMatch <> p:24 var
+R1248:1248 Fo.CoreMatch <> v:25 var
+R1250:1252 Fo.CoreMatch <> σ2:27 var
+R1264:1266 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1261:1263 Fo.CoreMatch <> σ1:26 var
+R1267:1269 Fo.CoreMatch <> σ2:27 var
+prf 1493:1516 FoCoreMatch core_match_binding_sound
+binder 1529:1529 <> x:29
+binder 1531:1531 <> v:30
+R1538:1551 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R1554:1560 Fo.Syntax FoSyntax PBinder constr
+R1562:1562 Fo.CoreMatch <> x:29 var
+R1565:1565 Fo.CoreMatch <> v:30 var
+R1567:1567 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1574:1574 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1568:1568 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1570:1571 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1573:1573 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1569:1569 Fo.CoreMatch <> x:29 var
+R1572:1572 Fo.CoreMatch <> v:30 var
+prf 1621:1640 FoCoreMatch core_match_wild_only
+binder 1653:1653 <> v:31
+binder 1655:1656 <> σ:32
+R1688:1695 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1663:1676 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R1678:1682 Fo.Syntax FoSyntax PWild constr
+R1684:1684 Fo.CoreMatch <> v:31 var
+R1686:1687 Fo.CoreMatch <> σ:32 var
+R1698:1700 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1696:1697 Fo.CoreMatch <> σ:32 var
+R1701:1702 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+prf 1771:1792 FoCoreMatch core_match_binder_only
+binder 1805:1805 <> x:33
+binder 1807:1807 <> v:34
+binder 1809:1810 <> σ:35
+R1848:1855 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1817:1830 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R1833:1839 Fo.Syntax FoSyntax PBinder constr
+R1841:1841 Fo.CoreMatch <> x:33 var
+R1844:1844 Fo.CoreMatch <> v:34 var
+R1846:1847 Fo.CoreMatch <> σ:35 var
+R1858:1860 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1856:1857 Fo.CoreMatch <> σ:35 var
+R1861:1861 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1868:1868 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R1862:1862 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1864:1865 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1867:1867 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R1863:1863 Fo.CoreMatch <> x:33 var
+R1866:1866 Fo.CoreMatch <> v:34 var
+prf 1939:1966 FoCoreMatch core_match_wild_domain_empty
+binder 1979:1979 <> v:36
+binder 1981:1982 <> σ:37
+R2014:2021 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R1989:2002 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R2004:2008 Fo.Syntax FoSyntax PWild constr
+R2010:2010 Fo.CoreMatch <> v:36 var
+R2012:2013 Fo.CoreMatch <> σ:37 var
+R2037:2039 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2022:2033 Fo.CoreMatch FoCoreMatch match_domain def
+R2035:2036 Fo.CoreMatch <> σ:37 var
+R2040:2041 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2079:2098 Fo.CoreMatch FoCoreMatch core_match_wild_only thm
+R2079:2098 Fo.CoreMatch FoCoreMatch core_match_wild_only thm
+R2079:2098 Fo.CoreMatch FoCoreMatch core_match_wild_only thm
+prf 2137:2170 FoCoreMatch core_match_binder_domain_singleton
+binder 2183:2183 <> x:38
+binder 2185:2185 <> v:39
+binder 2187:2188 <> σ:40
+R2226:2233 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2195:2208 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R2211:2217 Fo.Syntax FoSyntax PBinder constr
+R2219:2219 Fo.CoreMatch <> x:38 var
+R2222:2222 Fo.CoreMatch <> v:39 var
+R2224:2225 Fo.CoreMatch <> σ:40 var
+R2249:2251 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2234:2245 Fo.CoreMatch FoCoreMatch match_domain def
+R2247:2248 Fo.CoreMatch <> σ:40 var
+R2252:2252 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R2254:2254 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R2253:2253 Fo.CoreMatch <> x:38 var
+R2294:2315 Fo.CoreMatch FoCoreMatch core_match_binder_only thm
+R2294:2315 Fo.CoreMatch FoCoreMatch core_match_binder_only thm
+R2294:2315 Fo.CoreMatch FoCoreMatch core_match_binder_only thm
+prf 2356:2377 FoCoreMatch core_match_tuple_exact
+binder 2390:2391 <> ps:41
+binder 2393:2394 <> vs:42
+binder 2396:2397 <> σ:43
+R2425:2432 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2404:2421 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R2423:2424 Fo.CoreMatch <> σ:43 var
+R2433:2446 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R2449:2454 Fo.Syntax FoSyntax PTuple constr
+R2456:2457 Fo.CoreMatch <> ps:41 var
+R2461:2466 Fo.Semantics FoSemantics VTuple constr
+R2468:2469 Fo.CoreMatch <> vs:42 var
+R2472:2473 Fo.CoreMatch <> σ:43 var
+prf 2532:2552 FoCoreMatch core_match_ctor_exact
+binder 2565:2568 <> name:44
+binder 2570:2571 <> ps:45
+binder 2573:2574 <> vs:46
+binder 2576:2577 <> σ:47
+R2605:2612 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2584:2601 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R2603:2604 Fo.CoreMatch <> σ:47 var
+R2613:2626 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R2629:2633 Fo.Syntax FoSyntax PCtor constr
+R2635:2638 Fo.CoreMatch <> name:44 var
+R2640:2641 Fo.CoreMatch <> ps:45 var
+R2645:2649 Fo.Semantics FoSemantics VCtor constr
+R2651:2654 Fo.CoreMatch <> name:44 var
+R2656:2657 Fo.CoreMatch <> vs:46 var
+R2660:2661 Fo.CoreMatch <> σ:47 var
+prf 2720:2742 FoCoreMatch core_match_struct_exact
+binder 2755:2758 <> name:48
+binder 2760:2761 <> fs:49
+binder 2763:2764 <> vs:50
+binder 2766:2767 <> σ:51
+R2795:2802 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2774:2791 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R2793:2794 Fo.CoreMatch <> σ:51 var
+R2803:2816 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R2819:2825 Fo.Syntax FoSyntax PStruct constr
+R2827:2830 Fo.CoreMatch <> name:48 var
+R2832:2833 Fo.CoreMatch <> fs:49 var
+R2837:2843 Fo.Semantics FoSemantics VStruct constr
+R2845:2848 Fo.CoreMatch <> name:48 var
+R2850:2851 Fo.CoreMatch <> vs:50 var
+R2854:2855 Fo.CoreMatch <> σ:51 var
+prf 2914:2936 FoCoreMatch core_match_tuple_unique
+binder 2949:2950 <> ps:52
+binder 2952:2953 <> vs:53
+binder 2955:2956 <> σ:54
+R3004:3011 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R2963:2976 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R2979:2984 Fo.Syntax FoSyntax PTuple constr
+R2986:2987 Fo.CoreMatch <> ps:52 var
+R2991:2996 Fo.Semantics FoSemantics VTuple constr
+R2998:2999 Fo.CoreMatch <> vs:53 var
+R3002:3003 Fo.CoreMatch <> σ:54 var
+R3012:3029 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R3031:3032 Fo.CoreMatch <> σ:54 var
+prf 3102:3123 FoCoreMatch core_match_ctor_unique
+binder 3136:3139 <> name:55
+binder 3141:3142 <> ps:56
+binder 3144:3145 <> vs:57
+binder 3147:3148 <> σ:58
+R3204:3211 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3155:3168 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R3171:3175 Fo.Syntax FoSyntax PCtor constr
+R3177:3180 Fo.CoreMatch <> name:55 var
+R3182:3183 Fo.CoreMatch <> ps:56 var
+R3187:3191 Fo.Semantics FoSemantics VCtor constr
+R3193:3196 Fo.CoreMatch <> name:55 var
+R3198:3199 Fo.CoreMatch <> vs:57 var
+R3202:3203 Fo.CoreMatch <> σ:58 var
+R3212:3229 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R3231:3232 Fo.CoreMatch <> σ:58 var
+prf 3307:3330 FoCoreMatch core_match_struct_unique
+binder 3343:3346 <> name:59
+binder 3348:3349 <> fs:60
+binder 3351:3352 <> vs:61
+binder 3354:3355 <> σ:62
+R3415:3422 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3362:3375 Fo.CoreMatch FoCoreMatch core_match_rel ind
+R3378:3384 Fo.Syntax FoSyntax PStruct constr
+R3386:3389 Fo.CoreMatch <> name:59 var
+R3391:3392 Fo.CoreMatch <> fs:60 var
+R3396:3402 Fo.Semantics FoSemantics VStruct constr
+R3404:3407 Fo.CoreMatch <> name:59 var
+R3409:3410 Fo.CoreMatch <> vs:61 var
+R3413:3414 Fo.CoreMatch <> σ:62 var
+R3423:3440 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R3442:3443 Fo.CoreMatch <> σ:62 var
+prf 3518:3548 FoCoreMatch core_match_progress_tuple_exact
+binder 3561:3562 <> ps:63
+binder 3564:3565 <> vs:64
+binder 3567:3568 <> σ:65
+R3596:3603 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3575:3592 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R3594:3595 Fo.CoreMatch <> σ:65 var
+R3604:3617 Fo.CoreMatch FoCoreMatch branch_matches def
+R3620:3625 Fo.Syntax FoSyntax PTuple constr
+R3627:3628 Fo.CoreMatch <> ps:63 var
+R3632:3637 Fo.Semantics FoSemantics VTuple constr
+R3639:3640 Fo.CoreMatch <> vs:64 var
+prf 3711:3740 FoCoreMatch core_match_progress_ctor_exact
+binder 3753:3756 <> name:66
+binder 3758:3759 <> ps:67
+binder 3761:3762 <> vs:68
+binder 3764:3765 <> σ:69
+R3793:3800 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3772:3789 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R3791:3792 Fo.CoreMatch <> σ:69 var
+R3801:3814 Fo.CoreMatch FoCoreMatch branch_matches def
+R3817:3821 Fo.Syntax FoSyntax PCtor constr
+R3823:3826 Fo.CoreMatch <> name:66 var
+R3828:3829 Fo.CoreMatch <> ps:67 var
+R3833:3837 Fo.Semantics FoSemantics VCtor constr
+R3839:3842 Fo.CoreMatch <> name:66 var
+R3844:3845 Fo.CoreMatch <> vs:68 var
+prf 3916:3947 FoCoreMatch core_match_progress_struct_exact
+binder 3960:3963 <> name:70
+binder 3965:3966 <> fs:71
+binder 3968:3969 <> vs:72
+binder 3971:3972 <> σ:73
+R4000:4007 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3979:3996 Fo.CoreMatch FoCoreMatch match_subst_unique def
+R3998:3999 Fo.CoreMatch <> σ:73 var
+R4008:4021 Fo.CoreMatch FoCoreMatch branch_matches def
+R4024:4030 Fo.Syntax FoSyntax PStruct constr
+R4032:4035 Fo.CoreMatch <> name:70 var
+R4037:4038 Fo.CoreMatch <> fs:71 var
+R4042:4048 Fo.Semantics FoSemantics VStruct constr
+R4050:4053 Fo.CoreMatch <> name:70 var
+R4055:4056 Fo.CoreMatch <> vs:72 var
+prf 4127:4150 FoCoreMatch core_match_progress_wild
+binder 4163:4163 <> v:74
+R4166:4179 Fo.CoreMatch FoCoreMatch branch_matches def
+R4181:4185 Fo.Syntax FoSyntax PWild constr
+R4187:4187 Fo.CoreMatch <> v:74 var
+R4214:4215 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R4214:4215 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+prf 4245:4270 FoCoreMatch core_match_progress_binder
+binder 4283:4283 <> x:75
+binder 4285:4285 <> v:76
+R4288:4301 Fo.CoreMatch FoCoreMatch branch_matches def
+R4304:4310 Fo.Syntax FoSyntax PBinder constr
+R4312:4312 Fo.CoreMatch <> x:75 var
+R4315:4315 Fo.CoreMatch <> v:76 var
+R4342:4342 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R4349:4349 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R4343:4343 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R4345:4346 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R4348:4348 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R4342:4342 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R4349:4349 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R4343:4343 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R4345:4346 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R4348:4348 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+prf 4379:4397 FoCoreMatch core_match_progress
+binder 4410:4410 <> p:77
+binder 4412:4412 <> v:78
+R4419:4419 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4456:4464 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4429:4432 Corelib.Init.Logic <> ::type_scope:x_'\/'_x not
+R4421:4423 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4420:4420 Fo.CoreMatch <> p:77 var
+R4424:4428 Fo.Syntax FoSyntax PWild constr
+R4433:4439 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R4441:4442 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 4440:4440 <> x:79
+R4444:4446 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4443:4443 Fo.CoreMatch <> p:77 var
+R4447:4453 Fo.Syntax FoSyntax PBinder constr
+R4455:4455 Fo.CoreMatch <> x:79 var
+R4465:4478 Fo.CoreMatch FoCoreMatch branch_matches def
+R4480:4480 Fo.CoreMatch <> p:77 var
+R4482:4482 Fo.CoreMatch <> v:78 var
+R4552:4575 Fo.CoreMatch FoCoreMatch core_match_progress_wild thm
+R4552:4575 Fo.CoreMatch FoCoreMatch core_match_progress_wild thm
+R4618:4643 Fo.CoreMatch FoCoreMatch core_match_progress_binder thm
+R4618:4643 Fo.CoreMatch FoCoreMatch core_match_progress_binder thm
+R4656:4666 Fo.CoreMatch FoCoreMatch <> mod

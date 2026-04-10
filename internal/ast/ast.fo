@@ -1,0 +1,2245 @@
+package ast
+
+import "github.com/Feralthedogg/Fo/internal/token"
+
+type Node interface {
+    TokenPos() token.Pos
+    nodeTag()
+}
+
+type Decl interface {
+    TokenPos() token.Pos
+    nodeTag()
+    declTag()
+}
+
+type Stmt interface {
+    TokenPos() token.Pos
+    nodeTag()
+    stmtTag()
+}
+
+type Expr interface {
+    TokenPos() token.Pos
+    nodeTag()
+    exprTag()
+}
+
+type Pattern interface {
+    TokenPos() token.Pos
+    nodeTag()
+    patternTag()
+}
+
+type File struct {
+    Package Option[PackageDecl]
+    Imports []ImportDecl
+    Decls []Decl
+}
+
+func (f File) TokenPos() token.Pos {
+    if isNone[PackageDecl](f.Package) {
+        return ZeroPos()
+    }
+    pkg := unwrapOr(f.Package, MakePackageDecl(ZeroPos(), ""))
+    return pkg.TokenPos()
+}
+
+func (f File) nodeTag() {
+}
+
+type PackageDecl struct {
+    Pos token.Pos
+    Name string
+}
+
+func (d PackageDecl) TokenPos() token.Pos { return d.Pos }
+func (d PackageDecl) nodeTag() {}
+func (d PackageDecl) declTag() {}
+
+type ImportDecl struct {
+    Pos token.Pos
+    Path string
+}
+
+func (d ImportDecl) TokenPos() token.Pos { return d.Pos }
+func (d ImportDecl) nodeTag() {}
+func (d ImportDecl) declTag() {}
+
+type FuncDecl struct {
+    Pos token.Pos
+    IsExtern bool
+    Receiver Option[FieldDef]
+    Name string
+    TypeParams []TypeParam
+    Params []FieldDef
+    Results []TypeExpr
+    Body Option[BlockStmt]
+}
+
+func (d FuncDecl) TokenPos() token.Pos { return d.Pos }
+func (d FuncDecl) nodeTag() {}
+func (d FuncDecl) declTag() {}
+
+type TypeDecl struct {
+    Pos token.Pos
+    Name string
+    TypeParams []TypeParam
+    Def TypeDef
+    Deriving []string
+}
+
+func (d TypeDecl) TokenPos() token.Pos { return d.Pos }
+func (d TypeDecl) nodeTag() {}
+func (d TypeDecl) declTag() {}
+
+type TypeDef interface {
+    TokenPos() token.Pos
+    nodeTag()
+    typeDefTag()
+}
+
+type StructDef struct {
+    Pos token.Pos
+    Fields []FieldDef
+}
+
+func (d StructDef) TokenPos() token.Pos { return d.Pos }
+func (d StructDef) nodeTag() {}
+func (d StructDef) typeDefTag() {}
+
+type EnumDef struct {
+    Pos token.Pos
+    Variants []Variant
+}
+
+func (d EnumDef) TokenPos() token.Pos { return d.Pos }
+func (d EnumDef) nodeTag() {}
+func (d EnumDef) typeDefTag() {}
+
+type Variant struct {
+    Pos token.Pos
+    Name string
+    Fields []TypeExpr
+}
+
+func (v Variant) TokenPos() token.Pos { return v.Pos }
+func (v Variant) nodeTag() {}
+
+type InterfaceDef struct {
+    Pos token.Pos
+    Methods []MethodSig
+}
+
+func (d InterfaceDef) TokenPos() token.Pos { return d.Pos }
+func (d InterfaceDef) nodeTag() {}
+func (d InterfaceDef) typeDefTag() {}
+
+type MethodSig struct {
+    Pos token.Pos
+    Name string
+    Params []FieldDef
+    Results []TypeExpr
+}
+
+func (m MethodSig) TokenPos() token.Pos { return m.Pos }
+func (m MethodSig) nodeTag() {}
+
+type FieldDef struct {
+    Pos token.Pos
+    Name string
+    Type TypeExpr
+    Variadic bool
+}
+
+func (f FieldDef) TokenPos() token.Pos { return f.Pos }
+func (f FieldDef) nodeTag() {}
+
+type TypeParam struct {
+    Pos token.Pos
+    Name string
+    Constraint Option[TypeExpr]
+}
+
+func (t TypeParam) TokenPos() token.Pos { return t.Pos }
+func (t TypeParam) nodeTag() {}
+
+func MakeTypeParam(pos token.Pos, name string, constraint Option[TypeExpr]) TypeParam {
+    return TypeParam{
+        Pos: pos,
+        Name: name,
+        Constraint: constraint,
+    }
+}
+
+type TypeExpr interface {
+    TokenPos() token.Pos
+    nodeTag()
+    typeExprTag()
+}
+
+type NamedType struct {
+    Pos token.Pos
+    Name string
+    TypeArgs []TypeExpr
+}
+
+func (t NamedType) TokenPos() token.Pos { return t.Pos }
+func (t NamedType) nodeTag() {}
+func (t NamedType) typeExprTag() {}
+
+type SliceType struct {
+    Pos token.Pos
+    Elem TypeExpr
+}
+
+func (t SliceType) TokenPos() token.Pos { return t.Pos }
+func (t SliceType) nodeTag() {}
+func (t SliceType) typeExprTag() {}
+
+type MapType struct {
+    Pos token.Pos
+    Key TypeExpr
+    Value TypeExpr
+}
+
+func (t MapType) TokenPos() token.Pos { return t.Pos }
+func (t MapType) nodeTag() {}
+func (t MapType) typeExprTag() {}
+
+type TupleType struct {
+    Pos token.Pos
+    Elems []TypeExpr
+}
+
+func (t TupleType) TokenPos() token.Pos { return t.Pos }
+func (t TupleType) nodeTag() {}
+func (t TupleType) typeExprTag() {}
+
+type FuncType struct {
+    Pos token.Pos
+    Params []TypeExpr
+    Results []TypeExpr
+}
+
+func (t FuncType) TokenPos() token.Pos { return t.Pos }
+func (t FuncType) nodeTag() {}
+func (t FuncType) typeExprTag() {}
+
+type ChanType struct {
+    Pos token.Pos
+    Elem TypeExpr
+    ReceiveOnly bool
+}
+
+func (t ChanType) TokenPos() token.Pos { return t.Pos }
+func (t ChanType) nodeTag() {}
+func (t ChanType) typeExprTag() {}
+
+type QualifiedType struct {
+    Pos token.Pos
+    Package string
+    Name string
+    TypeArgs []TypeExpr
+}
+
+func (t QualifiedType) TokenPos() token.Pos { return t.Pos }
+func (t QualifiedType) nodeTag() {}
+func (t QualifiedType) typeExprTag() {}
+
+type BlockStmt struct {
+    Pos token.Pos
+    Stmts []Stmt
+}
+
+func (s BlockStmt) TokenPos() token.Pos { return s.Pos }
+func (s BlockStmt) nodeTag() {}
+func (s BlockStmt) stmtTag() {}
+
+type BindStmt struct {
+    Pos token.Pos
+    Names []string
+    Value Expr
+}
+
+func (s BindStmt) TokenPos() token.Pos { return s.Pos }
+func (s BindStmt) nodeTag() {}
+func (s BindStmt) stmtTag() {}
+
+type ReturnStmt struct {
+    Pos token.Pos
+    Results []Expr
+}
+
+func (s ReturnStmt) TokenPos() token.Pos { return s.Pos }
+func (s ReturnStmt) nodeTag() {}
+func (s ReturnStmt) stmtTag() {}
+
+type IfStmt struct {
+    Pos token.Pos
+    Cond Expr
+    Body BlockStmt
+    Else Option[Stmt]
+}
+
+func (s IfStmt) TokenPos() token.Pos { return s.Pos }
+func (s IfStmt) nodeTag() {}
+func (s IfStmt) stmtTag() {}
+
+type SwitchStmt struct {
+    Pos token.Pos
+    Tag Option[Expr]
+    Cases []CaseClause
+}
+
+func (s SwitchStmt) TokenPos() token.Pos { return s.Pos }
+func (s SwitchStmt) nodeTag() {}
+func (s SwitchStmt) stmtTag() {}
+
+type CaseClause struct {
+    Pos token.Pos
+    IsDefault bool
+    Exprs []Expr
+    Body []Stmt
+}
+
+func (c CaseClause) TokenPos() token.Pos { return c.Pos }
+func (c CaseClause) nodeTag() {}
+
+type MatchStmt struct {
+    Pos token.Pos
+    Tag Expr
+    Cases []MatchCase
+}
+
+func (s MatchStmt) TokenPos() token.Pos { return s.Pos }
+func (s MatchStmt) nodeTag() {}
+func (s MatchStmt) stmtTag() {}
+
+type MatchCase struct {
+    Pos token.Pos
+    Pattern Pattern
+    Body []Stmt
+}
+
+func (c MatchCase) TokenPos() token.Pos { return c.Pos }
+func (c MatchCase) nodeTag() {}
+
+type ExprStmt struct {
+    Pos token.Pos
+    Expr Expr
+}
+
+func (s ExprStmt) TokenPos() token.Pos { return s.Pos }
+func (s ExprStmt) nodeTag() {}
+func (s ExprStmt) stmtTag() {}
+
+type Ident struct {
+    Pos token.Pos
+    Name string
+}
+
+func (e Ident) TokenPos() token.Pos { return e.Pos }
+func (e Ident) nodeTag() {}
+func (e Ident) exprTag() {}
+
+type BasicLit struct {
+    Pos token.Pos
+    Kind token.Type
+    Value string
+}
+
+func (e BasicLit) TokenPos() token.Pos { return e.Pos }
+func (e BasicLit) nodeTag() {}
+func (e BasicLit) exprTag() {}
+
+type TupleLit struct {
+    Pos token.Pos
+    Elems []Expr
+}
+
+func (e TupleLit) TokenPos() token.Pos { return e.Pos }
+func (e TupleLit) nodeTag() {}
+func (e TupleLit) exprTag() {}
+
+type SliceLit struct {
+    Pos token.Pos
+    ElemType Option[TypeExpr]
+    Elems []Expr
+}
+
+func (e SliceLit) TokenPos() token.Pos { return e.Pos }
+func (e SliceLit) nodeTag() {}
+func (e SliceLit) exprTag() {}
+
+type MapLit struct {
+    Pos token.Pos
+    KeyType TypeExpr
+    ValueType TypeExpr
+    Entries []MapEntry
+}
+
+func (e MapLit) TokenPos() token.Pos { return e.Pos }
+func (e MapLit) nodeTag() {}
+func (e MapLit) exprTag() {}
+
+type MapEntry struct {
+    Key Expr
+    Value Expr
+}
+
+type StructLit struct {
+    Pos token.Pos
+    Type string
+    Fields []FieldInit
+}
+
+func (e StructLit) TokenPos() token.Pos { return e.Pos }
+func (e StructLit) nodeTag() {}
+func (e StructLit) exprTag() {}
+
+type FieldInit struct {
+    Name string
+    Value Expr
+}
+
+type CopyUpdateExpr struct {
+    Pos token.Pos
+    Source Expr
+    Updates []FieldUpdate
+}
+
+func (e CopyUpdateExpr) TokenPos() token.Pos { return e.Pos }
+func (e CopyUpdateExpr) nodeTag() {}
+func (e CopyUpdateExpr) exprTag() {}
+
+type FieldUpdate struct {
+    Path []string
+    Value Expr
+}
+
+type FuncLit struct {
+    Pos token.Pos
+    Params []FieldDef
+    Results []TypeExpr
+    Body BlockStmt
+}
+
+func (e FuncLit) TokenPos() token.Pos { return e.Pos }
+func (e FuncLit) nodeTag() {}
+func (e FuncLit) exprTag() {}
+
+type CallExpr struct {
+    Pos token.Pos
+    Func Expr
+    TypeArgs []TypeExpr
+    Args []Expr
+}
+
+func (e CallExpr) TokenPos() token.Pos { return e.Pos }
+func (e CallExpr) nodeTag() {}
+func (e CallExpr) exprTag() {}
+
+type PipelineExpr struct {
+    Pos token.Pos
+    Left Expr
+    Right Expr
+}
+
+func (e PipelineExpr) TokenPos() token.Pos { return e.Pos }
+func (e PipelineExpr) nodeTag() {}
+func (e PipelineExpr) exprTag() {}
+
+type BinaryExpr struct {
+    Pos token.Pos
+    Op token.Type
+    Left Expr
+    Right Expr
+}
+
+func (e BinaryExpr) TokenPos() token.Pos { return e.Pos }
+func (e BinaryExpr) nodeTag() {}
+func (e BinaryExpr) exprTag() {}
+
+type UnaryExpr struct {
+    Pos token.Pos
+    Op token.Type
+    Operand Expr
+}
+
+func (e UnaryExpr) TokenPos() token.Pos { return e.Pos }
+func (e UnaryExpr) nodeTag() {}
+func (e UnaryExpr) exprTag() {}
+
+type SelectorExpr struct {
+    Pos token.Pos
+    X Expr
+    Field string
+}
+
+func (e SelectorExpr) TokenPos() token.Pos { return e.Pos }
+func (e SelectorExpr) nodeTag() {}
+func (e SelectorExpr) exprTag() {}
+
+type IndexExpr struct {
+    Pos token.Pos
+    X Expr
+    Index Expr
+}
+
+func (e IndexExpr) TokenPos() token.Pos { return e.Pos }
+func (e IndexExpr) nodeTag() {}
+func (e IndexExpr) exprTag() {}
+
+type SliceExpr struct {
+    Pos token.Pos
+    X Expr
+    Low Option[Expr]
+    High Option[Expr]
+}
+
+func (e SliceExpr) TokenPos() token.Pos { return e.Pos }
+func (e SliceExpr) nodeTag() {}
+func (e SliceExpr) exprTag() {}
+
+type MatchExpr struct {
+    Pos token.Pos
+    Tag Expr
+    Cases []MatchCase
+}
+
+func (e MatchExpr) TokenPos() token.Pos { return e.Pos }
+func (e MatchExpr) nodeTag() {}
+func (e MatchExpr) exprTag() {}
+
+type WildcardPattern struct {
+    Pos token.Pos
+}
+
+func (p WildcardPattern) TokenPos() token.Pos { return p.Pos }
+func (p WildcardPattern) nodeTag() {}
+func (p WildcardPattern) patternTag() {}
+
+type IdentPattern struct {
+    Pos token.Pos
+    Name string
+}
+
+func (p IdentPattern) TokenPos() token.Pos { return p.Pos }
+func (p IdentPattern) nodeTag() {}
+func (p IdentPattern) patternTag() {}
+
+type LitPattern struct {
+    Pos token.Pos
+    Kind token.Type
+    Value string
+}
+
+func (p LitPattern) TokenPos() token.Pos { return p.Pos }
+func (p LitPattern) nodeTag() {}
+func (p LitPattern) patternTag() {}
+
+type EnumPattern struct {
+    Pos token.Pos
+    Name string
+    SubPats []Pattern
+}
+
+func (p EnumPattern) TokenPos() token.Pos { return p.Pos }
+func (p EnumPattern) nodeTag() {}
+func (p EnumPattern) patternTag() {}
+
+type StructPattern struct {
+    Pos token.Pos
+    Type string
+    Fields []FieldPattern
+}
+
+func (p StructPattern) TokenPos() token.Pos { return p.Pos }
+func (p StructPattern) nodeTag() {}
+func (p StructPattern) patternTag() {}
+
+type FieldPattern struct {
+    Name string
+    Pattern Pattern
+}
+
+type TuplePattern struct {
+    Pos token.Pos
+    Elems []Pattern
+}
+
+func (p TuplePattern) TokenPos() token.Pos { return p.Pos }
+func (p TuplePattern) nodeTag() {}
+func (p TuplePattern) patternTag() {}
+
+func ZeroPos() token.Pos {
+    return token.MakePos("", 0, 0, 0)
+}
+
+func MakePackageDecl(pos token.Pos, name string) PackageDecl {
+    return PackageDecl{
+        Pos: pos,
+        Name: name,
+    }
+}
+
+func MakeImportDecl(pos token.Pos, path string) ImportDecl {
+    return ImportDecl{
+        Pos: pos,
+        Path: path,
+    }
+}
+
+func MakeIdent(pos token.Pos, name string) Ident {
+    return Ident{
+        Pos: pos,
+        Name: name,
+    }
+}
+
+func MakeFile(pkg PackageDecl) File {
+    return File{
+        Package: Some[PackageDecl](pkg),
+        Imports: []ImportDecl{},
+        Decls: []Decl{},
+    }
+}
+
+func EmptyFile() File {
+    return File{
+        Package: None[PackageDecl](),
+        Imports: []ImportDecl{},
+        Decls: []Decl{},
+    }
+}
+
+func FileWithPackage(file File, pkg PackageDecl) File {
+    return file{
+        Package: Some[PackageDecl](pkg),
+    }
+}
+
+func FileWithDecl(file File, decl Decl) File {
+    return file{
+        Decls: append(file.Decls, decl),
+    }
+}
+
+func FileWithImport(file File, decl ImportDecl) File {
+    return file{
+        Imports: append(file.Imports, decl),
+    }
+}
+
+func MakeNamedType(pos token.Pos, name string) NamedType {
+    return NamedType{
+        Pos: pos,
+        Name: name,
+        TypeArgs: []TypeExpr{},
+    }
+}
+
+func MakeNamedTypeWithArgs(pos token.Pos, name string, typeArgs []TypeExpr) NamedType {
+    return NamedType{
+        Pos: pos,
+        Name: name,
+        TypeArgs: typeArgs,
+    }
+}
+
+func MakeSliceType(pos token.Pos, elem TypeExpr) SliceType {
+    return SliceType{
+        Pos: pos,
+        Elem: elem,
+    }
+}
+
+func MakeMapType(pos token.Pos, key TypeExpr, value TypeExpr) MapType {
+    return MapType{
+        Pos: pos,
+        Key: key,
+        Value: value,
+    }
+}
+
+func MakeFuncType(pos token.Pos, params []TypeExpr, results []TypeExpr) FuncType {
+    return FuncType{
+        Pos: pos,
+        Params: params,
+        Results: results,
+    }
+}
+
+func MakeChanType(pos token.Pos, elem TypeExpr, receiveOnly bool) ChanType {
+    return ChanType{
+        Pos: pos,
+        Elem: elem,
+        ReceiveOnly: receiveOnly,
+    }
+}
+
+func MakeQualifiedType(pos token.Pos, pkg string, name string) QualifiedType {
+    return QualifiedType{
+        Pos: pos,
+        Package: pkg,
+        Name: name,
+        TypeArgs: []TypeExpr{},
+    }
+}
+
+func MakeQualifiedTypeWithArgs(pos token.Pos, pkg string, name string, args []TypeExpr) QualifiedType {
+    return QualifiedType{
+        Pos: pos,
+        Package: pkg,
+        Name: name,
+        TypeArgs: args,
+    }
+}
+
+func MakeFuncDecl(pos token.Pos, name string, results []TypeExpr, body BlockStmt) FuncDecl {
+    return FuncDecl{
+        Pos: pos,
+        IsExtern: false,
+        Receiver: None[FieldDef](),
+        Name: name,
+        TypeParams: []TypeParam{},
+        Params: []FieldDef{},
+        Results: results,
+        Body: Some[BlockStmt](body),
+    }
+}
+
+func MakeTypeDeclStruct(pos token.Pos, name string, fields []FieldDef) TypeDecl {
+    return TypeDecl{
+        Pos: pos,
+        Name: name,
+        TypeParams: []TypeParam{},
+        Def: StructDef{
+            Pos: pos,
+            Fields: fields,
+        },
+        Deriving: []string{},
+    }
+}
+
+func MakeVariant(pos token.Pos, name string, fields []TypeExpr) Variant {
+    return Variant{
+        Pos: pos,
+        Name: name,
+        Fields: fields,
+    }
+}
+
+func MakeTypeDeclEnum(pos token.Pos, name string, variants []Variant) TypeDecl {
+    return TypeDecl{
+        Pos: pos,
+        Name: name,
+        TypeParams: []TypeParam{},
+        Def: EnumDef{
+            Pos: pos,
+            Variants: variants,
+        },
+        Deriving: []string{},
+    }
+}
+
+func MakeMethodSig(pos token.Pos, name string, params []FieldDef, results []TypeExpr) MethodSig {
+    return MethodSig{
+        Pos: pos,
+        Name: name,
+        Params: params,
+        Results: results,
+    }
+}
+
+func MakeTypeDeclInterface(pos token.Pos, name string, methods []MethodSig) TypeDecl {
+    return TypeDecl{
+        Pos: pos,
+        Name: name,
+        TypeParams: []TypeParam{},
+        Def: InterfaceDef{
+            Pos: pos,
+            Methods: methods,
+        },
+        Deriving: []string{},
+    }
+}
+
+func MakeFieldDef(pos token.Pos, name string, typ TypeExpr) FieldDef {
+    return FieldDef{
+        Pos: pos,
+        Name: name,
+        Type: typ,
+        Variadic: false,
+    }
+}
+
+func MakeVariadicFieldDef(pos token.Pos, name string, typ TypeExpr) FieldDef {
+    return FieldDef{
+        Pos: pos,
+        Name: name,
+        Type: typ,
+        Variadic: true,
+    }
+}
+
+func MakeBlockStmt(pos token.Pos) BlockStmt {
+    return BlockStmt{
+        Pos: pos,
+        Stmts: []Stmt{},
+    }
+}
+
+func BlockWithStmt(block BlockStmt, stmt Stmt) BlockStmt {
+    return block{
+        Stmts: append(block.Stmts, stmt),
+    }
+}
+
+func MakeReturnStmt(pos token.Pos, results []Expr) ReturnStmt {
+    return ReturnStmt{
+        Pos: pos,
+        Results: results,
+    }
+}
+
+func MakeBindStmt(pos token.Pos, name string, value Expr) BindStmt {
+    return BindStmt{
+        Pos: pos,
+        Names: []string{name},
+        Value: value,
+    }
+}
+
+func MakeBindStmtNames(pos token.Pos, names []string, value Expr) BindStmt {
+    return BindStmt{
+        Pos: pos,
+        Names: names,
+        Value: value,
+    }
+}
+
+func MakeExprStmt(pos token.Pos, expr Expr) ExprStmt {
+    return ExprStmt{
+        Pos: pos,
+        Expr: expr,
+    }
+}
+
+func MakeIfStmt(pos token.Pos, cond Expr, body BlockStmt) IfStmt {
+    return IfStmt{
+        Pos: pos,
+        Cond: cond,
+        Body: body,
+        Else: None[Stmt](),
+    }
+}
+
+func MakeCaseClause(pos token.Pos, isDefault bool, exprs []Expr, body []Stmt) CaseClause {
+    return CaseClause{
+        Pos: pos,
+        IsDefault: isDefault,
+        Exprs: exprs,
+        Body: body,
+    }
+}
+
+func MakeSwitchStmt(pos token.Pos, tag Option[Expr], cases []CaseClause) SwitchStmt {
+    return SwitchStmt{
+        Pos: pos,
+        Tag: tag,
+        Cases: cases,
+    }
+}
+
+func MakeMatchCase(pos token.Pos, pattern Pattern, body []Stmt) MatchCase {
+    return MatchCase{
+        Pos: pos,
+        Pattern: pattern,
+        Body: body,
+    }
+}
+
+func MakeMatchStmt(pos token.Pos, tag Expr, cases []MatchCase) MatchStmt {
+    return MatchStmt{
+        Pos: pos,
+        Tag: tag,
+        Cases: cases,
+    }
+}
+
+func MakeBasicLit(pos token.Pos, kind token.Type, value string) BasicLit {
+    return BasicLit{
+        Pos: pos,
+        Kind: kind,
+        Value: value,
+    }
+}
+
+func MakeTupleLit(pos token.Pos, elems []Expr) TupleLit {
+    return TupleLit{
+        Pos: pos,
+        Elems: elems,
+    }
+}
+
+func MakeStructLit(pos token.Pos, name string, fields []FieldInit) StructLit {
+    return StructLit{
+        Pos: pos,
+        Type: name,
+        Fields: fields,
+    }
+}
+
+func MakeFieldInit(name string, value Expr) FieldInit {
+    return FieldInit{
+        Name: name,
+        Value: value,
+    }
+}
+
+func MakeFieldUpdate(path []string, value Expr) FieldUpdate {
+    return FieldUpdate{
+        Path: path,
+        Value: value,
+    }
+}
+
+func MakeCopyUpdateExpr(pos token.Pos, source Expr, updates []FieldUpdate) CopyUpdateExpr {
+    return CopyUpdateExpr{
+        Pos: pos,
+        Source: source,
+        Updates: updates,
+    }
+}
+
+func MakeCallExpr(pos token.Pos, fn Expr, args []Expr) CallExpr {
+    return CallExpr{
+        Pos: pos,
+        Func: fn,
+        TypeArgs: []TypeExpr{},
+        Args: args,
+    }
+}
+
+func MakeCallExprWithTypeArgs(pos token.Pos, fn Expr, typeArgs []TypeExpr, args []Expr) CallExpr {
+    return CallExpr{
+        Pos: pos,
+        Func: fn,
+        TypeArgs: typeArgs,
+        Args: args,
+    }
+}
+
+func MakePipelineExpr(pos token.Pos, left Expr, right Expr) PipelineExpr {
+    return PipelineExpr{
+        Pos: pos,
+        Left: left,
+        Right: right,
+    }
+}
+
+func MakeBinaryExpr(pos token.Pos, op token.Type, left Expr, right Expr) BinaryExpr {
+    return BinaryExpr{
+        Pos: pos,
+        Op: op,
+        Left: left,
+        Right: right,
+    }
+}
+
+func MakeUnaryExpr(pos token.Pos, op token.Type, operand Expr) UnaryExpr {
+    return UnaryExpr{
+        Pos: pos,
+        Op: op,
+        Operand: operand,
+    }
+}
+
+func MakeSelectorExpr(pos token.Pos, x Expr, field string) SelectorExpr {
+    return SelectorExpr{
+        Pos: pos,
+        X: x,
+        Field: field,
+    }
+}
+
+func MakeIndexExpr(pos token.Pos, x Expr, index Expr) IndexExpr {
+    return IndexExpr{
+        Pos: pos,
+        X: x,
+        Index: index,
+    }
+}
+
+func MakeSliceExpr(pos token.Pos, x Expr, low Option[Expr], high Option[Expr]) SliceExpr {
+    return SliceExpr{
+        Pos: pos,
+        X: x,
+        Low: low,
+        High: high,
+    }
+}
+
+func MakeSliceLit(pos token.Pos, elem TypeExpr, elems []Expr) SliceLit {
+    return SliceLit{
+        Pos: pos,
+        ElemType: Some[TypeExpr](elem),
+        Elems: elems,
+    }
+}
+
+func MakeFuncLit(pos token.Pos, params []FieldDef, results []TypeExpr, body BlockStmt) FuncLit {
+    return FuncLit{
+        Pos: pos,
+        Params: params,
+        Results: results,
+        Body: body,
+    }
+}
+
+func MakeWildcardPattern(pos token.Pos) WildcardPattern {
+    return WildcardPattern{Pos: pos}
+}
+
+func MakeIdentPattern(pos token.Pos, name string) IdentPattern {
+    return IdentPattern{
+        Pos: pos,
+        Name: name,
+    }
+}
+
+func MakeEnumPattern(pos token.Pos, name string, subPats []Pattern) EnumPattern {
+    return EnumPattern{
+        Pos: pos,
+        Name: name,
+        SubPats: subPats,
+    }
+}
+
+func MakeLitPattern(pos token.Pos, kind token.Type, value string) LitPattern {
+    return LitPattern{
+        Pos: pos,
+        Kind: kind,
+        Value: value,
+    }
+}
+
+func MakeFieldPattern(name string, pattern Pattern) FieldPattern {
+    return FieldPattern{
+        Name: name,
+        Pattern: pattern,
+    }
+}
+
+func MakeStructPattern(pos token.Pos, typ string, fields []FieldPattern) StructPattern {
+    return StructPattern{
+        Pos: pos,
+        Type: typ,
+        Fields: fields,
+    }
+}
+
+func MakeTuplePattern(pos token.Pos, elems []Pattern) TuplePattern {
+    return TuplePattern{
+        Pos: pos,
+        Elems: elems,
+    }
+}
+
+func MakeTupleType(pos token.Pos, elems []TypeExpr) TupleType {
+    return TupleType{
+        Pos: pos,
+        Elems: elems,
+    }
+}
+
+func DeclName(decl Decl) string {
+    match decl {
+    case FuncDecl{Name: name}:
+        return name
+    case TypeDecl{Name: name}:
+        return name
+    case _:
+        return ""
+    }
+}
+
+func DeclWithExtern(decl Decl, isExtern bool) Decl {
+    match decl {
+    case FuncDecl{Pos: pos, Receiver: receiver, Name: name, TypeParams: typeParams, Params: params, Results: results, Body: body}:
+        return FuncDecl{
+            Pos: pos,
+            IsExtern: isExtern,
+            Receiver: receiver,
+            Name: name,
+            TypeParams: typeParams,
+            Params: params,
+            Results: results,
+            Body: body,
+        }
+    case _:
+        return decl
+    }
+}
+
+func DeclWithTypeParams(decl Decl, params []TypeParam) Decl {
+    match decl {
+    case FuncDecl{Pos: pos, IsExtern: isExtern, Receiver: receiver, Name: name, Params: fields, Results: results, Body: body}:
+        return FuncDecl{
+            Pos: pos,
+            IsExtern: isExtern,
+            Receiver: receiver,
+            Name: name,
+            TypeParams: params,
+            Params: fields,
+            Results: results,
+            Body: body,
+        }
+    case TypeDecl{Pos: pos, Name: name, Def: def, Deriving: names}:
+        return TypeDecl{
+            Pos: pos,
+            Name: name,
+            TypeParams: params,
+            Def: def,
+            Deriving: names,
+        }
+    case _:
+        return decl
+    }
+}
+
+func DeclPos(decl Decl) token.Pos {
+    return decl.TokenPos()
+}
+
+func DeclIsTopLevelFunc(decl Decl) bool {
+    match decl {
+    case FuncDecl{Receiver: recv}:
+        return isNone[FieldDef](recv)
+    case _:
+        return false
+    }
+}
+
+func DeclIsFuncDecl(decl Decl) bool {
+    match decl {
+    case FuncDecl{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func DeclIsTypeDecl(decl Decl) bool {
+    match decl {
+    case TypeDecl{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func DeclKind(decl Decl) string {
+    if DeclIsTopLevelFunc(decl) {
+        return "func"
+    }
+    if DeclIsTypeDecl(decl) {
+        return "type"
+    }
+    return ""
+}
+
+func FilePackageName(file File) string {
+    if isNone[PackageDecl](file.Package) {
+        return ""
+    }
+    return unwrapOr(file.Package, MakePackageDecl(ZeroPos(), "")).Name
+}
+
+func ImportPath(imp ImportDecl) string {
+    return imp.Path
+}
+
+func DeclResults(decl Decl) []TypeExpr {
+    match decl {
+    case FuncDecl{Results: results}:
+        return results
+    case _:
+        return []TypeExpr{}
+    }
+}
+
+func DeclIsExtern(decl Decl) bool {
+    match decl {
+    case FuncDecl{IsExtern: isExtern}:
+        return isExtern
+    case _:
+        return false
+    }
+}
+
+func DeclDerivingNames(decl Decl) []string {
+    match decl {
+    case TypeDecl{Deriving: names}:
+        return names
+    case _:
+        return []string{}
+    }
+}
+
+func DeclParams(decl Decl) []FieldDef {
+    match decl {
+    case FuncDecl{Params: params}:
+        return params
+    case _:
+        return []FieldDef{}
+    }
+}
+
+func DeclTypeParams(decl Decl) []TypeParam {
+    match decl {
+    case FuncDecl{TypeParams: params}:
+        return params
+    case TypeDecl{TypeParams: params}:
+        return params
+    case _:
+        return []TypeParam{}
+    }
+}
+
+func TypeParamName(t TypeParam) string {
+    return t.Name
+}
+
+func TypeParamConstraint(t TypeParam) Option[TypeExpr] {
+    return t.Constraint
+}
+
+func DeclHasReceiver(decl Decl) bool {
+    match decl {
+    case FuncDecl{Receiver: recv}:
+        return !isNone[FieldDef](recv)
+    case _:
+        return false
+    }
+}
+
+func DeclReceiverField(decl Decl) FieldDef {
+    match decl {
+    case FuncDecl{Receiver: recv}:
+        return unwrapOr[FieldDef](recv, MakeFieldDef(ZeroPos(), "_", MakeNamedType(ZeroPos(), "any")))
+    case _:
+        return MakeFieldDef(ZeroPos(), "_", MakeNamedType(ZeroPos(), "any"))
+    }
+}
+
+func DeclStructFields(decl Decl) []FieldDef {
+    def := DeclTypeDef(decl)
+    match def {
+    case StructDef{Fields: fields}:
+        return fields
+    case _:
+        return []FieldDef{}
+    }
+}
+
+func DeclIsStructType(decl Decl) bool {
+    def := DeclTypeDef(decl)
+    match def {
+    case StructDef{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func DeclEnumVariants(decl Decl) []Variant {
+    def := DeclTypeDef(decl)
+    match def {
+    case EnumDef{Variants: variants}:
+        return variants
+    case _:
+        return []Variant{}
+    }
+}
+
+func DeclIsEnumType(decl Decl) bool {
+    def := DeclTypeDef(decl)
+    match def {
+    case EnumDef{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func DeclInterfaceMethods(decl Decl) []MethodSig {
+    def := DeclTypeDef(decl)
+    match def {
+    case InterfaceDef{Methods: methods}:
+        return methods
+    case _:
+        return []MethodSig{}
+    }
+}
+
+func DeclIsInterfaceType(decl Decl) bool {
+    def := DeclTypeDef(decl)
+    match def {
+    case InterfaceDef{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func DeclTypeDef(decl Decl) TypeDef {
+    match decl {
+    case TypeDecl{Def: def}:
+        return def
+    case _:
+        return StructDef{
+            Pos: ZeroPos(),
+            Fields: []FieldDef{},
+        }
+    }
+}
+
+func FieldName(field FieldDef) string {
+    return field.Name
+}
+
+func FieldType(field FieldDef) TypeExpr {
+    return field.Type
+}
+
+func FieldIsVariadic(field FieldDef) bool {
+    return field.Variadic
+}
+
+func DeclBodyBlock(decl Decl) BlockStmt {
+    match decl {
+    case FuncDecl{Body: body}:
+        if isNone[BlockStmt](body) {
+            return MakeBlockStmt(ZeroPos())
+        }
+        return unwrapOr(body, MakeBlockStmt(ZeroPos()))
+    case _:
+        return MakeBlockStmt(ZeroPos())
+    }
+}
+
+func BlockStatements(block BlockStmt) []Stmt {
+    return block.Stmts
+}
+
+func StmtIsBind(stmt Stmt) bool {
+    match stmt {
+    case BindStmt{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func StmtIsExpr(stmt Stmt) bool {
+    match stmt {
+    case ExprStmt{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func StmtBindNames(stmt Stmt) []string {
+    match stmt {
+    case BindStmt{Names: names}:
+        return names
+    case _:
+        return []string{}
+    }
+}
+
+func StmtBindValue(stmt Stmt) Expr {
+    match stmt {
+    case BindStmt{Value: value}:
+        return value
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func StmtExprValue(stmt Stmt) Expr {
+    match stmt {
+    case ExprStmt{Expr: expr}:
+        return expr
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func StmtIsReturn(stmt Stmt) bool {
+    match stmt {
+    case ReturnStmt{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func StmtIsIf(stmt Stmt) bool {
+    match stmt {
+    case IfStmt{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func StmtIsSwitch(stmt Stmt) bool {
+    match stmt {
+    case SwitchStmt{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func StmtIfCond(stmt Stmt) Expr {
+    match stmt {
+    case IfStmt{Cond: cond}:
+        return cond
+    case _:
+        return MakeIdent(ZeroPos(), "false")
+    }
+}
+
+func StmtIfBody(stmt Stmt) BlockStmt {
+    match stmt {
+    case IfStmt{Body: body}:
+        return body
+    case _:
+        return MakeBlockStmt(ZeroPos())
+    }
+}
+
+func StmtSwitchTag(stmt Stmt) Option[Expr] {
+    match stmt {
+    case SwitchStmt{Tag: tag}:
+        return tag
+    case _:
+        return None[Expr]()
+    }
+}
+
+func StmtSwitchCases(stmt Stmt) []CaseClause {
+    match stmt {
+    case SwitchStmt{Cases: cases}:
+        return cases
+    case _:
+        return []CaseClause{}
+    }
+}
+
+func StmtIsMatch(stmt Stmt) bool {
+    match stmt {
+    case MatchStmt{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func StmtMatchTag(stmt Stmt) Expr {
+    match stmt {
+    case MatchStmt{Tag: tag}:
+        return tag
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func StmtMatchCases(stmt Stmt) []MatchCase {
+    match stmt {
+    case MatchStmt{Cases: cases}:
+        return cases
+    case _:
+        return []MatchCase{}
+    }
+}
+
+func StmtReturnResults(stmt Stmt) []Expr {
+    match stmt {
+    case ReturnStmt{Results: results}:
+        return results
+    case _:
+        return []Expr{}
+    }
+}
+
+func SwitchCaseIsDefault(c CaseClause) bool {
+    return c.IsDefault
+}
+
+func SwitchCaseExprs(c CaseClause) []Expr {
+    return c.Exprs
+}
+
+func SwitchCaseBody(c CaseClause) []Stmt {
+    return c.Body
+}
+
+func MatchCasePattern(c MatchCase) Pattern {
+    return c.Pattern
+}
+
+func MatchCaseBody(c MatchCase) []Stmt {
+    return c.Body
+}
+
+func ExprIsIdent(expr Expr) bool {
+    match expr {
+    case Ident{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprIsBinary(expr Expr) bool {
+    match expr {
+    case BinaryExpr{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprIsUnary(expr Expr) bool {
+    match expr {
+    case UnaryExpr{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprUnaryOperand(expr Expr) Expr {
+    match expr {
+    case UnaryExpr{Operand: operand}:
+        return operand
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprUnaryOp(expr Expr) token.Type {
+    match expr {
+    case UnaryExpr{Op: op}:
+        return op
+    case _:
+        return token.IllegalType()
+    }
+}
+
+func ExprBinaryLeft(expr Expr) Expr {
+    match expr {
+    case BinaryExpr{Left: left}:
+        return left
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprBinaryRight(expr Expr) Expr {
+    match expr {
+    case BinaryExpr{Right: right}:
+        return right
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprBinaryOp(expr Expr) token.Type {
+    match expr {
+    case BinaryExpr{Op: op}:
+        return op
+    case _:
+        return token.IllegalType()
+    }
+}
+
+func ExprIdentName(expr Expr) string {
+    match expr {
+    case Ident{Name: name}:
+        return name
+    case _:
+        return ""
+    }
+}
+
+func ExprIsBasicLit(expr Expr) bool {
+    match expr {
+    case BasicLit{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprIsTuple(expr Expr) bool {
+    match expr {
+    case TupleLit{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprTupleElems(expr Expr) []Expr {
+    match expr {
+    case TupleLit{Elems: elems}:
+        return elems
+    case _:
+        return []Expr{}
+    }
+}
+
+func ExprIsCall(expr Expr) bool {
+    match expr {
+    case CallExpr{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprIsPipeline(expr Expr) bool {
+    match expr {
+    case PipelineExpr{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprPipelineLeft(expr Expr) Expr {
+    match expr {
+    case PipelineExpr{Left: left}:
+        return left
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprPipelineRight(expr Expr) Expr {
+    match expr {
+    case PipelineExpr{Right: right}:
+        return right
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprCallFunc(expr Expr) Expr {
+    match expr {
+    case CallExpr{Func: fn}:
+        return fn
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprCallArgs(expr Expr) []Expr {
+    match expr {
+    case CallExpr{Args: args}:
+        return args
+    case _:
+        return []Expr{}
+    }
+}
+
+func ExprCallTypeArgs(expr Expr) []TypeExpr {
+    match expr {
+    case CallExpr{TypeArgs: typeArgs}:
+        return typeArgs
+    case _:
+        return []TypeExpr{}
+    }
+}
+
+func ExprIsSelector(expr Expr) bool {
+    match expr {
+    case SelectorExpr{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprSelectorTarget(expr Expr) Expr {
+    match expr {
+    case SelectorExpr{X: x}:
+        return x
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprSelectorField(expr Expr) string {
+    match expr {
+    case SelectorExpr{Field: field}:
+        return field
+    case _:
+        return ""
+    }
+}
+
+func ExprIsIndex(expr Expr) bool {
+    match expr {
+    case IndexExpr{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprIndexTarget(expr Expr) Expr {
+    match expr {
+    case IndexExpr{X: x}:
+        return x
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprIndexValue(expr Expr) Expr {
+    match expr {
+    case IndexExpr{Index: index}:
+        return index
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprIsSlice(expr Expr) bool {
+    match expr {
+    case SliceExpr{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprSliceTarget(expr Expr) Expr {
+    match expr {
+    case SliceExpr{X: x}:
+        return x
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprSliceLow(expr Expr) Option[Expr] {
+    match expr {
+    case SliceExpr{Low: low}:
+        return low
+    case _:
+        return None[Expr]()
+    }
+}
+
+func ExprSliceHigh(expr Expr) Option[Expr] {
+    match expr {
+    case SliceExpr{High: high}:
+        return high
+    case _:
+        return None[Expr]()
+    }
+}
+
+func ExprOptionIsNone(expr Option[Expr]) bool {
+    return isNone[Expr](expr)
+}
+
+func ExprOptionValue(expr Option[Expr]) Expr {
+    return unwrapOr[Expr](expr, MakeIdent(ZeroPos(), "_"))
+}
+
+func ExprIsStructLit(expr Expr) bool {
+    match expr {
+    case StructLit{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprStructLitType(expr Expr) string {
+    match expr {
+    case StructLit{Type: name}:
+        return name
+    case _:
+        return ""
+    }
+}
+
+func ExprStructLitFields(expr Expr) []FieldInit {
+    match expr {
+    case StructLit{Fields: fields}:
+        return fields
+    case _:
+        return []FieldInit{}
+    }
+}
+
+func ExprIsFuncLit(expr Expr) bool {
+    match expr {
+    case FuncLit{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprFuncLitParams(expr Expr) []FieldDef {
+    match expr {
+    case FuncLit{Params: params}:
+        return params
+    case _:
+        return []FieldDef{}
+    }
+}
+
+func ExprFuncLitResults(expr Expr) []TypeExpr {
+    match expr {
+    case FuncLit{Results: results}:
+        return results
+    case _:
+        return []TypeExpr{}
+    }
+}
+
+func ExprFuncLitBody(expr Expr) BlockStmt {
+    match expr {
+    case FuncLit{Body: body}:
+        return body
+    case _:
+        return MakeBlockStmt(ZeroPos())
+    }
+}
+
+func ExprIsCopyUpdate(expr Expr) bool {
+    match expr {
+    case CopyUpdateExpr{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprCopyUpdateSource(expr Expr) Expr {
+    match expr {
+    case CopyUpdateExpr{Source: source}:
+        return source
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func ExprCopyUpdateUpdates(expr Expr) []FieldUpdate {
+    match expr {
+    case CopyUpdateExpr{Updates: updates}:
+        return updates
+    case _:
+        return []FieldUpdate{}
+    }
+}
+
+func FieldInitNameValue(field FieldInit) string {
+    return field.Name
+}
+
+func FieldInitExprValue(field FieldInit) Expr {
+    return field.Value
+}
+
+func FieldUpdatePathValue(update FieldUpdate) []string {
+    return update.Path
+}
+
+func FieldUpdateExprValue(update FieldUpdate) Expr {
+    return update.Value
+}
+
+func ExprIsSliceLit(expr Expr) bool {
+    match expr {
+    case SliceLit{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprSliceLitType(expr Expr) Option[TypeExpr] {
+    match expr {
+    case SliceLit{ElemType: elemType}:
+        return elemType
+    case _:
+        return None[TypeExpr]()
+    }
+}
+
+func ExprSliceLitElems(expr Expr) []Expr {
+    match expr {
+    case SliceLit{Elems: elems}:
+        return elems
+    case _:
+        return []Expr{}
+    }
+}
+
+func TypeExprIsQualified(expr TypeExpr) bool {
+    match expr {
+    case QualifiedType{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func TypeExprQualifiedPackage(expr TypeExpr) string {
+    match expr {
+    case QualifiedType{Package: pkg}:
+        return pkg
+    case _:
+        return ""
+    }
+}
+
+func TypeExprQualifiedName(expr TypeExpr) string {
+    match expr {
+    case QualifiedType{Name: name}:
+        return name
+    case _:
+        return ""
+    }
+}
+
+func TypeExprQualifiedArgs(expr TypeExpr) []TypeExpr {
+    match expr {
+    case QualifiedType{TypeArgs: args}:
+        return args
+    case _:
+        return []TypeExpr{}
+    }
+}
+
+func TypeExprIsSlice(expr TypeExpr) bool {
+    match expr {
+    case SliceType{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func TypeExprIsMap(expr TypeExpr) bool {
+    match expr {
+    case MapType{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func TypeExprIsFunc(expr TypeExpr) bool {
+    match expr {
+    case FuncType{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func TypeExprIsChan(expr TypeExpr) bool {
+    match expr {
+    case ChanType{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func TypeExprIsTuple(expr TypeExpr) bool {
+    match expr {
+    case TupleType{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func TypeExprFuncParams(expr TypeExpr) []TypeExpr {
+    match expr {
+    case FuncType{Params: params}:
+        return params
+    case _:
+        return []TypeExpr{}
+    }
+}
+
+func TypeExprFuncResults(expr TypeExpr) []TypeExpr {
+    match expr {
+    case FuncType{Results: results}:
+        return results
+    case _:
+        return []TypeExpr{}
+    }
+}
+
+func TypeExprChanElem(expr TypeExpr) TypeExpr {
+    match expr {
+    case ChanType{Elem: elem}:
+        return elem
+    case _:
+        return MakeNamedType(ZeroPos(), "any")
+    }
+}
+
+func TypeExprChanReceiveOnly(expr TypeExpr) bool {
+    match expr {
+    case ChanType{ReceiveOnly: receiveOnly}:
+        return receiveOnly
+    case _:
+        return false
+    }
+}
+
+func TypeExprSliceElem(expr TypeExpr) TypeExpr {
+    match expr {
+    case SliceType{Elem: elem}:
+        return elem
+    case _:
+        return MakeNamedType(ZeroPos(), "any")
+    }
+}
+
+func TypeExprMapKey(expr TypeExpr) TypeExpr {
+    match expr {
+    case MapType{Key: key}:
+        return key
+    case _:
+        return MakeNamedType(ZeroPos(), "any")
+    }
+}
+
+func TypeExprMapValue(expr TypeExpr) TypeExpr {
+    match expr {
+    case MapType{Value: value}:
+        return value
+    case _:
+        return MakeNamedType(ZeroPos(), "any")
+    }
+}
+
+func TypeExprTupleElems(expr TypeExpr) []TypeExpr {
+    match expr {
+    case TupleType{Elems: elems}:
+        return elems
+    case _:
+        return []TypeExpr{}
+    }
+}
+
+func TypeExprNamedArgs(expr TypeExpr) []TypeExpr {
+    match expr {
+    case NamedType{TypeArgs: typeArgs}:
+        return typeArgs
+    case _:
+        return []TypeExpr{}
+    }
+}
+
+func ExprBasicLitValue(expr Expr) string {
+    match expr {
+    case BasicLit{Value: value}:
+        return value
+    case _:
+        return ""
+    }
+}
+
+func ExprBasicLitKind(expr Expr) token.Type {
+    match expr {
+    case BasicLit{Kind: kind}:
+        return kind
+    case _:
+        return token.IllegalType()
+    }
+}
+
+func VariantName(v Variant) string {
+    return v.Name
+}
+
+func VariantFields(v Variant) []TypeExpr {
+    return v.Fields
+}
+
+func PatternIsWildcard(p Pattern) bool {
+    match p {
+    case WildcardPattern{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func PatternIsEnum(p Pattern) bool {
+    match p {
+    case EnumPattern{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func PatternEnumName(p Pattern) string {
+    match p {
+    case EnumPattern{Name: name}:
+        return name
+    case _:
+        return ""
+    }
+}
+
+func PatternEnumSubPats(p Pattern) []Pattern {
+    match p {
+    case EnumPattern{SubPats: subPats}:
+        return subPats
+    case _:
+        return []Pattern{}
+    }
+}
+
+func PatternIsStruct(p Pattern) bool {
+    match p {
+    case StructPattern{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func PatternIsLit(p Pattern) bool {
+    match p {
+    case LitPattern{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func PatternLitKind(p Pattern) token.Type {
+    match p {
+    case LitPattern{Kind: kind}:
+        return kind
+    case _:
+        return token.IllegalType()
+    }
+}
+
+func PatternLitValue(p Pattern) string {
+    match p {
+    case LitPattern{Value: value}:
+        return value
+    case _:
+        return ""
+    }
+}
+
+func PatternIsTuple(p Pattern) bool {
+    match p {
+    case TuplePattern{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func PatternTupleElems(p Pattern) []Pattern {
+    match p {
+    case TuplePattern{Elems: elems}:
+        return elems
+    case _:
+        return []Pattern{}
+    }
+}
+
+func PatternStructType(p Pattern) string {
+    match p {
+    case StructPattern{Type: typ}:
+        return typ
+    case _:
+        return ""
+    }
+}
+
+func PatternStructFields(p Pattern) []FieldPattern {
+    match p {
+    case StructPattern{Fields: fields}:
+        return fields
+    case _:
+        return []FieldPattern{}
+    }
+}
+
+func FieldPatternNameValue(field FieldPattern) string {
+    return field.Name
+}
+
+func FieldPatternPatternValue(field FieldPattern) Pattern {
+    return field.Pattern
+}
+
+func MethodSigName(m MethodSig) string {
+    return m.Name
+}
+
+func MethodSigParams(m MethodSig) []FieldDef {
+    return m.Params
+}
+
+func MethodSigResults(m MethodSig) []TypeExpr {
+    return m.Results
+}
+
+func PatternIsIdent(p Pattern) bool {
+    match p {
+    case IdentPattern{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func PatternIdentName(p Pattern) string {
+    match p {
+    case IdentPattern{Name: name}:
+        return name
+    case _:
+        return "_"
+    }
+}
+
+func TypeExprNamedName(expr TypeExpr) string {
+    match expr {
+    case NamedType{Name: name}:
+        return name
+    case _:
+        return ""
+    }
+}

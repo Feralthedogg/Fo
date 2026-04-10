@@ -1,0 +1,42 @@
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Fo caches and transient workdirs
+.fo-cache/
+.fo-build/
+.fo-build-stage/
+.fo-build-run.*/
+.cold-seed-check.*/
+.genesis-seed-check.*/
+.genesis-seed-src.*/
+.genesis-stage.debug.*/
+.seed-freeze.*/
+.seed-genesis.*/
+.seed-materialize.*/
+.seed-parity.*/
+seedwork/
+.lia.cache/
+
+# Optional published artifacts
+bootstrap/seed/
+bootstrap/seed-genesis/
+
+# Local build outputs
+build/
+dist/
+
+# Generated Go outputs
+.tmp_tokenprobe.go
+bootstrap/*.go
+cmd/*/*.go
+examples/*.go
+internal/*/*.go
+internal/*/*/*.go
+stdlib/fo/*.go
+
+# Proof / tool outputs
+proof/**/*.olean

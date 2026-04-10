@@ -1,0 +1,180 @@
+DIGEST d4dc07c936f56e88d8a4d7993c653e64
+FFo.Syntax
+R24:27 Stdlib.Lists.List <> <> lib
+R29:34 Stdlib.Strings.String <> <> lib
+R36:41 Stdlib.ZArith.ZArith <> <> lib
+R51:63 Stdlib.Lists.List ListNotations <> mod
+mod 74:81 <> FoSyntax
+ind 95:96 FoSyntax ty
+constr 103:108 FoSyntax TyUnit
+constr 112:117 FoSyntax TyBool
+constr 121:125 FoSyntax TyInt
+constr 129:136 FoSyntax TyString
+constr 140:146 FoSyntax TyTuple
+constr 168:175 FoSyntax TyStruct
+constr 195:200 FoSyntax TyEnum
+constr 220:223 FoSyntax TyFn
+R157:160 Corelib.Init.Datatypes <> list ind
+R162:163 Fo.Syntax <> ty:1 ind
+binder 149:153 <> items:3
+R185:190 Stdlib.Strings.String <> string ind
+binder 178:181 <> name:4
+R210:215 Stdlib.Strings.String <> string ind
+binder 203:206 <> name:5
+R235:238 Corelib.Init.Datatypes <> list ind
+R240:241 Fo.Syntax <> ty:1 ind
+binder 226:231 <> params:6
+R254:255 Fo.Syntax <> ty:1 ind
+binder 245:250 <> result:7
+scheme 95:96 FoSyntax ty_rect
+scheme 95:96 FoSyntax ty_ind
+scheme 95:96 FoSyntax ty_rec
+scheme 95:96 FoSyntax ty_sind
+ind 270:276 FoSyntax pattern
+constr 283:287 FoSyntax PWild
+constr 291:297 FoSyntax PBinder
+constr 317:322 FoSyntax PTuple
+constr 349:353 FoSyntax PCtor
+constr 395:401 FoSyntax PStruct
+R307:312 Stdlib.Strings.String <> string ind
+binder 300:303 <> name:10
+R333:336 Corelib.Init.Datatypes <> list ind
+R338:344 Fo.Syntax <> pattern:8 ind
+binder 325:329 <> items:11
+R363:368 Stdlib.Strings.String <> string ind
+binder 356:359 <> name:12
+R379:382 Corelib.Init.Datatypes <> list ind
+R384:390 Fo.Syntax <> pattern:8 ind
+binder 372:375 <> args:13
+R411:416 Stdlib.Strings.String <> string ind
+binder 404:407 <> name:14
+R429:432 Corelib.Init.Datatypes <> list ind
+R441:443 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R435:440 Stdlib.Strings.String <> string ind
+R444:450 Fo.Syntax <> pattern:8 ind
+binder 420:425 <> fields:15
+scheme 270:276 FoSyntax pattern_rect
+scheme 270:276 FoSyntax pattern_ind
+scheme 270:276 FoSyntax pattern_rec
+scheme 270:276 FoSyntax pattern_sind
+ind 466:469 FoSyntax expr
+constr 476:479 FoSyntax EVar
+constr 499:503 FoSyntax EUnit
+constr 507:511 FoSyntax EBool
+constr 526:529 FoSyntax EInt
+constr 541:547 FoSyntax EString
+constr 564:569 FoSyntax ETuple
+constr 593:597 FoSyntax ECtor
+constr 636:645 FoSyntax EStructLit
+constr 697:707 FoSyntax ECopyUpdate
+constr 761:766 FoSyntax EUnary
+constr 797:803 FoSyntax EBinary
+constr 838:842 FoSyntax ECall
+constr 879:881 FoSyntax EIf
+constr 906:911 FoSyntax EMatch
+R489:494 Stdlib.Strings.String <> string ind
+binder 482:485 <> name:18
+R518:521 Corelib.Init.Datatypes <> bool ind
+binder 514:514 <> b:19
+R536:536 Corelib.Numbers.BinNums <> Z ind
+binder 532:532 <> n:20
+R554:559 Stdlib.Strings.String <> string ind
+binder 550:550 <> s:21
+R580:583 Corelib.Init.Datatypes <> list ind
+R585:588 Fo.Syntax <> expr:16 ind
+binder 572:576 <> items:22
+R607:612 Stdlib.Strings.String <> string ind
+binder 600:603 <> name:23
+R623:626 Corelib.Init.Datatypes <> list ind
+R628:631 Fo.Syntax <> expr:16 ind
+binder 616:619 <> args:24
+R655:660 Stdlib.Strings.String <> string ind
+binder 648:651 <> name:25
+R673:676 Corelib.Init.Datatypes <> list ind
+R685:687 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R679:684 Stdlib.Strings.String <> string ind
+R688:691 Fo.Syntax <> expr:16 ind
+binder 664:669 <> fields:26
+R717:720 Fo.Syntax <> expr:16 ind
+binder 710:713 <> base:27
+R731:734 Corelib.Init.Datatypes <> list ind
+R736:741 Stdlib.Strings.String <> string ind
+binder 724:727 <> path:28
+R753:756 Fo.Syntax <> expr:16 ind
+binder 745:749 <> value:29
+R774:779 Stdlib.Strings.String <> string ind
+binder 769:770 <> op:30
+R789:792 Fo.Syntax <> expr:16 ind
+binder 783:785 <> arg:31
+R811:816 Stdlib.Strings.String <> string ind
+binder 806:807 <> op:32
+R830:833 Fo.Syntax <> expr:16 ind
+binder 820:822 <> lhs:33
+binder 824:826 <> rhs:34
+R850:855 Stdlib.Strings.String <> string ind
+binder 845:846 <> fn:35
+R866:869 Corelib.Init.Datatypes <> list ind
+R871:874 Fo.Syntax <> expr:16 ind
+binder 859:862 <> args:36
+R898:901 Fo.Syntax <> expr:16 ind
+binder 884:887 <> cond:37
+binder 889:891 <> yes:38
+binder 893:894 <> no:39
+R926:929 Fo.Syntax <> expr:16 ind
+binder 914:922 <> scrutinee:40
+R941:944 Corelib.Init.Datatypes <> list ind
+R954:956 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R947:953 Fo.Syntax FoSyntax pattern ind
+R957:960 Fo.Syntax <> expr:16 ind
+binder 933:937 <> cases:41
+scheme 466:469 FoSyntax expr_rect
+scheme 466:469 FoSyntax expr_ind
+scheme 466:469 FoSyntax expr_rec
+scheme 466:469 FoSyntax expr_sind
+ind 976:979 FoSyntax stmt
+constr 986:990 FoSyntax SBind
+constr 1025:1031 FoSyntax SReturn
+constr 1050:1052 FoSyntax SIf
+constr 1091:1096 FoSyntax SMatch
+R1000:1005 Stdlib.Strings.String <> string ind
+binder 993:996 <> name:44
+R1017:1020 Fo.Syntax FoSyntax expr ind
+binder 1009:1013 <> value:45
+R1042:1045 Fo.Syntax FoSyntax expr ind
+binder 1034:1038 <> value:46
+R1062:1065 Fo.Syntax FoSyntax expr ind
+binder 1055:1058 <> cond:47
+R1078:1081 Corelib.Init.Datatypes <> list ind
+R1083:1086 Fo.Syntax <> stmt:42 ind
+binder 1069:1071 <> yes:48
+binder 1073:1074 <> no:49
+R1111:1114 Fo.Syntax FoSyntax expr ind
+binder 1099:1107 <> scrutinee:50
+R1126:1129 Corelib.Init.Datatypes <> list ind
+R1139:1141 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R1132:1138 Fo.Syntax FoSyntax pattern ind
+R1142:1145 Corelib.Init.Datatypes <> list ind
+R1147:1150 Fo.Syntax <> stmt:42 ind
+binder 1118:1122 <> cases:51
+scheme 976:979 FoSyntax stmt_rect
+scheme 976:979 FoSyntax stmt_ind
+scheme 976:979 FoSyntax stmt_rec
+scheme 976:979 FoSyntax stmt_sind
+rec 1163:1167 FoSyntax fndef
+proj 1176:1182 FoSyntax fn_name
+proj 1196:1204 FoSyntax fn_params
+proj 1230:1238 FoSyntax fn_result
+proj 1248:1254 FoSyntax fn_body
+R1186:1191 Stdlib.Strings.String <> string ind
+R1208:1211 Corelib.Init.Datatypes <> list ind
+R1220:1222 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R1214:1219 Stdlib.Strings.String <> string ind
+R1223:1224 Fo.Syntax FoSyntax ty ind
+R1242:1243 Fo.Syntax FoSyntax ty ind
+R1258:1261 Corelib.Init.Datatypes <> list ind
+R1263:1266 Fo.Syntax FoSyntax stmt ind
+rec 1280:1286 FoSyntax program
+proj 1295:1302 FoSyntax prog_fns
+R1306:1309 Corelib.Init.Datatypes <> list ind
+R1311:1315 Fo.Syntax FoSyntax fndef rec
+R1326:1333 Fo.Syntax FoSyntax <> mod

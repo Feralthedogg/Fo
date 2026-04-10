@@ -1,0 +1,666 @@
+package genesis
+
+type ValueField struct {
+    Name string
+    Value Value
+}
+
+type ExprField struct {
+    Name string
+    Value Expr
+}
+
+type EnvEntry struct {
+    Name string
+    Value Value
+}
+
+type Stmt enum {
+    Let(string, Expr)
+    Ret(Expr)
+}
+
+type FuncDef struct {
+    Name string
+    Params []string
+    Body []Stmt
+}
+
+type Program struct {
+    Funcs []FuncDef
+}
+
+type Value enum {
+    Unit
+    Bool(bool)
+    Int(int)
+    Text(string)
+    Tuple([]Value)
+    Struct(string, []ValueField)
+}
+
+type Expr enum {
+    Var(string)
+    UnitLit
+    BoolLit(bool)
+    IntLit(int)
+    TextLit(string)
+    TupleLit([]Expr)
+    StructLit(string, []ExprField)
+    Select(Expr, string)
+    Call(string, []Expr)
+    Binary(string, Expr, Expr)
+    BaseName(Expr)
+    Head(Expr)
+    Tail(Expr)
+    IsEmpty(Expr)
+    If(Expr, Expr, Expr)
+}
+
+type EvalResult enum {
+    EvalOk(Value)
+    EvalErr(string)
+}
+
+type EnvResult enum {
+    EnvOk([]EnvEntry)
+    EnvErr(string)
+}
+
+type FuncLookupResult enum {
+    FuncOk(FuncDef)
+    FuncErr(string)
+}
+
+func Bind(name string, value Value) EnvEntry {
+    return EnvEntry{
+        Name: name,
+        Value: value,
+    }
+}
+
+func ValueFieldEntry(name string, value Value) ValueField {
+    return ValueField{
+        Name: name,
+        Value: value,
+    }
+}
+
+func ExprFieldEntry(name string, value Expr) ExprField {
+    return ExprField{
+        Name: name,
+        Value: value,
+    }
+}
+
+func LetStmt(name string, value Expr) Stmt {
+    return Let(name, value)
+}
+
+func ReturnStmt(value Expr) Stmt {
+    return Ret(value)
+}
+
+func Function(name string, params []string, body []Stmt) FuncDef {
+    return FuncDef{
+        Name: name,
+        Params: params,
+        Body: body,
+    }
+}
+
+func NewProgram(funcs []FuncDef) Program {
+    return Program{
+        Funcs: funcs,
+    }
+}
+
+func EmptyProgram() Program {
+    return NewProgram([]FuncDef{})
+}
+
+func UnitValue() Value {
+    return Unit
+}
+
+func BoolValue(v bool) Value {
+    return Bool(v)
+}
+
+func IntValue(v int) Value {
+    return Int(v)
+}
+
+func TextValue(v string) Value {
+    return Text(v)
+}
+
+func TupleValue(vs []Value) Value {
+    return Tuple(vs)
+}
+
+func StructValue(name string, fields []ValueField) Value {
+    return Struct(name, fields)
+}
+
+func VarExpr(name string) Expr {
+    return Var(name)
+}
+
+func UnitExpr() Expr {
+    return UnitLit
+}
+
+func BoolExpr(v bool) Expr {
+    return BoolLit(v)
+}
+
+func IntExpr(v int) Expr {
+    return IntLit(v)
+}
+
+func TextExpr(v string) Expr {
+    return TextLit(v)
+}
+
+func TupleExpr(items []Expr) Expr {
+    return TupleLit(items)
+}
+
+func StructExpr(name string, fields []ExprField) Expr {
+    return StructLit(name, fields)
+}
+
+func SelectExpr(target Expr, field string) Expr {
+    return Select(target, field)
+}
+
+func CallExpr(name string, args []Expr) Expr {
+    return Call(name, args)
+}
+
+func BinaryExpr(op string, left Expr, right Expr) Expr {
+    return Binary(op, left, right)
+}
+
+func BaseNameExpr(target Expr) Expr {
+    return BaseName(target)
+}
+
+func HeadExpr(target Expr) Expr {
+    return Head(target)
+}
+
+func TailExpr(target Expr) Expr {
+    return Tail(target)
+}
+
+func IsEmptyExpr(target Expr) Expr {
+    return IsEmpty(target)
+}
+
+func IfExpr(cond Expr, yes Expr, no Expr) Expr {
+    return If(cond, yes, no)
+}
+
+func OkValue(v Value) EvalResult {
+    return EvalOk(v)
+}
+
+func ErrValue(msg string) EvalResult {
+    return EvalErr(msg)
+}
+
+func Lookup(env []EnvEntry, name string) EvalResult {
+    if len(env) == 0 {
+        return EvalErr("unbound variable: " + name)
+    }
+    if env[0].Name == name {
+        return EvalOk(env[0].Value)
+    }
+    return Lookup(env[1:], name)
+}
+
+func LookupField(fields []ValueField, name string) EvalResult {
+    if len(fields) == 0 {
+        return EvalErr("unknown field: " + name)
+    }
+    if fields[0].Name == name {
+        return EvalOk(fields[0].Value)
+    }
+    return LookupField(fields[1:], name)
+}
+
+func LookupFunc(funcs []FuncDef, name string) FuncLookupResult {
+    if len(funcs) == 0 {
+        return FuncErr("unknown function: " + name)
+    }
+    if funcs[0].Name == name {
+        return FuncOk(funcs[0])
+    }
+    return LookupFunc(funcs[1:], name)
+}
+
+func ConsEnv(entry EnvEntry, env []EnvEntry) []EnvEntry {
+    return AppendEnv([]EnvEntry{entry}, env, 0)
+}
+
+func AppendEnv(acc []EnvEntry, env []EnvEntry, idx int) []EnvEntry {
+    if idx >= len(env) {
+        return acc
+    }
+    return AppendEnv(append(acc, env[idx]), env, idx + 1)
+}
+
+func BindParams(params []string, values []Value, env []EnvEntry) EnvResult {
+    if !(len(params) == len(values)) {
+        return EnvErr("arity mismatch")
+    }
+    return BindParamAt(params, values, env, 0)
+}
+
+func BindParamAt(params []string, values []Value, env []EnvEntry, idx int) EnvResult {
+    if idx >= len(params) {
+        return EnvOk(env)
+    }
+    next := ConsEnv(Bind(params[idx], values[idx]), env)
+    return BindParamAt(params, values, next, idx + 1)
+}
+
+func Eval(env []EnvEntry, expr Expr) EvalResult {
+    return EvalInProgram(EmptyProgram(), env, expr)
+}
+
+func EvalInProgram(program Program, env []EnvEntry, expr Expr) EvalResult {
+    match expr {
+    case Var(name):
+        return Lookup(env, name)
+    case UnitLit:
+        return EvalOk(Unit)
+    case BoolLit(v):
+        return EvalOk(Bool(v))
+    case IntLit(v):
+        return EvalOk(Int(v))
+    case TextLit(v):
+        return EvalOk(Text(v))
+    case TupleLit(items):
+        return EvalTuple(program, env, items, []Value{})
+    case StructLit(name, fields):
+        return EvalStructFields(program, env, name, fields, []ValueField{})
+    case Select(target, field):
+        current := EvalInProgram(program, env, target)
+        match current {
+        case EvalOk(v):
+            match v {
+            case Struct(_, fields):
+                return LookupField(fields, field)
+            case _:
+                return EvalErr("select on non-struct")
+            }
+        case EvalErr(msg):
+            return EvalErr(msg)
+        }
+    case Call(name, args):
+        lookup := LookupFunc(program.Funcs, name)
+        match lookup {
+        case FuncOk(fn):
+            argValues := EvalArgs(program, env, args, []Value{})
+            match argValues {
+            case EvalOk(v):
+                match v {
+                case Tuple(values):
+                    bound := BindParams(fn.Params, values, env)
+                    match bound {
+                    case EnvOk(callEnv):
+                        return RunBlock(program, callEnv, fn.Body)
+                    case EnvErr(msg):
+                        return EvalErr(msg)
+                    }
+                case _:
+                    return EvalErr("internal call argument shape")
+                }
+            case EvalErr(msg):
+                return EvalErr(msg)
+            }
+        case FuncErr(msg):
+            return EvalErr(msg)
+        }
+    case Binary(op, left, right):
+        leftResult := EvalInProgram(program, env, left)
+        match leftResult {
+        case EvalOk(leftValue):
+            rightResult := EvalInProgram(program, env, right)
+            match rightResult {
+            case EvalOk(rightValue):
+                return ApplyBinary(op, leftValue, rightValue)
+            case EvalErr(msg):
+                return EvalErr(msg)
+            }
+        case EvalErr(msg):
+            return EvalErr(msg)
+        }
+    case BaseName(target):
+        current := EvalInProgram(program, env, target)
+        match current {
+        case EvalOk(v):
+            match v {
+            case Text(text):
+                return EvalOk(Text(BaseNameString(text)))
+            case _:
+                return EvalErr("basename on non-text")
+            }
+        case EvalErr(msg):
+            return EvalErr(msg)
+        }
+    case Head(target):
+        current := EvalInProgram(program, env, target)
+        match current {
+        case EvalOk(v):
+            match v {
+            case Tuple(items):
+                return TupleHead(items)
+            case _:
+                return EvalErr("head on non-tuple")
+            }
+        case EvalErr(msg):
+            return EvalErr(msg)
+        }
+    case Tail(target):
+        current := EvalInProgram(program, env, target)
+        match current {
+        case EvalOk(v):
+            match v {
+            case Tuple(items):
+                return TupleTail(items)
+            case _:
+                return EvalErr("tail on non-tuple")
+            }
+        case EvalErr(msg):
+            return EvalErr(msg)
+        }
+    case IsEmpty(target):
+        current := EvalInProgram(program, env, target)
+        match current {
+        case EvalOk(v):
+            match v {
+            case Tuple(items):
+                return EvalOk(Bool(len(items) == 0))
+            case _:
+                return EvalErr("isEmpty on non-tuple")
+            }
+        case EvalErr(msg):
+            return EvalErr(msg)
+        }
+    case If(cond, yes, no):
+        condResult := EvalInProgram(program, env, cond)
+        match condResult {
+        case EvalOk(v):
+            match v {
+            case Bool(flag):
+                if flag {
+                    return EvalInProgram(program, env, yes)
+                }
+                return EvalInProgram(program, env, no)
+            case _:
+                return EvalErr("if condition is not bool")
+            }
+        case EvalErr(msg):
+            return EvalErr(msg)
+        }
+    }
+}
+
+func BaseNameString(path string) string {
+    if path == "" {
+        return ""
+    }
+    return BaseNameFrom(path, len(path) - 1, "")
+}
+
+func BaseNameFrom(path string, idx int, acc string) string {
+    if idx < 0 {
+        return acc
+    }
+    ch := path[idx]
+    if ch == "/"[0] || ch == BackslashPathByte() {
+        return acc
+    }
+    return BaseNameFrom(path, idx - 1, string(ch) + acc)
+}
+
+func BackslashPathByte() byte {
+    return byte(92)
+}
+
+func ApplyBinary(op string, left Value, right Value) EvalResult {
+    if op == "+" {
+        match left {
+        case Int(ln):
+            match right {
+            case Int(rn):
+                return EvalOk(Int(ln + rn))
+            case _:
+                return EvalErr("int + non-int")
+            }
+        case Text(ls):
+            match right {
+            case Text(rs):
+                return EvalOk(Text(ls + rs))
+            case _:
+                return EvalErr("text + non-text")
+            }
+        case _:
+            return EvalErr("unsupported + operands")
+        }
+    }
+
+    if op == "==" {
+        return EvalOk(Bool(EqualValues(left, right)))
+    }
+
+    if op == "&&" {
+        match left {
+        case Bool(lb):
+            match right {
+            case Bool(rb):
+                if lb {
+                    return EvalOk(Bool(rb))
+                }
+                return EvalOk(Bool(false))
+            case _:
+                return EvalErr("bool && non-bool")
+            }
+        case _:
+            return EvalErr("unsupported && operands")
+        }
+    }
+
+    if op == "||" {
+        match left {
+        case Bool(lb):
+            match right {
+            case Bool(rb):
+                return EvalOk(Bool(lb || rb))
+            case _:
+                return EvalErr("bool || non-bool")
+            }
+        case _:
+            return EvalErr("unsupported || operands")
+        }
+    }
+
+    return EvalErr("unknown binary operator: " + op)
+}
+
+func TupleHead(items []Value) EvalResult {
+    if len(items) == 0 {
+        return EvalErr("head on empty tuple")
+    }
+    return EvalOk(items[0])
+}
+
+func TupleTail(items []Value) EvalResult {
+    if len(items) == 0 {
+        return EvalErr("tail on empty tuple")
+    }
+    return EvalOk(Tuple(items[1:]))
+}
+
+func EvalTuple(program Program, env []EnvEntry, items []Expr, acc []Value) EvalResult {
+    if len(items) == 0 {
+        return EvalOk(Tuple(acc))
+    }
+
+    current := EvalInProgram(program, env, items[0])
+    match current {
+    case EvalOk(v):
+        return EvalTuple(program, env, items[1:], append(acc, v))
+    case EvalErr(msg):
+        return EvalErr(msg)
+    }
+}
+
+func EvalArgs(program Program, env []EnvEntry, items []Expr, acc []Value) EvalResult {
+    return EvalTuple(program, env, items, acc)
+}
+
+func EvalStructFields(program Program, env []EnvEntry, name string, fields []ExprField, acc []ValueField) EvalResult {
+    if len(fields) == 0 {
+        return EvalOk(Struct(name, acc))
+    }
+
+    current := EvalInProgram(program, env, fields[0].Value)
+    match current {
+    case EvalOk(v):
+        next := append(acc, ValueFieldEntry(fields[0].Name, v))
+        return EvalStructFields(program, env, name, fields[1:], next)
+    case EvalErr(msg):
+        return EvalErr(msg)
+    }
+}
+
+func RunBlock(program Program, env []EnvEntry, stmts []Stmt) EvalResult {
+    if len(stmts) == 0 {
+        return EvalOk(Unit)
+    }
+
+    match stmts[0] {
+    case Let(name, expr):
+        current := EvalInProgram(program, env, expr)
+        match current {
+        case EvalOk(v):
+            return RunBlock(program, ConsEnv(Bind(name, v), env), stmts[1:])
+        case EvalErr(msg):
+            return EvalErr(msg)
+        }
+    case Ret(expr):
+        return EvalInProgram(program, env, expr)
+    }
+}
+
+func EqualValues(left Value, right Value) bool {
+    match left {
+    case Unit:
+        match right {
+        case Unit:
+            return true
+        case _:
+            return false
+        }
+    case Bool(lb):
+        match right {
+        case Bool(rb):
+            return lb == rb
+        case _:
+            return false
+        }
+    case Int(ln):
+        match right {
+        case Int(rn):
+            return ln == rn
+        case _:
+            return false
+        }
+    case Text(ls):
+        match right {
+        case Text(rs):
+            return ls == rs
+        case _:
+            return false
+        }
+    case Tuple(litems):
+        match right {
+        case Tuple(ritems):
+            return EqualValueSlices(litems, ritems)
+        case _:
+            return false
+        }
+    case Struct(lname, lfields):
+        match right {
+        case Struct(rname, rfields):
+            if !(lname == rname) {
+                return false
+            }
+            return EqualFieldSlices(lfields, rfields)
+        case _:
+            return false
+        }
+    }
+}
+
+func EqualValueSlices(left []Value, right []Value) bool {
+    if !(len(left) == len(right)) {
+        return false
+    }
+    if len(left) == 0 {
+        return true
+    }
+    if EqualValues(left[0], right[0]) == false {
+        return false
+    }
+    return EqualValueSlices(left[1:], right[1:])
+}
+
+func EqualFieldSlices(left []ValueField, right []ValueField) bool {
+    if !(len(left) == len(right)) {
+        return false
+    }
+    if len(left) == 0 {
+        return true
+    }
+    if !(left[0].Name == right[0].Name) {
+        return false
+    }
+    if EqualValues(left[0].Value, right[0].Value) == false {
+        return false
+    }
+    return EqualFieldSlices(left[1:], right[1:])
+}
+
+func Expect(env []EnvEntry, expr Expr, expected Value) bool {
+    return ExpectProgram(EmptyProgram(), env, expr, expected)
+}
+
+func ExpectProgram(program Program, env []EnvEntry, expr Expr, expected Value) bool {
+    result := EvalInProgram(program, env, expr)
+    match result {
+    case EvalOk(v):
+        return EqualValues(v, expected)
+    case EvalErr(_):
+        return false
+    }
+}
+
+func ExpectErr(env []EnvEntry, expr Expr) bool {
+    return ExpectProgramErr(EmptyProgram(), env, expr)
+}
+
+func ExpectProgramErr(program Program, env []EnvEntry, expr Expr) bool {
+    result := EvalInProgram(program, env, expr)
+    match result {
+    case EvalOk(_):
+        return false
+    case EvalErr(_):
+        return true
+    }
+}

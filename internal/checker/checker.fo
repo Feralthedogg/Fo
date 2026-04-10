@@ -1,0 +1,2668 @@
+package checker
+
+import "github.com/Feralthedogg/Fo/internal/ast"
+import "github.com/Feralthedogg/Fo/internal/diagnostic"
+import "github.com/Feralthedogg/Fo/internal/token"
+import "strings"
+
+type NameEntry struct {
+    Name string
+    Kind string
+    Pos token.Pos
+}
+
+func EmptyNameEntry() NameEntry {
+    return NameEntry{
+        Name: "",
+        Kind: "",
+        Pos: ast.ZeroPos(),
+    }
+}
+
+type BindingState struct {
+    Diag diagnostic.Diagnostics
+    Local []NameEntry
+    Visible []NameEntry
+}
+
+type TypeEntry struct {
+    Name string
+    TypeName string
+}
+
+type EnumInfo struct {
+    Name string
+    Variants []string
+}
+
+func EmptyEnumInfo() EnumInfo {
+    return EnumInfo{
+        Name: "",
+        Variants: []string{},
+    }
+}
+
+type StructInfo struct {
+    Name string
+    Fields []FieldTypeInfo
+}
+
+func EmptyStructInfo() StructInfo {
+    return StructInfo{
+        Name: "",
+        Fields: []FieldTypeInfo{},
+    }
+}
+
+type FieldTypeInfo struct {
+    Name string
+    TypeName string
+}
+
+type InterfaceInfo struct {
+    Name string
+    Methods []FuncInfo
+}
+
+func EmptyInterfaceInfo() InterfaceInfo {
+    return InterfaceInfo{
+        Name: "",
+        Methods: []FuncInfo{},
+    }
+}
+
+type MethodInfo struct {
+    ReceiverType string
+    Name string
+    ParamTypes []string
+    ResultTypes []string
+}
+
+func EmptyMethodInfo() MethodInfo {
+    return MethodInfo{
+        ReceiverType: "",
+        Name: "",
+        ParamTypes: []string{},
+        ResultTypes: []string{},
+    }
+}
+
+type FuncInfo struct {
+    Name string
+    TypeParams []string
+    ParamTypes []string
+    ResultTypes []string
+}
+
+func EmptyFuncInfo() FuncInfo {
+    return FuncInfo{
+        Name: "",
+        TypeParams: []string{},
+        ParamTypes: []string{},
+        ResultTypes: []string{},
+    }
+}
+
+type TypeBinding struct {
+    Name string
+    TypeName string
+}
+
+func Check(file ast.File) diagnostic.Diagnostics {
+    externs := EffectiveExternNames(file)
+    enums := CollectEnums(file.Decls, 0, []EnumInfo{})
+    structs := CollectStructs(file.Decls, 0, []StructInfo{})
+    interfaces := CollectInterfaces(file.Decls, 0, []InterfaceInfo{})
+    funcs := CollectFuncs(file.Decls, 0, []FuncInfo{})
+    constructors := CollectConstructors(file.Decls, 0, []FuncInfo{})
+    methods := CollectMethods(file.Decls, 0, []MethodInfo{})
+    return CheckDecls(file.Decls, []NameEntry{}, diagnostic.New(), externs, enums, structs, interfaces, ConcatFuncInfos(funcs, constructors), methods)
+}
+
+func EffectiveExternNames(file ast.File) []string {
+    if ast.FilePackageName(file) == "main" {
+        return []string{}
+    }
+    return CollectExternNames(file.Decls, 0, []string{})
+}
+
+func CollectExternNames(decls []ast.Decl, idx int, acc []string) []string {
+    if idx >= len(decls) {
+        return acc
+    }
+    decl := decls[idx]
+    if ast.DeclIsFuncDecl(decl) {
+        if ast.DeclIsExtern(decl) {
+            return CollectExternNames(decls, idx + 1, append(acc, ast.DeclName(decl)))
+        }
+    }
+    return CollectExternNames(decls, idx + 1, acc)
+}
+
+func CollectEnums(decls []ast.Decl, idx int, acc []EnumInfo) []EnumInfo {
+    if idx >= len(decls) {
+        return acc
+    }
+    decl := decls[idx]
+    variants := ast.DeclEnumVariants(decl)
+    if len(variants) > 0 {
+        return CollectEnums(
+            decls,
+            idx + 1,
+            append(acc, EnumInfo{
+                Name: ast.DeclName(decl),
+                Variants: VariantNames(variants, 0),
+            }),
+        )
+    }
+    return CollectEnums(decls, idx + 1, acc)
+}
+
+func CollectStructs(decls []ast.Decl, idx int, acc []StructInfo) []StructInfo {
+    if idx >= len(decls) {
+        return acc
+    }
+    decl := decls[idx]
+    fields := ast.DeclStructFields(decl)
+    if len(fields) > 0 {
+        return CollectStructs(
+            decls,
+            idx + 1,
+            append(acc, StructInfo{
+                Name: ast.DeclName(decl),
+                Fields: StructFieldInfos(fields, 0, []FieldTypeInfo{}),
+            }),
+        )
+    }
+    return CollectStructs(decls, idx + 1, acc)
+}
+
+func StructFieldInfos(fields []ast.FieldDef, idx int, acc []FieldTypeInfo) []FieldTypeInfo {
+    if idx >= len(fields) {
+        return acc
+    }
+    return StructFieldInfos(fields, idx + 1, append(acc, FieldTypeInfo{
+        Name: ast.FieldName(fields[idx]),
+        TypeName: TypeExprName(ast.FieldType(fields[idx])),
+    }))
+}
+
+func CollectInterfaces(decls []ast.Decl, idx int, acc []InterfaceInfo) []InterfaceInfo {
+    if idx >= len(decls) {
+        return acc
+    }
+    decl := decls[idx]
+    methods := ast.DeclInterfaceMethods(decl)
+    if len(methods) > 0 {
+        return CollectInterfaces(
+            decls,
+            idx + 1,
+            append(acc, InterfaceInfo{
+                Name: ast.DeclName(decl),
+                Methods: InterfaceMethodInfos(methods, 0, []FuncInfo{}),
+            }),
+        )
+    }
+    return CollectInterfaces(decls, idx + 1, acc)
+}
+
+func InterfaceMethodInfos(methods []ast.MethodSig, idx int, acc []FuncInfo) []FuncInfo {
+    if idx >= len(methods) {
+        return acc
+    }
+    return InterfaceMethodInfos(methods, idx + 1, append(acc, FuncInfo{
+        Name: ast.MethodSigName(methods[idx]),
+        TypeParams: []string{},
+        ParamTypes: FieldTypes(ast.MethodSigParams(methods[idx]), 0, []string{}),
+        ResultTypes: TypeNames(ast.MethodSigResults(methods[idx]), 0, []string{}),
+    }))
+}
+
+func CollectFuncs(decls []ast.Decl, idx int, acc []FuncInfo) []FuncInfo {
+    if idx >= len(decls) {
+        return acc
+    }
+    decl := decls[idx]
+    if ast.DeclIsFuncDecl(decl) {
+        if !ast.DeclHasReceiver(decl) {
+            return CollectFuncs(
+                decls,
+                idx + 1,
+                append(acc, FuncInfo{
+                    Name: ast.DeclName(decl),
+                    TypeParams: TypeParamNames(ast.DeclTypeParams(decl), 0, []string{}),
+                    ParamTypes: FieldTypes(ast.DeclParams(decl), 0, []string{}),
+                    ResultTypes: TypeNames(ast.DeclResults(decl), 0, []string{}),
+                }),
+            )
+        }
+    }
+    return CollectFuncs(decls, idx + 1, acc)
+}
+
+func CollectMethods(decls []ast.Decl, idx int, acc []MethodInfo) []MethodInfo {
+    if idx >= len(decls) {
+        return acc
+    }
+    decl := decls[idx]
+    if ast.DeclIsFuncDecl(decl) {
+        if ast.DeclHasReceiver(decl) {
+            return CollectMethods(
+                decls,
+                idx + 1,
+                append(acc, MethodInfo{
+                    ReceiverType: TypeExprName(ast.FieldType(ast.DeclReceiverField(decl))),
+                    Name: ast.DeclName(decl),
+                    ParamTypes: FieldTypes(ast.DeclParams(decl), 0, []string{}),
+                    ResultTypes: TypeNames(ast.DeclResults(decl), 0, []string{}),
+                }),
+            )
+        }
+    }
+    return CollectMethods(decls, idx + 1, acc)
+}
+
+func CollectConstructors(decls []ast.Decl, idx int, acc []FuncInfo) []FuncInfo {
+    if idx >= len(decls) {
+        return acc
+    }
+    decl := decls[idx]
+    variants := ast.DeclEnumVariants(decl)
+    if len(variants) > 0 {
+        typeParams := TypeParamNames(ast.DeclTypeParams(decl), 0, []string{})
+        enumType := GenericNamedTypeFromParams(ast.DeclName(decl), typeParams)
+        return CollectConstructors(
+            decls,
+            idx + 1,
+            ConcatFuncInfos(acc, ConstructorInfos(enumType, typeParams, variants, 0, []FuncInfo{})),
+        )
+    }
+    return CollectConstructors(decls, idx + 1, acc)
+}
+
+func TypeParamNames(items []ast.TypeParam, idx int, acc []string) []string {
+    if idx >= len(items) {
+        return acc
+    }
+    return TypeParamNames(items, idx + 1, append(acc, ast.TypeParamName(items[idx])))
+}
+
+func GenericNamedTypeFromParams(name string, params []string) string {
+    if len(params) == 0 {
+        return name
+    }
+    return name + "[" + JoinStrings(params, 0) + "]"
+}
+
+func ConstructorInfos(enumType string, typeParams []string, variants []ast.Variant, idx int, acc []FuncInfo) []FuncInfo {
+    if idx >= len(variants) {
+        return acc
+    }
+    info := FuncInfo{
+        Name: ast.VariantName(variants[idx]),
+        TypeParams: typeParams,
+        ParamTypes: TypeNames(ast.VariantFields(variants[idx]), 0, []string{}),
+        ResultTypes: []string{enumType},
+    }
+    return ConstructorInfos(enumType, typeParams, variants, idx + 1, append(acc, info))
+}
+
+func ConcatFuncInfos(left []FuncInfo, right []FuncInfo) []FuncInfo {
+    return ConcatFuncInfosLoop(left, right, 0)
+}
+
+func ConcatFuncInfosLoop(left []FuncInfo, right []FuncInfo, idx int) []FuncInfo {
+    if idx >= len(right) {
+        return left
+    }
+    return ConcatFuncInfosLoop(append(left, right[idx]), right, idx + 1)
+}
+
+func FieldTypes(fields []ast.FieldDef, idx int, acc []string) []string {
+    if idx >= len(fields) {
+        return acc
+    }
+    return FieldTypes(fields, idx + 1, append(acc, TypeExprName(ast.FieldType(fields[idx]))))
+}
+
+func TypeNames(items []ast.TypeExpr, idx int, acc []string) []string {
+    if idx >= len(items) {
+        return acc
+    }
+    return TypeNames(items, idx + 1, append(acc, TypeExprName(items[idx])))
+}
+
+func VariantNames(items []ast.Variant, idx int) []string {
+    if idx >= len(items) {
+        return []string{}
+    }
+    return VariantNamesAcc(items, idx, []string{})
+}
+
+func VariantNamesAcc(items []ast.Variant, idx int, acc []string) []string {
+    if idx >= len(items) {
+        return acc
+    }
+    return VariantNamesAcc(items, idx + 1, append(acc, ast.VariantName(items[idx])))
+}
+
+func CheckDecls(decls []ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if len(decls) == 0 {
+        return diag
+    }
+
+    current := decls[0]
+    nextDiag := CheckDecl(current, seen, diag, externs, enums, structs, interfaces, funcs, methods)
+    nextSeen := ExtendSeen(current, seen)
+    return CheckDecls(decls[1:], nextSeen, nextDiag, externs, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckDecl(decl ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if ast.DeclIsFuncDecl(decl) {
+        return CheckFuncDecl(decl, seen, diag, externs, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.DeclIsTypeDecl(decl) {
+        return CheckTypeDecl(decl, seen, diag)
+    }
+    return diag
+}
+
+func CheckFuncDecl(decl ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    headerDiag := CheckFuncDeclHeader(decl, seen, diag)
+    paramState := CheckFieldDefs(ast.DeclParams(decl), []NameEntry{}, "parameter", headerDiag)
+    return CheckFuncDeclBody(decl, paramState, externs, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckFuncDeclHeader(decl ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    if ast.DeclIsTopLevelFunc(decl) {
+        name := ast.DeclName(decl)
+        pos := ast.DeclPos(decl)
+        initDiag := CheckInitName(name, pos, diag)
+        namedDiag := CheckDuplicateName(name, "func", pos, seen, initDiag)
+        return CheckVariadicParams(ast.DeclParams(decl), 0, namedDiag)
+    }
+    return CheckVariadicParams(ast.DeclParams(decl), 0, diag)
+}
+
+func CheckFuncDeclBody(decl ast.Decl, paramState DuplicateState, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    typeEnv := ParamTypeEnv(ast.DeclParams(decl), 0, []TypeEntry{})
+    if ast.DeclHasReceiver(decl) {
+        receiver := ast.DeclReceiverField(decl)
+        recvState := RegisterName(
+            ast.FieldName(receiver),
+            "receiver",
+            receiver.Pos,
+            paramState.Seen,
+            paramState.Seen,
+            paramState.Diag,
+        )
+        recvEnv := append(typeEnv, TypeEntry{
+            Name: ast.FieldName(receiver),
+            TypeName: TypeExprName(ast.FieldType(receiver)),
+        })
+        if ast.DeclIsExtern(decl) {
+            return recvState.Diag
+        }
+        bodyDiag := CheckBlock(ast.DeclBodyBlock(decl), recvState.Visible, recvState.Visible, recvState.Diag, externs)
+        return CheckSemanticBlock(ast.DeclBodyBlock(decl), ast.DeclResults(decl), bodyDiag, recvEnv, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.DeclIsExtern(decl) {
+        return paramState.Diag
+    }
+    bodyDiag := CheckBlock(ast.DeclBodyBlock(decl), paramState.Seen, paramState.Seen, paramState.Diag, externs)
+    return CheckSemanticBlock(ast.DeclBodyBlock(decl), ast.DeclResults(decl), bodyDiag, typeEnv, enums, structs, interfaces, funcs, methods)
+}
+
+func ParamTypeEnv(fields []ast.FieldDef, idx int, acc []TypeEntry) []TypeEntry {
+    if idx >= len(fields) {
+        return acc
+    }
+    return ParamTypeEnv(fields, idx + 1, append(acc, TypeEntry{
+        Name: ast.FieldName(fields[idx]),
+        TypeName: TypeExprName(ast.FieldType(fields[idx])),
+    }))
+}
+
+func CheckTypeDecl(decl ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    name := ast.DeclName(decl)
+    pos := ast.DeclPos(decl)
+    next := CheckDuplicateName(name, "type", pos, seen, diag)
+
+    fields := ast.DeclStructFields(decl)
+    if len(fields) > 0 {
+        return CheckFieldDefs(fields, []NameEntry{}, "field", next).Diag
+    }
+
+    variants := ast.DeclEnumVariants(decl)
+    if len(variants) > 0 {
+        return CheckVariants(variants, []NameEntry{}, next).Diag
+    }
+
+    methods := ast.DeclInterfaceMethods(decl)
+    if len(methods) > 0 {
+        return CheckMethods(methods, []NameEntry{}, next).Diag
+    }
+
+    return next
+}
+
+func CheckFieldDefs(fields []ast.FieldDef, seen []NameEntry, kind string, diag diagnostic.Diagnostics) DuplicateState {
+    if len(fields) == 0 {
+        return DuplicateState{
+            Diag: diag,
+            Seen: seen,
+        }
+    }
+
+    field := fields[0]
+    state := CheckDuplicateLocalName(ast.FieldName(field), kind, field.Pos, seen, diag)
+    return CheckFieldDefs(fields[1:], state.Seen, kind, state.Diag)
+}
+
+type DuplicateState struct {
+    Diag diagnostic.Diagnostics
+    Seen []NameEntry
+}
+
+func CheckVariants(items []ast.Variant, seen []NameEntry, diag diagnostic.Diagnostics) DuplicateState {
+    if len(items) == 0 {
+        return DuplicateState{
+            Diag: diag,
+            Seen: seen,
+        }
+    }
+    item := items[0]
+    state := CheckDuplicateLocalName(ast.VariantName(item), "variant", item.Pos, seen, diag)
+    return CheckVariants(items[1:], state.Seen, state.Diag)
+}
+
+func CheckMethods(items []ast.MethodSig, seen []NameEntry, diag diagnostic.Diagnostics) DuplicateState {
+    if len(items) == 0 {
+        return DuplicateState{
+            Diag: diag,
+            Seen: seen,
+        }
+    }
+    item := items[0]
+    state := CheckDuplicateLocalName(ast.MethodSigName(item), "method", item.Pos, seen, CheckVariadicParams(ast.MethodSigParams(item), 0, diag))
+    return CheckMethods(items[1:], state.Seen, state.Diag)
+}
+
+func CheckVariadicParams(fields []ast.FieldDef, idx int, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    if idx >= len(fields) {
+        return diag
+    }
+    if ast.FieldIsVariadic(fields[idx]) {
+        if idx + 1 < len(fields) {
+            return CheckVariadicParams(
+                fields,
+                idx + 1,
+                diag.Error(
+                    diagnostic.SyntaxCategory(),
+                    fields[idx].Pos,
+                    "variadic parameter must be the final parameter",
+                ),
+            )
+        }
+    }
+    return CheckVariadicParams(fields, idx + 1, diag)
+}
+
+func CheckDuplicateLocalName(name string, kind string, pos token.Pos, seen []NameEntry, diag diagnostic.Diagnostics) DuplicateState {
+    prev := FindNameEntry(seen, name)
+    if !isNone[NameEntry](prev) {
+        return DuplicateState{
+            Diag: diag.Error(
+                diagnostic.TypeErrorCategory(),
+                pos,
+                "duplicate "+kind+" declaration: "+name,
+            ),
+            Seen: seen,
+        }
+    }
+    return DuplicateState{
+        Diag: diag,
+        Seen: append(seen, NameEntry{
+            Name: name,
+            Kind: kind,
+            Pos: pos,
+        }),
+    }
+}
+
+func CheckInitName(name string, pos token.Pos, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    if name == "init" {
+        return diag.ErrorWithHint(
+            diagnostic.SyntaxCategory(),
+            pos,
+            "`init()` is not allowed in Fo",
+            "Use explicit entrypoints and bridge layers instead of package initialization side effects.",
+        )
+    }
+    return diag
+}
+
+func CheckDuplicateName(name string, kind string, pos token.Pos, seen []NameEntry, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    prev := FindNameEntry(seen, name)
+    if !isNone[NameEntry](prev) {
+        return diag.Error(
+            diagnostic.TypeErrorCategory(),
+            pos,
+            "duplicate "+kind+" declaration: "+name,
+        )
+    }
+    return diag
+}
+
+func CheckBlock(block ast.BlockStmt, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    return CheckStatements(ast.BlockStatements(block), local, visible, diag, externs)
+}
+
+func CheckStatements(stmts []ast.Stmt, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if len(stmts) == 0 {
+        return diag
+    }
+
+    stmt := stmts[0]
+    if ast.StmtIsBind(stmt) {
+        nextDiag := CheckExpr(ast.StmtBindValue(stmt), visible, diag, externs)
+        state := RegisterNames(ast.StmtBindNames(stmt), "binding", stmt.TokenPos(), local, visible, nextDiag)
+        return CheckStatements(stmts[1:], state.Local, state.Visible, state.Diag, externs)
+    }
+
+    nextDiag := CheckStmt(stmt, visible, diag, externs)
+    return CheckStatements(stmts[1:], local, visible, nextDiag, externs)
+}
+
+func CheckStmt(stmt ast.Stmt, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if ast.StmtIsReturn(stmt) {
+        return CheckExprs(ast.StmtReturnResults(stmt), 0, visible, diag, externs)
+    }
+    if ast.StmtIsIf(stmt) {
+        next := CheckExpr(ast.StmtIfCond(stmt), visible, diag, externs)
+        return CheckBlock(ast.StmtIfBody(stmt), []NameEntry{}, visible, next, externs)
+    }
+    if ast.StmtIsSwitch(stmt) {
+        tagDiag := CheckSwitchTag(stmt, visible, diag, externs)
+        return CheckSwitchCases(ast.StmtSwitchCases(stmt), 0, visible, tagDiag, externs)
+    }
+    if ast.StmtIsMatch(stmt) {
+        next := CheckExpr(ast.StmtMatchTag(stmt), visible, diag, externs)
+        return CheckMatchCases(ast.StmtMatchCases(stmt), 0, visible, next, externs)
+    }
+    if ast.StmtIsExpr(stmt) {
+        return CheckExpr(ast.StmtExprValue(stmt), visible, diag, externs)
+    }
+    return diag
+}
+
+func CheckSwitchTag(stmt ast.Stmt, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if ast.ExprOptionIsNone(ast.StmtSwitchTag(stmt)) {
+        return diag
+    }
+    return CheckExpr(ast.ExprOptionValue(ast.StmtSwitchTag(stmt)), visible, diag, externs)
+}
+
+func CheckSwitchCases(cases []ast.CaseClause, idx int, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if idx >= len(cases) {
+        return diag
+    }
+    exprDiag := CheckExprs(ast.SwitchCaseExprs(cases[idx]), 0, visible, diag, externs)
+    bodyDiag := CheckStatements(ast.SwitchCaseBody(cases[idx]), []NameEntry{}, visible, exprDiag, externs)
+    return CheckSwitchCases(cases, idx + 1, visible, bodyDiag, externs)
+}
+
+func CheckMatchCases(cases []ast.MatchCase, idx int, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if idx >= len(cases) {
+        return diag
+    }
+    state := RegisterPattern(ast.MatchCasePattern(cases[idx]), []NameEntry{}, visible, diag)
+    next := CheckStatements(ast.MatchCaseBody(cases[idx]), state.Local, state.Visible, state.Diag, externs)
+    return CheckMatchCases(cases, idx + 1, visible, next, externs)
+}
+
+func RegisterPattern(pattern ast.Pattern, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics) BindingState {
+    if ast.PatternIsWildcard(pattern) {
+        return BindingState{
+            Diag: diag,
+            Local: local,
+            Visible: visible,
+        }
+    }
+    if ast.PatternIsIdent(pattern) {
+        return RegisterNames([]string{ast.PatternIdentName(pattern)}, "pattern", pattern.TokenPos(), local, visible, diag)
+    }
+    if ast.PatternIsEnum(pattern) {
+        return RegisterPatterns(ast.PatternEnumSubPats(pattern), 0, local, visible, diag)
+    }
+    if ast.PatternIsStruct(pattern) {
+        return RegisterFieldPatterns(ast.PatternStructFields(pattern), 0, local, visible, diag)
+    }
+    return BindingState{
+        Diag: diag,
+        Local: local,
+        Visible: visible,
+    }
+}
+
+func RegisterPatterns(patterns []ast.Pattern, idx int, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics) BindingState {
+    if idx >= len(patterns) {
+        return BindingState{
+            Diag: diag,
+            Local: local,
+            Visible: visible,
+        }
+    }
+    state := RegisterPattern(patterns[idx], local, visible, diag)
+    return RegisterPatterns(patterns, idx + 1, state.Local, state.Visible, state.Diag)
+}
+
+func RegisterFieldPatterns(fields []ast.FieldPattern, idx int, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics) BindingState {
+    if idx >= len(fields) {
+        return BindingState{
+            Diag: diag,
+            Local: local,
+            Visible: visible,
+        }
+    }
+    state := RegisterPattern(ast.FieldPatternPatternValue(fields[idx]), local, visible, diag)
+    return RegisterFieldPatterns(fields, idx + 1, state.Local, state.Visible, state.Diag)
+}
+
+func RegisterNames(names []string, kind string, pos token.Pos, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics) BindingState {
+    if len(names) == 0 {
+        return BindingState{
+            Diag: diag,
+            Local: local,
+            Visible: visible,
+        }
+    }
+    state := RegisterName(names[0], kind, pos, local, visible, diag)
+    return RegisterNames(names[1:], kind, pos, state.Local, state.Visible, state.Diag)
+}
+
+func RegisterName(name string, kind string, pos token.Pos, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics) BindingState {
+    prev := FindNameEntry(local, name)
+    if !isNone[NameEntry](prev) {
+        return BindingState{
+            Diag: diag.Error(
+                diagnostic.ImmutabilityCategory(),
+                pos,
+                "reassignment is not allowed in Fo: "+name,
+            ),
+            Local: local,
+            Visible: visible,
+        }
+    }
+    return RegisterNameWithShadow(name, kind, pos, local, visible, diag)
+}
+
+func RegisterNameWithShadow(name string, kind string, pos token.Pos, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics) BindingState {
+    entry := NameEntry{
+        Name: name,
+        Kind: kind,
+        Pos: pos,
+    }
+    return BindingState{
+        Diag: ShadowDiag(name, pos, visible, diag),
+        Local: append(local, entry),
+        Visible: append(visible, entry),
+    }
+}
+
+func ShadowDiag(name string, pos token.Pos, visible []NameEntry, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    prev := FindNameEntry(visible, name)
+    if !isNone[NameEntry](prev) {
+        item := unwrapOr[NameEntry](prev, EmptyNameEntry())
+        return diag.Warning(
+            diagnostic.TypeErrorCategory(),
+            pos,
+            "shadowing "+item.Kind+" declaration: "+name,
+        )
+    }
+    return diag
+}
+
+func CheckExprs(exprs []ast.Expr, idx int, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if idx >= len(exprs) {
+        return diag
+    }
+    next := CheckExpr(exprs[idx], visible, diag, externs)
+    return CheckExprs(exprs, idx + 1, visible, next, externs)
+}
+
+func CheckExpr(expr ast.Expr, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if ast.ExprIsCall(expr) {
+        next := CheckCallExpr(expr, visible, diag, externs)
+        return CheckExprs(ast.ExprCallArgs(expr), 0, visible, next, externs)
+    }
+    if ast.ExprIsBinary(expr) {
+        next := CheckExpr(ast.ExprBinaryLeft(expr), visible, diag, externs)
+        return CheckExpr(ast.ExprBinaryRight(expr), visible, next, externs)
+    }
+    if ast.ExprIsUnary(expr) {
+        return CheckExpr(ast.ExprUnaryOperand(expr), visible, diag, externs)
+    }
+    if ast.ExprIsPipeline(expr) {
+        next := CheckExpr(ast.ExprPipelineLeft(expr), visible, diag, externs)
+        return CheckExpr(ast.ExprPipelineRight(expr), visible, next, externs)
+    }
+    if ast.ExprIsSelector(expr) {
+        return CheckExpr(ast.ExprSelectorTarget(expr), visible, diag, externs)
+    }
+    if ast.ExprIsIndex(expr) {
+        next := CheckExpr(ast.ExprIndexTarget(expr), visible, diag, externs)
+        return CheckExpr(ast.ExprIndexValue(expr), visible, next, externs)
+    }
+    if ast.ExprIsSlice(expr) {
+        targetDiag := CheckExpr(ast.ExprSliceTarget(expr), visible, diag, externs)
+        lowDiag := CheckOptionalExpr(ast.ExprSliceLow(expr), visible, targetDiag, externs)
+        return CheckOptionalExpr(ast.ExprSliceHigh(expr), visible, lowDiag, externs)
+    }
+    if ast.ExprIsStructLit(expr) {
+        return CheckFieldInitExprs(ast.ExprStructLitFields(expr), 0, visible, diag, externs)
+    }
+    if ast.ExprIsCopyUpdate(expr) {
+        next := CheckExpr(ast.ExprCopyUpdateSource(expr), visible, diag, externs)
+        return CheckFieldUpdateExprs(ast.ExprCopyUpdateUpdates(expr), 0, visible, next, externs)
+    }
+    if ast.ExprIsSliceLit(expr) {
+        return CheckExprs(ast.ExprSliceLitElems(expr), 0, visible, diag, externs)
+    }
+    if ast.ExprIsFuncLit(expr) {
+        return CheckFuncLitExpr(expr, visible, diag, externs)
+    }
+    return diag
+}
+
+func CheckFuncLitExpr(expr ast.Expr, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    params := ast.ExprFuncLitParams(expr)
+    paramDiag := CheckFieldDefs(params, []NameEntry{}, "parameter", diag).Diag
+    bindings := RegisterFuncLitParams(params, 0, []NameEntry{}, visible, paramDiag)
+    return CheckBlock(ast.ExprFuncLitBody(expr), bindings.Local, bindings.Visible, bindings.Diag, externs)
+}
+
+func RegisterFuncLitParams(fields []ast.FieldDef, idx int, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics) BindingState {
+    if idx >= len(fields) {
+        return BindingState{
+            Diag: diag,
+            Local: local,
+            Visible: visible,
+        }
+    }
+    state := RegisterName(ast.FieldName(fields[idx]), "parameter", fields[idx].Pos, local, visible, diag)
+    return RegisterFuncLitParams(fields, idx + 1, state.Local, state.Visible, state.Diag)
+}
+
+func CheckSemanticBlock(block ast.BlockStmt, results []ast.TypeExpr, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    return CheckSemanticStatements(ast.BlockStatements(block), 0, results, diag, env, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckSemanticStatements(stmts []ast.Stmt, idx int, results []ast.TypeExpr, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(stmts) {
+        return diag
+    }
+    stmt := stmts[idx]
+    next := CheckSemanticStmt(stmt, results, diag, env, enums, structs, interfaces, funcs, methods)
+    nextEnv := SemanticEnvAfterStmt(stmt, env, enums, structs, funcs, methods)
+    return CheckSemanticStatements(stmts, idx + 1, results, next, nextEnv, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckSemanticStmt(stmt ast.Stmt, results []ast.TypeExpr, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if ast.StmtIsReturn(stmt) {
+        callDiag := CheckSemanticExprs(ast.StmtReturnResults(stmt), 0, diag, env, enums, structs, interfaces, funcs, methods)
+        return CheckReturnShape(ast.StmtReturnResults(stmt), results, stmt.TokenPos(), callDiag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.StmtIsIf(stmt) {
+        exprDiag := CheckSemanticExpr(ast.StmtIfCond(stmt), diag, env, enums, structs, interfaces, funcs, methods)
+        condDiag := CheckConditionShape(ast.StmtIfCond(stmt), stmt.TokenPos(), exprDiag)
+        return CheckSemanticBlock(ast.StmtIfBody(stmt), results, condDiag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.StmtIsSwitch(stmt) {
+        return CheckSemanticSwitchCases(ast.StmtSwitchCases(stmt), 0, results, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.StmtIsMatch(stmt) {
+        matchType := InferMatchTagType(ast.StmtMatchTag(stmt), env, enums)
+        patternDiag := CheckMatchPatternTypes(ast.StmtMatchCases(stmt), 0, matchType, diag, enums, structs, funcs)
+        matchDiag := CheckMatchExhaustiveness(stmt, env, enums, patternDiag)
+        return CheckSemanticMatchCases(ast.StmtMatchCases(stmt), 0, results, matchDiag, env, matchType, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.StmtIsBind(stmt) {
+        return CheckSemanticExpr(ast.StmtBindValue(stmt), diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.StmtIsExpr(stmt) {
+        return CheckSemanticExpr(ast.StmtExprValue(stmt), diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    return diag
+}
+
+func CheckMatchPatternTypes(cases []ast.MatchCase, idx int, matchType string, diag diagnostic.Diagnostics, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) diagnostic.Diagnostics {
+    if idx >= len(cases) {
+        return diag
+    }
+    next := CheckPatternType(ast.MatchCasePattern(cases[idx]), matchType, cases[idx].Pos, diag, enums, structs, funcs)
+    return CheckMatchPatternTypes(cases, idx + 1, matchType, next, enums, structs, funcs)
+}
+
+func CheckPatternType(pattern ast.Pattern, expectedType string, pos token.Pos, diag diagnostic.Diagnostics, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) diagnostic.Diagnostics {
+    if expectedType == "" {
+        return diag
+    }
+    if ast.PatternIsWildcard(pattern) || ast.PatternIsIdent(pattern) {
+        return diag
+    }
+    if ast.PatternIsLit(pattern) {
+        return CheckLitPatternType(pattern, expectedType, pos, diag)
+    }
+    if ast.PatternIsTuple(pattern) {
+        return CheckTuplePatternType(pattern, expectedType, pos, diag, enums, structs, funcs)
+    }
+    if ast.PatternIsEnum(pattern) {
+        if !IsKnownEnumType(expectedType, enums) {
+            return diag
+        }
+        return CheckEnumPatternType(pattern, expectedType, pos, diag, enums, structs, funcs)
+    }
+    if ast.PatternIsStruct(pattern) {
+        if !IsKnownStructType(expectedType, structs) {
+            return diag
+        }
+        return CheckStructPatternType(pattern, expectedType, pos, diag, enums, structs, funcs)
+    }
+    return diag
+}
+
+func CheckLitPatternType(pattern ast.Pattern, expectedType string, pos token.Pos, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    got := BasicLitTypeName(ast.PatternLitKind(pattern), ast.PatternLitValue(pattern))
+    if got == "" {
+        return diag
+    }
+    if got == expectedType {
+        return diag
+    }
+    return diag.Error(
+        diagnostic.TypeErrorCategory(),
+        pos,
+        "pattern type mismatch: expected "+expectedType+", got "+got,
+    )
+}
+
+func CheckTuplePatternType(pattern ast.Pattern, expectedType string, pos token.Pos, diag diagnostic.Diagnostics, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) diagnostic.Diagnostics {
+    expected := ParseTupleTypeNames(expectedType)
+    if len(expected) == 0 {
+        return diag
+    }
+    elems := ast.PatternTupleElems(pattern)
+    if len(elems) == len(expected) {
+        return CheckPatternTypes(elems, expected, 0, diag, enums, structs, funcs)
+    }
+    return diag.Error(
+        diagnostic.TypeErrorCategory(),
+        pos,
+        "tuple pattern arity mismatch: expected "+IntString(len(expected))+", got "+IntString(len(elems)),
+    )
+}
+
+func IsKnownEnumType(name string, enums []EnumInfo) bool {
+    info := FindEnumInfo(enums, name)
+    if !isNone[EnumInfo](info) {
+        return true
+    }
+    return false
+}
+
+func IsKnownStructType(name string, structs []StructInfo) bool {
+    info := FindStructInfo(structs, name)
+    if !isNone[StructInfo](info) {
+        return true
+    }
+    return false
+}
+
+func CheckEnumPatternType(pattern ast.Pattern, expectedType string, pos token.Pos, diag diagnostic.Diagnostics, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) diagnostic.Diagnostics {
+    name := ast.PatternEnumName(pattern)
+    info := FindEnumConstructor(funcs, expectedType, name)
+    if !isNone[FuncInfo](info) {
+        item := unwrapOr[FuncInfo](info, EmptyFuncInfo())
+        subPats := ast.PatternEnumSubPats(pattern)
+        if len(subPats) == len(item.ParamTypes) {
+            return CheckPatternTypes(subPats, item.ParamTypes, 0, diag, enums, structs, funcs)
+        }
+        return diag.Error(
+            diagnostic.TypeErrorCategory(),
+            pos,
+            "pattern arity mismatch for "+name+": expected "+IntString(len(item.ParamTypes))+", got "+IntString(len(subPats)),
+        )
+    }
+    return diag.Error(
+        diagnostic.TypeErrorCategory(),
+        pos,
+        "pattern variant "+name+" does not belong to "+expectedType,
+    )
+}
+
+func CheckPatternTypes(patterns []ast.Pattern, expected []string, idx int, diag diagnostic.Diagnostics, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) diagnostic.Diagnostics {
+    if idx >= len(patterns) {
+        return diag
+    }
+    next := CheckPatternType(patterns[idx], expected[idx], patterns[idx].TokenPos(), diag, enums, structs, funcs)
+    return CheckPatternTypes(patterns, expected, idx + 1, next, enums, structs, funcs)
+}
+
+func CheckStructPatternType(pattern ast.Pattern, expectedType string, pos token.Pos, diag diagnostic.Diagnostics, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) diagnostic.Diagnostics {
+    if ast.PatternStructType(pattern) == expectedType {
+        return CheckStructPatternFields(ast.PatternStructFields(pattern), expectedType, 0, diag, enums, structs, funcs)
+    }
+    return diag.Error(
+        diagnostic.TypeErrorCategory(),
+        pos,
+        "pattern type mismatch: expected "+expectedType+", got "+ast.PatternStructType(pattern),
+    )
+}
+
+func CheckStructPatternFields(fields []ast.FieldPattern, structType string, idx int, diag diagnostic.Diagnostics, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) diagnostic.Diagnostics {
+    if idx >= len(fields) {
+        return diag
+    }
+    name := ast.FieldPatternNameValue(fields[idx])
+    fieldType := FieldTypeForStruct(structType, name, structs)
+    if fieldType == "" {
+        return CheckStructPatternFields(
+            fields,
+            structType,
+            idx + 1,
+            diag.Error(
+                diagnostic.TypeErrorCategory(),
+                ast.FieldPatternPatternValue(fields[idx]).TokenPos(),
+                "unknown field "+name+" on "+structType,
+            ),
+            enums,
+            structs,
+            funcs,
+        )
+    }
+    next := CheckPatternType(ast.FieldPatternPatternValue(fields[idx]), fieldType, ast.FieldPatternPatternValue(fields[idx]).TokenPos(), diag, enums, structs, funcs)
+    return CheckStructPatternFields(fields, structType, idx + 1, next, enums, structs, funcs)
+}
+
+func ExtendTypeEnvWithPattern(pattern ast.Pattern, expectedType string, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) []TypeEntry {
+    if expectedType == "" {
+        return env
+    }
+    if ast.PatternIsWildcard(pattern) || ast.PatternIsLit(pattern) {
+        return env
+    }
+    if ast.PatternIsIdent(pattern) {
+        return append(env, TypeEntry{
+            Name: ast.PatternIdentName(pattern),
+            TypeName: expectedType,
+        })
+    }
+    if ast.PatternIsTuple(pattern) {
+        return ExtendTypeEnvWithTuplePattern(ast.PatternTupleElems(pattern), ParseTupleTypeNames(expectedType), 0, env, enums, structs, funcs)
+    }
+    if ast.PatternIsEnum(pattern) {
+        info := FindEnumConstructor(funcs, expectedType, ast.PatternEnumName(pattern))
+        if isNone[FuncInfo](info) {
+            return env
+        }
+        item := unwrapOr[FuncInfo](info, EmptyFuncInfo())
+        return ExtendTypeEnvWithPatterns(ast.PatternEnumSubPats(pattern), item.ParamTypes, 0, env, enums, structs, funcs)
+    }
+    if ast.PatternIsStruct(pattern) {
+        return ExtendTypeEnvWithStructPattern(ast.PatternStructFields(pattern), expectedType, 0, env, enums, structs, funcs)
+    }
+    return env
+}
+
+func ExtendTypeEnvWithPatterns(patterns []ast.Pattern, expected []string, idx int, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) []TypeEntry {
+    if idx >= len(patterns) {
+        return env
+    }
+    if idx >= len(expected) {
+        return env
+    }
+    next := ExtendTypeEnvWithPattern(patterns[idx], expected[idx], env, enums, structs, funcs)
+    return ExtendTypeEnvWithPatterns(patterns, expected, idx + 1, next, enums, structs, funcs)
+}
+
+func ExtendTypeEnvWithTuplePattern(patterns []ast.Pattern, expected []string, idx int, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) []TypeEntry {
+    if idx >= len(patterns) {
+        return env
+    }
+    if idx >= len(expected) {
+        return env
+    }
+    next := ExtendTypeEnvWithPattern(patterns[idx], expected[idx], env, enums, structs, funcs)
+    return ExtendTypeEnvWithTuplePattern(patterns, expected, idx + 1, next, enums, structs, funcs)
+}
+
+func ExtendTypeEnvWithStructPattern(fields []ast.FieldPattern, structType string, idx int, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo) []TypeEntry {
+    if idx >= len(fields) {
+        return env
+    }
+    name := ast.FieldPatternNameValue(fields[idx])
+    fieldType := FieldTypeForStruct(structType, name, structs)
+    if fieldType == "" {
+        return ExtendTypeEnvWithStructPattern(fields, structType, idx + 1, env, enums, structs, funcs)
+    }
+    next := ExtendTypeEnvWithPattern(ast.FieldPatternPatternValue(fields[idx]), fieldType, env, enums, structs, funcs)
+    return ExtendTypeEnvWithStructPattern(fields, structType, idx + 1, next, enums, structs, funcs)
+}
+
+func CheckSemanticSwitchCases(cases []ast.CaseClause, idx int, results []ast.TypeExpr, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(cases) {
+        return diag
+    }
+    exprDiag := CheckSemanticExprs(ast.SwitchCaseExprs(cases[idx]), 0, diag, env, enums, structs, interfaces, funcs, methods)
+    next := CheckSemanticStatements(ast.SwitchCaseBody(cases[idx]), 0, results, exprDiag, env, enums, structs, interfaces, funcs, methods)
+    return CheckSemanticSwitchCases(cases, idx + 1, results, next, env, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckSemanticMatchCases(cases []ast.MatchCase, idx int, results []ast.TypeExpr, diag diagnostic.Diagnostics, env []TypeEntry, matchType string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(cases) {
+        return diag
+    }
+    caseEnv := ExtendTypeEnvWithPattern(ast.MatchCasePattern(cases[idx]), matchType, env, enums, structs, funcs)
+    next := CheckSemanticStatements(ast.MatchCaseBody(cases[idx]), 0, results, diag, caseEnv, enums, structs, interfaces, funcs, methods)
+    return CheckSemanticMatchCases(cases, idx + 1, results, next, env, matchType, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckConditionShape(expr ast.Expr, pos token.Pos, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    got := InferExprTypeName(expr)
+    if got == "" {
+        return diag
+    }
+    if got == "bool" {
+        return diag
+    }
+    return diag.Error(
+        diagnostic.TypeErrorCategory(),
+        pos,
+        "if condition must be bool, got "+got,
+    )
+}
+
+func CheckReturnShape(exprs []ast.Expr, results []ast.TypeExpr, pos token.Pos, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if len(exprs) == len(results) {
+        return CheckReturnTypes(exprs, results, 0, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if len(exprs) == 1 {
+        got := InferExprTypeNameFromEnv(exprs[0], env, enums, structs, funcs, methods)
+        elems := ParseTupleTypeNames(got)
+        if len(elems) == len(results) {
+            return CheckReturnTupleTypes(elems, results, 0, exprs[0].TokenPos(), diag, interfaces, methods)
+        }
+    }
+    return diag.Error(
+        diagnostic.TypeErrorCategory(),
+        pos,
+        "return value count mismatch: expected "+IntString(len(results))+", got "+IntString(len(exprs)),
+    )
+}
+
+func CheckReturnTypes(exprs []ast.Expr, results []ast.TypeExpr, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(exprs) {
+        return diag
+    }
+    expected := TypeExprName(results[idx])
+    got := InferExprTypeNameFromEnv(exprs[idx], env, enums, structs, funcs, methods)
+    if expected == "" {
+        return CheckReturnTypes(exprs, results, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if got == "" {
+        return CheckReturnTypes(exprs, results, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ReturnTypeCompatible(expected, got, interfaces, methods) {
+        return CheckReturnTypes(exprs, results, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    return CheckReturnTypes(
+        exprs,
+        results,
+        idx + 1,
+        diag.Error(
+            diagnostic.TypeErrorCategory(),
+            exprs[idx].TokenPos(),
+            "return type mismatch: expected "+expected+", got "+got,
+        ),
+        env,
+        enums,
+        structs,
+        interfaces,
+        funcs,
+        methods,
+    )
+}
+
+func CheckReturnTupleTypes(got []string, results []ast.TypeExpr, idx int, pos token.Pos, diag diagnostic.Diagnostics, interfaces []InterfaceInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(got) {
+        return diag
+    }
+    expected := TypeExprName(results[idx])
+    if ReturnTypeCompatible(expected, got[idx], interfaces, methods) {
+        return CheckReturnTupleTypes(got, results, idx + 1, pos, diag, interfaces, methods)
+    }
+    return CheckReturnTupleTypes(
+        got,
+        results,
+        idx + 1,
+        pos,
+        diag.Error(
+            diagnostic.TypeErrorCategory(),
+            pos,
+            "return type mismatch: expected "+expected+", got "+got[idx],
+        ),
+        interfaces,
+        methods,
+    )
+}
+
+func TypeExprName(expr ast.TypeExpr) string {
+    if ast.TypeExprIsQualified(expr) {
+        name := ast.TypeExprQualifiedPackage(expr) + "." + ast.TypeExprQualifiedName(expr)
+        args := ast.TypeExprQualifiedArgs(expr)
+        if len(args) == 0 {
+            return name
+        }
+        return name + "[" + JoinTypeNames(args, 0) + "]"
+    }
+    if ast.TypeExprIsTuple(expr) {
+        return "(" + JoinTypeNames(ast.TypeExprTupleElems(expr), 0) + ")"
+    }
+    if ast.TypeExprIsMap(expr) {
+        return "map[" + TypeExprName(ast.TypeExprMapKey(expr)) + "]" + TypeExprName(ast.TypeExprMapValue(expr))
+    }
+    if ast.TypeExprIsSlice(expr) {
+        return "[]" + TypeExprName(ast.TypeExprSliceElem(expr))
+    }
+    if ast.TypeExprIsChan(expr) {
+        if ast.TypeExprChanReceiveOnly(expr) {
+            return "<-chan " + TypeExprName(ast.TypeExprChanElem(expr))
+        }
+        return "chan " + TypeExprName(ast.TypeExprChanElem(expr))
+    }
+    if ast.TypeExprIsFunc(expr) {
+        return "func"
+    }
+    name := ast.TypeExprNamedName(expr)
+    args := ast.TypeExprNamedArgs(expr)
+    if len(args) == 0 {
+        return name
+    }
+    return name + "[" + JoinTypeNames(args, 0) + "]"
+}
+
+func JoinTypeNames(items []ast.TypeExpr, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    head := TypeExprName(items[idx])
+    if idx + 1 >= len(items) {
+        return head
+    }
+    return head + ", " + JoinTypeNames(items, idx + 1)
+}
+
+func InferExprTypeName(expr ast.Expr) string {
+    if ast.ExprIsBasicLit(expr) {
+        return BasicLitTypeName(ast.ExprBasicLitKind(expr), ast.ExprBasicLitValue(expr))
+    }
+    if ast.ExprIsTuple(expr) {
+        return TupleExprTypeName(ast.ExprTupleElems(expr), 0, []string{})
+    }
+    if ast.ExprIsStructLit(expr) {
+        return ast.ExprStructLitType(expr)
+    }
+    if ast.ExprIsUnary(expr) {
+        if ast.ExprUnaryOp(expr) == token.NotType() {
+            return "bool"
+        }
+        if ast.ExprUnaryOp(expr) == token.MinusType() {
+            return InferExprTypeName(ast.ExprUnaryOperand(expr))
+        }
+    }
+    if ast.ExprIsBinary(expr) {
+        op := ast.ExprBinaryOp(expr)
+        if op == token.EqType() || op == token.LtType() || op == token.GtType() || op == token.LteType() || op == token.GteType() {
+            return "bool"
+        }
+        left := InferExprTypeName(ast.ExprBinaryLeft(expr))
+        right := InferExprTypeName(ast.ExprBinaryRight(expr))
+        if left == right {
+            return left
+        }
+        return ""
+    }
+    if ast.ExprIsPipeline(expr) {
+        return InferExprTypeName(ast.ExprPipelineRight(expr))
+    }
+    return ""
+}
+
+func BasicLitTypeName(kind token.Type, value string) string {
+    if kind == token.StringLitType() {
+        return "string"
+    }
+    if kind == token.IntLitType() {
+        return "int"
+    }
+    if kind == token.TrueType() || kind == token.FalseType() {
+        return "bool"
+    }
+    if value == "true" || value == "false" {
+        return "bool"
+    }
+    return ""
+}
+
+func TupleExprTypeName(items []ast.Expr, idx int, acc []string) string {
+    if idx >= len(items) {
+        return "(" + JoinStrings(acc, 0) + ")"
+    }
+    got := InferExprTypeName(items[idx])
+    if got == "" {
+        return ""
+    }
+    return TupleExprTypeName(items, idx + 1, append(acc, got))
+}
+
+func IntString(n int) string {
+    if n == 0 {
+        return "0"
+    }
+    if n == 1 {
+        return "1"
+    }
+    if n == 2 {
+        return "2"
+    }
+    if n == 3 {
+        return "3"
+    }
+    if n == 4 {
+        return "4"
+    }
+    if n == 5 {
+        return "5"
+    }
+    if n == 6 {
+        return "6"
+    }
+    if n == 7 {
+        return "7"
+    }
+    if n == 8 {
+        return "8"
+    }
+    if n == 9 {
+        return "9"
+    }
+    return "0"
+}
+
+func CheckMatchExhaustiveness(stmt ast.Stmt, env []TypeEntry, enums []EnumInfo, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    matchType := InferMatchTagType(ast.StmtMatchTag(stmt), env, enums)
+    if matchType == "" {
+        return diag
+    }
+    info := FindEnumInfo(enums, matchType)
+    if isNone[EnumInfo](info) {
+        return diag
+    }
+    item := unwrapOr[EnumInfo](info, EmptyEnumInfo())
+    return CheckMatchCasesAgainstEnum(ast.StmtMatchCases(stmt), item, stmt.TokenPos(), diag)
+}
+
+func InferMatchTagType(expr ast.Expr, env []TypeEntry, enums []EnumInfo) string {
+    if ast.ExprIsIdent(expr) {
+        return LookupTypeEnv(env, ast.ExprIdentName(expr))
+    }
+    if ast.ExprIsCall(expr) {
+        fn := ast.ExprCallFunc(expr)
+        if ast.ExprIsIdent(fn) {
+            return EnumTypeForVariant(ast.ExprIdentName(fn), enums)
+        }
+    }
+    return ""
+}
+
+func LookupTypeEnv(env []TypeEntry, name string) string {
+    if len(env) == 0 {
+        return ""
+    }
+    if env[0].Name == name {
+        return env[0].TypeName
+    }
+    return LookupTypeEnv(env[1:], name)
+}
+
+func FindStructInfo(items []StructInfo, name string) Option[StructInfo] {
+    if len(items) == 0 {
+        return None[StructInfo]()
+    }
+    if BaseTypeName(items[0].Name) == BaseTypeName(name) {
+        return Some[StructInfo](items[0])
+    }
+    return FindStructInfo(items[1:], name)
+}
+
+func FieldTypeForStruct(typeName string, fieldName string, structs []StructInfo) string {
+    info := FindStructInfo(structs, typeName)
+    if isNone[StructInfo](info) {
+        return ""
+    }
+    item := unwrapOr[StructInfo](info, EmptyStructInfo())
+    return FieldTypeForInfo(item.Fields, fieldName)
+}
+
+func ResolveFieldPathType(structType string, path []string, structs []StructInfo) string {
+    if len(path) == 0 {
+        return structType
+    }
+    fieldType := FieldTypeForStruct(structType, path[0], structs)
+    if fieldType == "" {
+        return ""
+    }
+    if len(path) == 1 {
+        return fieldType
+    }
+    if !IsKnownStructType(fieldType, structs) {
+        return ""
+    }
+    return ResolveFieldPathType(fieldType, path[1:], structs)
+}
+
+func FieldTypeForInfo(fields []FieldTypeInfo, fieldName string) string {
+    if len(fields) == 0 {
+        return ""
+    }
+    if fields[0].Name == fieldName {
+        return fields[0].TypeName
+    }
+    return FieldTypeForInfo(fields[1:], fieldName)
+}
+
+func SliceElemTypeName(typeName string) string {
+    if HasSlicePrefix(typeName) {
+        return TrimSlicePrefix(typeName)
+    }
+    return ""
+}
+
+func HasSlicePrefix(typeName string) bool {
+    if len(typeName) < 2 {
+        return false
+    }
+    if typeName[0] == "["[0] {
+        if typeName[1] == "]"[0] {
+            return true
+        }
+    }
+    return false
+}
+
+func TrimSlicePrefix(typeName string) string {
+    return TrimSlicePrefixLoop(typeName, 0, "")
+}
+
+func TrimSlicePrefixLoop(typeName string, idx int, acc string) string {
+    if idx >= len(typeName) {
+        return acc
+    }
+    if idx < 2 {
+        return TrimSlicePrefixLoop(typeName, idx + 1, acc)
+    }
+    return TrimSlicePrefixLoop(typeName, idx + 1, acc + string(typeName[idx]))
+}
+
+func ParseTupleTypeNames(typeName string) []string {
+    if !HasTupleEnvelope(typeName) {
+        return []string{}
+    }
+    inner := TrimTupleEnvelope(typeName)
+    if strings.TrimSpace(inner) == "" {
+        return []string{}
+    }
+    return ParseTupleTypeNamesLoop(strings.Split(inner, ","), 0, []string{})
+}
+
+func HasTupleEnvelope(typeName string) bool {
+    if len(typeName) < 2 {
+        return false
+    }
+    if typeName[0] == "("[0] {
+        if typeName[len(typeName)-1] == ")"[0] {
+            return true
+        }
+    }
+    return false
+}
+
+func TrimTupleEnvelope(typeName string) string {
+    return TrimTupleEnvelopeLoop(typeName, 0, "")
+}
+
+func TrimTupleEnvelopeLoop(typeName string, idx int, acc string) string {
+    if idx >= len(typeName) {
+        return acc
+    }
+    if idx == 0 {
+        return TrimTupleEnvelopeLoop(typeName, idx + 1, acc)
+    }
+    if idx + 1 == len(typeName) {
+        return acc
+    }
+    return TrimTupleEnvelopeLoop(typeName, idx + 1, acc + string(typeName[idx]))
+}
+
+func ParseTupleTypeNamesLoop(items []string, idx int, acc []string) []string {
+    if idx >= len(items) {
+        return acc
+    }
+    return ParseTupleTypeNamesLoop(items, idx + 1, append(acc, strings.TrimSpace(items[idx])))
+}
+
+func FindEnumInfo(enums []EnumInfo, name string) Option[EnumInfo] {
+    if len(enums) == 0 {
+        return None[EnumInfo]()
+    }
+    if BaseTypeName(enums[0].Name) == BaseTypeName(name) {
+        return Some[EnumInfo](enums[0])
+    }
+    return FindEnumInfo(enums[1:], name)
+}
+
+func EnumTypeForVariant(variant string, enums []EnumInfo) string {
+    return EnumTypeForVariantLoop(variant, enums, 0, "")
+}
+
+func EnumTypeForVariantLoop(variant string, enums []EnumInfo, idx int, found string) string {
+    if idx >= len(enums) {
+        return found
+    }
+    if EnumHasVariant(enums[idx], variant) {
+        if found == "" {
+            return EnumTypeForVariantLoop(variant, enums, idx + 1, enums[idx].Name)
+        }
+        return ""
+    }
+    return EnumTypeForVariantLoop(variant, enums, idx + 1, found)
+}
+
+func EnumHasVariant(info EnumInfo, variant string) bool {
+    return StringIn(info.Variants, variant)
+}
+
+func ReturnTypeCompatible(expected string, got string, interfaces []InterfaceInfo, methods []MethodInfo) bool {
+    if expected == got {
+        return true
+    }
+    return TypeImplementsInterface(got, expected, interfaces, methods)
+}
+
+func ArgumentTypeCompatible(expected string, got string, interfaces []InterfaceInfo, methods []MethodInfo) bool {
+    if IsTypeVariableName(expected) {
+        return true
+    }
+    return ReturnTypeCompatible(expected, got, interfaces, methods)
+}
+
+func TypeImplementsInterface(typeName string, interfaceName string, interfaces []InterfaceInfo, methods []MethodInfo) bool {
+    info := FindInterfaceInfo(interfaces, interfaceName)
+    if isNone[InterfaceInfo](info) {
+        return false
+    }
+    item := unwrapOr[InterfaceInfo](info, EmptyInterfaceInfo())
+    return HasMethodInfos(typeName, item.Methods, methods, 0)
+}
+
+func FindInterfaceInfo(items []InterfaceInfo, name string) Option[InterfaceInfo] {
+    if len(items) == 0 {
+        return None[InterfaceInfo]()
+    }
+    if BaseTypeName(items[0].Name) == BaseTypeName(name) {
+        return Some[InterfaceInfo](items[0])
+    }
+    return FindInterfaceInfo(items[1:], name)
+}
+
+func HasMethodInfos(typeName string, infos []FuncInfo, methods []MethodInfo, idx int) bool {
+    if idx >= len(infos) {
+        return true
+    }
+    if MethodImplements(typeName, infos[idx], methods) {
+        return HasMethodInfos(typeName, infos, methods, idx + 1)
+    }
+    return false
+}
+
+func MethodImplements(typeName string, need FuncInfo, methods []MethodInfo) bool {
+    info := FindMethodInfo(methods, typeName, need.Name)
+    if !isNone[MethodInfo](info) {
+        item := unwrapOr[MethodInfo](info, EmptyMethodInfo())
+        if SignatureMatches(need.ParamTypes, item.ParamTypes, 0) {
+            return SignatureMatches(need.ResultTypes, item.ResultTypes, 0)
+        }
+        return false
+    }
+    return false
+}
+
+func SignatureMatches(left []string, right []string, idx int) bool {
+    if len(left) == len(right) {
+        if idx >= len(left) {
+            return true
+        }
+        if left[idx] == right[idx] {
+            return SignatureMatches(left, right, idx + 1)
+        }
+    }
+    return false
+}
+
+func StringIn(items []string, want string) bool {
+    if len(items) == 0 {
+        return false
+    }
+    if items[0] == want {
+        return true
+    }
+    return StringIn(items[1:], want)
+}
+
+type CoverageState struct {
+    Diag diagnostic.Diagnostics
+    Seen []string
+    HasWildcard bool
+}
+
+func CheckMatchCasesAgainstEnum(cases []ast.MatchCase, info EnumInfo, pos token.Pos, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
+    state := AnalyzeMatchCoverage(cases, 0, []string{}, false, diag)
+    if state.HasWildcard {
+        return state.Diag
+    }
+    missing := MissingVariants(info.Variants, state.Seen, 0, []string{})
+    if len(missing) == 0 {
+        return state.Diag
+    }
+    return state.Diag.Error(
+        diagnostic.ExhaustivenessCategory(),
+        pos,
+        "match does not cover every case of '"+info.Name+"'. Missing: "+JoinStrings(missing, 0),
+    )
+}
+
+func AnalyzeMatchCoverage(cases []ast.MatchCase, idx int, seen []string, hasWildcard bool, diag diagnostic.Diagnostics) CoverageState {
+    if idx >= len(cases) {
+        return CoverageState{
+            Diag: diag,
+            Seen: seen,
+            HasWildcard: hasWildcard,
+        }
+    }
+    pattern := ast.MatchCasePattern(cases[idx])
+    if hasWildcard {
+        return AnalyzeMatchCoverage(
+            cases,
+            idx + 1,
+            seen,
+            hasWildcard,
+            diag.Warning(
+                diagnostic.ExhaustivenessCategory(),
+                cases[idx].Pos,
+                "unreachable match case",
+            ),
+        )
+    }
+    if ast.PatternIsWildcard(pattern) {
+        return AnalyzeMatchCoverage(cases, idx + 1, seen, true, diag)
+    }
+    if ast.PatternIsIdent(pattern) {
+        return AnalyzeMatchCoverage(cases, idx + 1, seen, true, diag)
+    }
+    if ast.PatternIsEnum(pattern) {
+        name := ast.PatternEnumName(pattern)
+        if StringIn(seen, name) {
+            return AnalyzeMatchCoverage(
+                cases,
+                idx + 1,
+                seen,
+                false,
+                diag.Warning(
+                    diagnostic.ExhaustivenessCategory(),
+                    cases[idx].Pos,
+                    "redundant match case",
+                ),
+            )
+        }
+        return AnalyzeMatchCoverage(cases, idx + 1, append(seen, name), false, diag)
+    }
+    return AnalyzeMatchCoverage(cases, idx + 1, seen, false, diag)
+}
+
+func MissingVariants(all []string, seen []string, idx int, acc []string) []string {
+    if idx >= len(all) {
+        return acc
+    }
+    if StringIn(seen, all[idx]) {
+        return MissingVariants(all, seen, idx + 1, acc)
+    }
+    return MissingVariants(all, seen, idx + 1, append(acc, all[idx]))
+}
+
+func SemanticEnvAfterStmt(stmt ast.Stmt, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo, methods []MethodInfo) []TypeEntry {
+    if ast.StmtIsBind(stmt) {
+        names := ast.StmtBindNames(stmt)
+        if len(names) == 0 {
+            return env
+        }
+        inferred := InferExprTypeNameFromEnv(ast.StmtBindValue(stmt), env, enums, structs, funcs, methods)
+        if inferred == "" {
+            return env
+        }
+        return ExtendTypeEnvForNames(names, inferred, env, 0)
+    }
+    return env
+}
+
+func ExtendTypeEnvForNames(names []string, inferred string, env []TypeEntry, idx int) []TypeEntry {
+    if len(names) == 0 {
+        return env
+    }
+    if len(names) == 1 {
+        return append(env, TypeEntry{
+            Name: names[0],
+            TypeName: inferred,
+        })
+    }
+    elems := ParseTupleTypeNames(inferred)
+    if len(elems) == len(names) {
+        return ExtendTypeEnvForTupleNames(names, elems, env, 0)
+    }
+    return env
+}
+
+func ExtendTypeEnvForTupleNames(names []string, elems []string, env []TypeEntry, idx int) []TypeEntry {
+    if idx >= len(names) {
+        return env
+    }
+    next := append(env, TypeEntry{
+        Name: names[idx],
+        TypeName: elems[idx],
+    })
+    return ExtendTypeEnvForTupleNames(names, elems, next, idx + 1)
+}
+
+func InferExprTypeNameFromEnv(expr ast.Expr, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo, methods []MethodInfo) string {
+    if ast.ExprIsIdent(expr) {
+        return LookupTypeEnv(env, ast.ExprIdentName(expr))
+    }
+    if ast.ExprIsTuple(expr) {
+        return TupleExprTypeNameFromEnv(ast.ExprTupleElems(expr), 0, []string{}, env, enums, structs, funcs, methods)
+    }
+    if ast.ExprIsStructLit(expr) {
+        return ast.ExprStructLitType(expr)
+    }
+    if ast.ExprIsCopyUpdate(expr) {
+        return InferExprTypeNameFromEnv(ast.ExprCopyUpdateSource(expr), env, enums, structs, funcs, methods)
+    }
+    if ast.ExprIsSelector(expr) {
+        recvType := InferExprTypeNameFromEnv(ast.ExprSelectorTarget(expr), env, enums, structs, funcs, methods)
+        if recvType == "" {
+            return ""
+        }
+        return FieldTypeForStruct(recvType, ast.ExprSelectorField(expr), structs)
+    }
+    if ast.ExprIsIndex(expr) {
+        base := InferExprTypeNameFromEnv(ast.ExprIndexTarget(expr), env, enums, structs, funcs, methods)
+        return SliceElemTypeName(base)
+    }
+    if ast.ExprIsSlice(expr) {
+        return InferExprTypeNameFromEnv(ast.ExprSliceTarget(expr), env, enums, structs, funcs, methods)
+    }
+    if ast.ExprIsCall(expr) {
+        fn := ast.ExprCallFunc(expr)
+        if ast.ExprIsIdent(fn) {
+            info := ResolveFuncSig(funcs, ast.ExprIdentName(fn))
+            if isNone[FuncInfo](info) {
+                enumType := EnumTypeForVariant(ast.ExprIdentName(fn), enums)
+                if enumType == "" {
+                    return ""
+                }
+                return enumType
+            }
+            item := unwrapOr[FuncInfo](info, EmptyFuncInfo())
+            return CallResultTypeForExpr(item, ast.ExprCallTypeArgs(expr), ast.ExprCallArgs(expr), env, enums, structs, funcs, methods)
+        }
+        if ast.ExprIsSelector(fn) {
+            recvType := InferExprTypeNameFromEnv(ast.ExprSelectorTarget(fn), env, enums, structs, funcs, methods)
+            if recvType == "" {
+                return ""
+            }
+            info := ResolveMethodSig(methods, recvType, ast.ExprSelectorField(fn))
+            if isNone[FuncInfo](info) {
+                return ""
+            }
+            item := unwrapOr[FuncInfo](info, EmptyFuncInfo())
+            return CallResultTypeForExpr(item, ast.ExprCallTypeArgs(expr), ast.ExprCallArgs(expr), env, enums, structs, funcs, methods)
+        }
+    }
+    return InferExprTypeName(expr)
+}
+
+func CallResultTypeForExpr(info FuncInfo, typeArgs []ast.TypeExpr, args []ast.Expr, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo, methods []MethodInfo) string {
+    explicit := BindExplicitTypeArgsForInfo(info, typeArgs)
+    inferred := InferTypeBindings(info.ParamTypes, args, 0, explicit, env, enums, structs, funcs, methods)
+    if len(info.ResultTypes) == 1 {
+        return SubstituteTypeVars(info.ResultTypes[0], inferred)
+    }
+    if len(info.ResultTypes) > 1 {
+        return "(" + JoinResultTypes(info.ResultTypes, inferred, 0) + ")"
+    }
+    return ""
+}
+
+func BindExplicitTypeArgsForInfo(info FuncInfo, typeArgs []ast.TypeExpr) []TypeBinding {
+    if len(info.TypeParams) == 0 {
+        return BindExplicitTypeArgs(CollectTypeVariables(info.ParamTypes, info.ResultTypes), typeArgs, 0, []TypeBinding{})
+    }
+    return BindExplicitTypeArgs(info.TypeParams, typeArgs, 0, []TypeBinding{})
+}
+
+func BindExplicitTypeArgs(typeVars []string, typeArgs []ast.TypeExpr, idx int, bindings []TypeBinding) []TypeBinding {
+    if idx >= len(typeVars) {
+        return bindings
+    }
+    if idx >= len(typeArgs) {
+        return bindings
+    }
+    next := AddTypeBinding(bindings, typeVars[idx], TypeExprName(typeArgs[idx]))
+    return BindExplicitTypeArgs(typeVars, typeArgs, idx + 1, next)
+}
+
+func CollectTypeVariables(params []string, results []string) []string {
+    fromParams := CollectTypeVariablesFromTypes(params, 0, []string{})
+    return CollectTypeVariablesFromTypes(results, 0, fromParams)
+}
+
+func CollectTypeVariablesFromTypes(items []string, idx int, acc []string) []string {
+    if idx >= len(items) {
+        return acc
+    }
+    next := CollectTypeVariablesFromType(items[idx], acc)
+    return CollectTypeVariablesFromTypes(items, idx + 1, next)
+}
+
+func CollectTypeVariablesFromType(typeName string, acc []string) []string {
+    if typeName == "" {
+        return acc
+    }
+    if IsTypeVariableName(typeName) {
+        return AppendUniqueString(acc, typeName)
+    }
+    if HasSlicePrefix(typeName) {
+        return CollectTypeVariablesFromType(TrimSlicePrefix(typeName), acc)
+    }
+    if HasMapPrefix(typeName) {
+        keyNext := CollectTypeVariablesFromType(MapKeyTypeName(typeName), acc)
+        return CollectTypeVariablesFromType(MapValueTypeName(typeName), keyNext)
+    }
+    if HasTupleEnvelope(typeName) {
+        return CollectTypeVariablesFromTypes(ParseTupleTypeNames(typeName), 0, acc)
+    }
+    return CollectTypeVariablesFromTypes(ParseNamedTypeArgs(typeName), 0, acc)
+}
+
+func AppendUniqueString(items []string, value string) []string {
+    if StringIn(items, value) {
+        return items
+    }
+    return append(items, value)
+}
+
+func InferTypeBindings(expected []string, args []ast.Expr, idx int, bindings []TypeBinding, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo, methods []MethodInfo) []TypeBinding {
+    if idx >= len(expected) {
+        return bindings
+    }
+    if idx >= len(args) {
+        return bindings
+    }
+    got := InferExprTypeNameFromEnv(args[idx], env, enums, structs, funcs, methods)
+    next := BindTypeVars(expected[idx], got, bindings)
+    return InferTypeBindings(expected, args, idx + 1, next, env, enums, structs, funcs, methods)
+}
+
+func BindTypeVars(expected string, got string, bindings []TypeBinding) []TypeBinding {
+    if expected == "" || got == "" {
+        return bindings
+    }
+    if IsTypeVariableName(expected) {
+        return AddTypeBinding(bindings, expected, got)
+    }
+    if HasSlicePrefix(expected) {
+        if HasSlicePrefix(got) {
+            return BindTypeVars(TrimSlicePrefix(expected), TrimSlicePrefix(got), bindings)
+        }
+        return bindings
+    }
+    if HasMapPrefix(expected) {
+        if HasMapPrefix(got) {
+            return BindMapTypes(expected, got, bindings)
+        }
+        return bindings
+    }
+    if HasTupleEnvelope(expected) {
+        if HasTupleEnvelope(got) {
+            return BindTupleTypes(ParseTupleTypeNames(expected), ParseTupleTypeNames(got), 0, bindings)
+        }
+        return bindings
+    }
+    expectedBase := BaseTypeName(expected)
+    gotBase := BaseTypeName(got)
+    expectedArgs := ParseNamedTypeArgs(expected)
+    gotArgs := ParseNamedTypeArgs(got)
+    if expectedBase == gotBase {
+        if len(expectedArgs) == len(gotArgs) {
+            if len(expectedArgs) > 0 {
+                return BindTupleTypes(expectedArgs, gotArgs, 0, bindings)
+            }
+        }
+    }
+    return bindings
+}
+
+func BindMapTypes(expected string, got string, bindings []TypeBinding) []TypeBinding {
+    keyExpected := MapKeyTypeName(expected)
+    valueExpected := MapValueTypeName(expected)
+    keyGot := MapKeyTypeName(got)
+    valueGot := MapValueTypeName(got)
+    next := BindTypeVars(keyExpected, keyGot, bindings)
+    return BindTypeVars(valueExpected, valueGot, next)
+}
+
+func BindTupleTypes(expected []string, got []string, idx int, bindings []TypeBinding) []TypeBinding {
+    if idx >= len(expected) {
+        return bindings
+    }
+    if idx >= len(got) {
+        return bindings
+    }
+    next := BindTypeVars(expected[idx], got[idx], bindings)
+    return BindTupleTypes(expected, got, idx + 1, next)
+}
+
+func AddTypeBinding(bindings []TypeBinding, name string, typeName string) []TypeBinding {
+    found := LookupTypeBinding(bindings, name)
+    if found == "" {
+        return append(bindings, TypeBinding{
+            Name: name,
+            TypeName: typeName,
+        })
+    }
+    return bindings
+}
+
+func LookupTypeBinding(bindings []TypeBinding, name string) string {
+    if len(bindings) == 0 {
+        return ""
+    }
+    if bindings[0].Name == name {
+        return bindings[0].TypeName
+    }
+    return LookupTypeBinding(bindings[1:], name)
+}
+
+func SubstituteTypeVars(typeName string, bindings []TypeBinding) string {
+    if typeName == "" {
+        return ""
+    }
+    if IsTypeVariableName(typeName) {
+        found := LookupTypeBinding(bindings, typeName)
+        if found == "" {
+            return typeName
+        }
+        return found
+    }
+    if HasSlicePrefix(typeName) {
+        return "[]" + SubstituteTypeVars(TrimSlicePrefix(typeName), bindings)
+    }
+    if HasMapPrefix(typeName) {
+        return "map[" + SubstituteTypeVars(MapKeyTypeName(typeName), bindings) + "]" + SubstituteTypeVars(MapValueTypeName(typeName), bindings)
+    }
+    if HasTupleEnvelope(typeName) {
+        return "(" + JoinSubstitutedTypeNames(ParseTupleTypeNames(typeName), bindings, 0) + ")"
+    }
+    base := BaseTypeName(typeName)
+    args := ParseNamedTypeArgs(typeName)
+    if len(args) == 0 {
+        return typeName
+    }
+    return base + "[" + JoinSubstitutedTypeNames(args, bindings, 0) + "]"
+}
+
+func JoinSubstitutedTypeNames(items []string, bindings []TypeBinding, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    head := SubstituteTypeVars(items[idx], bindings)
+    if idx + 1 >= len(items) {
+        return head
+    }
+    return head + ", " + JoinSubstitutedTypeNames(items, bindings, idx + 1)
+}
+
+func JoinResultTypes(items []string, bindings []TypeBinding, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    head := SubstituteTypeVars(items[idx], bindings)
+    if idx + 1 >= len(items) {
+        return head
+    }
+    return head + ", " + JoinResultTypes(items, bindings, idx + 1)
+}
+
+func IsTypeVariableName(typeName string) bool {
+    if len(typeName) == 1 {
+        ch := typeName[0]
+        if ch >= "A"[0] {
+            if ch <= "Z"[0] {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+func BaseTypeName(typeName string) string {
+    if typeName == "" {
+        return ""
+    }
+    if HasSlicePrefix(typeName) || HasMapPrefix(typeName) || HasTupleEnvelope(typeName) || typeName == "func" {
+        return typeName
+    }
+    return BaseTypeNameLoop(typeName, 0, "")
+}
+
+func BaseTypeNameLoop(typeName string, idx int, acc string) string {
+    if idx >= len(typeName) {
+        return acc
+    }
+    if typeName[idx] == "["[0] {
+        return acc
+    }
+    return BaseTypeNameLoop(typeName, idx + 1, acc + string(typeName[idx]))
+}
+
+func ParseNamedTypeArgs(typeName string) []string {
+    if typeName == "" {
+        return []string{}
+    }
+    if HasSlicePrefix(typeName) || HasMapPrefix(typeName) || HasTupleEnvelope(typeName) || typeName == "func" {
+        return []string{}
+    }
+    start := FirstBracketIndex(typeName, 0)
+    if start < 0 {
+        return []string{}
+    }
+    return SplitTopLevelComma(TrimOuterBrackets(typeName, start), 0, 0, "", []string{})
+}
+
+func FirstBracketIndex(value string, idx int) int {
+    if idx >= len(value) {
+        return -1
+    }
+    if value[idx] == "["[0] {
+        return idx
+    }
+    return FirstBracketIndex(value, idx + 1)
+}
+
+func TrimOuterBrackets(value string, start int) string {
+    return TrimOuterBracketsLoop(value, 0, start, "")
+}
+
+func TrimOuterBracketsLoop(value string, idx int, start int, acc string) string {
+    if idx >= len(value) {
+        return acc
+    }
+    if idx <= start {
+        return TrimOuterBracketsLoop(value, idx + 1, start, acc)
+    }
+    if idx + 1 == len(value) {
+        return acc
+    }
+    return TrimOuterBracketsLoop(value, idx + 1, start, acc + string(value[idx]))
+}
+
+func SplitTopLevelComma(value string, idx int, depth int, current string, acc []string) []string {
+    if idx >= len(value) {
+        if strings.TrimSpace(current) == "" {
+            return acc
+        }
+        return append(acc, strings.TrimSpace(current))
+    }
+    ch := value[idx]
+    if ch == "["[0] || ch == "("[0] {
+        return SplitTopLevelComma(value, idx + 1, depth + 1, current + string(ch), acc)
+    }
+    if ch == "]"[0] || ch == ")"[0] {
+        return SplitTopLevelComma(value, idx + 1, depth - 1, current + string(ch), acc)
+    }
+    if ch == ","[0] {
+        if depth == 0 {
+            return SplitTopLevelComma(value, idx + 1, depth, "", append(acc, strings.TrimSpace(current)))
+        }
+    }
+    return SplitTopLevelComma(value, idx + 1, depth, current + string(ch), acc)
+}
+
+func HasMapPrefix(typeName string) bool {
+    return strings.HasPrefix(typeName, "map[")
+}
+
+func MapKeyTypeName(typeName string) string {
+    return ParseMapTypeName(typeName, true)
+}
+
+func MapValueTypeName(typeName string) string {
+    return ParseMapTypeName(typeName, false)
+}
+
+func ParseMapTypeName(typeName string, wantKey bool) string {
+    return ParseMapTypeNameLoop(typeName, 4, 0, wantKey, "")
+}
+
+func ParseMapTypeNameLoop(typeName string, idx int, depth int, wantKey bool, acc string) string {
+    if idx >= len(typeName) {
+        return strings.TrimSpace(acc)
+    }
+    ch := typeName[idx]
+    if wantKey {
+        if ch == "["[0] {
+            return ParseMapTypeNameLoop(typeName, idx + 1, depth + 1, wantKey, acc + string(ch))
+        }
+        if ch == "]"[0] {
+            if depth == 0 {
+                return strings.TrimSpace(acc)
+            }
+            return ParseMapTypeNameLoop(typeName, idx + 1, depth - 1, wantKey, acc + string(ch))
+        }
+        return ParseMapTypeNameLoop(typeName, idx + 1, depth, wantKey, acc + string(ch))
+    }
+    if ch == "]"[0] {
+        if depth == 0 {
+            return strings.TrimSpace(MapValueTail(typeName, idx + 1, ""))
+        }
+    }
+    if ch == "["[0] {
+        return ParseMapTypeNameLoop(typeName, idx + 1, depth + 1, wantKey, acc)
+    }
+    if ch == "]"[0] {
+        return ParseMapTypeNameLoop(typeName, idx + 1, depth - 1, wantKey, acc)
+    }
+    return ParseMapTypeNameLoop(typeName, idx + 1, depth, wantKey, acc)
+}
+
+func MapValueTail(typeName string, idx int, acc string) string {
+    if idx >= len(typeName) {
+        return acc
+    }
+    return MapValueTail(typeName, idx + 1, acc + string(typeName[idx]))
+}
+
+func TupleExprTypeNameFromEnv(items []ast.Expr, idx int, acc []string, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo, methods []MethodInfo) string {
+    if idx >= len(items) {
+        return "(" + JoinStrings(acc, 0) + ")"
+    }
+    got := InferExprTypeNameFromEnv(items[idx], env, enums, structs, funcs, methods)
+    if got == "" {
+        return ""
+    }
+    return TupleExprTypeNameFromEnv(items, idx + 1, append(acc, got), env, enums, structs, funcs, methods)
+}
+
+func CallResultTypeForName(name string, funcs []FuncInfo) string {
+    info := ResolveFuncSig(funcs, name)
+    if !isNone[FuncInfo](info) {
+        item := unwrapOr[FuncInfo](info, EmptyFuncInfo())
+        if len(item.ResultTypes) == 1 {
+            return item.ResultTypes[0]
+        }
+        if len(item.ResultTypes) > 1 {
+            return "(" + JoinStrings(item.ResultTypes, 0) + ")"
+        }
+        return ""
+    }
+    return ""
+}
+
+func MethodResultTypeForName(receiverType string, name string, methods []MethodInfo) string {
+    info := FindMethodInfo(methods, receiverType, name)
+    if !isNone[MethodInfo](info) {
+        item := unwrapOr[MethodInfo](info, EmptyMethodInfo())
+        if len(item.ResultTypes) == 1 {
+            return item.ResultTypes[0]
+        }
+        if len(item.ResultTypes) > 1 {
+            return "(" + JoinStrings(item.ResultTypes, 0) + ")"
+        }
+        return ""
+    }
+    return ""
+}
+
+func JoinStrings(items []string, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    if idx + 1 >= len(items) {
+        return items[idx]
+    }
+    return items[idx] + ", " + JoinStrings(items, idx + 1)
+}
+
+func CheckSemanticExprs(exprs []ast.Expr, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(exprs) {
+        return diag
+    }
+    next := CheckSemanticExpr(exprs[idx], diag, env, enums, structs, interfaces, funcs, methods)
+    return CheckSemanticExprs(exprs, idx + 1, next, env, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckSemanticExpr(expr ast.Expr, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if ast.ExprIsCall(expr) {
+        checkedArgs := CheckSemanticExprs(ast.ExprCallArgs(expr), 0, diag, env, enums, structs, interfaces, funcs, methods)
+        return CheckCallSignature(expr, checkedArgs, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsBinary(expr) {
+        left := CheckSemanticExpr(ast.ExprBinaryLeft(expr), diag, env, enums, structs, interfaces, funcs, methods)
+        return CheckSemanticExpr(ast.ExprBinaryRight(expr), left, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsUnary(expr) {
+        return CheckSemanticExpr(ast.ExprUnaryOperand(expr), diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsPipeline(expr) {
+        left := CheckSemanticExpr(ast.ExprPipelineLeft(expr), diag, env, enums, structs, interfaces, funcs, methods)
+        return CheckSemanticExpr(ast.ExprPipelineRight(expr), left, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsSelector(expr) {
+        return CheckSemanticExpr(ast.ExprSelectorTarget(expr), diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsIndex(expr) {
+        left := CheckSemanticExpr(ast.ExprIndexTarget(expr), diag, env, enums, structs, interfaces, funcs, methods)
+        return CheckSemanticExpr(ast.ExprIndexValue(expr), left, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsSlice(expr) {
+        left := CheckSemanticExpr(ast.ExprSliceTarget(expr), diag, env, enums, structs, interfaces, funcs, methods)
+        low := CheckOptionalExprSemantic(ast.ExprSliceLow(expr), left, env, enums, structs, interfaces, funcs, methods)
+        return CheckOptionalExprSemantic(ast.ExprSliceHigh(expr), low, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsStructLit(expr) {
+        return CheckStructLiteralExpr(expr, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsCopyUpdate(expr) {
+        return CheckCopyUpdateExpr(expr, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsSliceLit(expr) {
+        return CheckSemanticExprs(ast.ExprSliceLitElems(expr), 0, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ast.ExprIsFuncLit(expr) {
+        return CheckSemanticBlock(
+            ast.ExprFuncLitBody(expr),
+            ast.ExprFuncLitResults(expr),
+            diag,
+            ParamTypeEnv(ast.ExprFuncLitParams(expr), 0, env),
+            enums,
+            structs,
+            interfaces,
+            funcs,
+            methods,
+        )
+    }
+    return diag
+}
+
+func CheckStructLiteralExpr(expr ast.Expr, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    checked := CheckFieldInitExprsSemantic(ast.ExprStructLitFields(expr), 0, diag, env, enums, structs, interfaces, funcs, methods)
+    structType := ast.ExprStructLitType(expr)
+    if !IsKnownStructType(structType, structs) {
+        return checked
+    }
+    return CheckStructLiteralFields(ast.ExprStructLitFields(expr), structType, 0, checked, env, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckStructLiteralFields(fields []ast.FieldInit, structType string, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(fields) {
+        return diag
+    }
+    name := ast.FieldInitNameValue(fields[idx])
+    fieldType := FieldTypeForStruct(structType, name, structs)
+    if fieldType == "" {
+        return CheckStructLiteralFields(
+            fields,
+            structType,
+            idx + 1,
+            diag.Error(
+                diagnostic.TypeErrorCategory(),
+                ast.FieldInitExprValue(fields[idx]).TokenPos(),
+                "unknown field "+name+" on "+structType,
+            ),
+            env,
+            enums,
+            structs,
+            interfaces,
+            funcs,
+            methods,
+        )
+    }
+    got := InferExprTypeNameFromEnv(ast.FieldInitExprValue(fields[idx]), env, enums, structs, funcs, methods)
+    if got == "" {
+        return CheckStructLiteralFields(fields, structType, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ArgumentTypeCompatible(fieldType, got, interfaces, methods) {
+        return CheckStructLiteralFields(fields, structType, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    return CheckStructLiteralFields(
+        fields,
+        structType,
+        idx + 1,
+        diag.Error(
+            diagnostic.TypeErrorCategory(),
+            ast.FieldInitExprValue(fields[idx]).TokenPos(),
+            "field type mismatch for "+name+": expected "+fieldType+", got "+got,
+        ),
+        env,
+        enums,
+        structs,
+        interfaces,
+        funcs,
+        methods,
+    )
+}
+
+func CheckCopyUpdateExpr(expr ast.Expr, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    base := CheckSemanticExpr(ast.ExprCopyUpdateSource(expr), diag, env, enums, structs, interfaces, funcs, methods)
+    sourceType := InferExprTypeNameFromEnv(ast.ExprCopyUpdateSource(expr), env, enums, structs, funcs, methods)
+    checked := CheckFieldUpdateExprsSemantic(ast.ExprCopyUpdateUpdates(expr), 0, base, env, enums, structs, interfaces, funcs, methods)
+    if sourceType == "" {
+        return checked
+    }
+    if !IsKnownStructType(sourceType, structs) {
+        return checked.Error(
+            diagnostic.TypeErrorCategory(),
+            expr.TokenPos(),
+            "copy-update requires a struct source, got "+sourceType,
+        )
+    }
+    return CheckFieldUpdatePaths(ast.ExprCopyUpdateUpdates(expr), sourceType, 0, checked, env, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckFieldUpdatePaths(fields []ast.FieldUpdate, structType string, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(fields) {
+        return diag
+    }
+    path := ast.FieldUpdatePathValue(fields[idx])
+    fieldType := ResolveFieldPathType(structType, path, structs)
+    if fieldType == "" {
+        return CheckFieldUpdatePaths(
+            fields,
+            structType,
+            idx + 1,
+            diag.Error(
+                diagnostic.TypeErrorCategory(),
+                ast.FieldUpdateExprValue(fields[idx]).TokenPos(),
+                "unknown update path "+JoinStrings(path, 0)+" on "+structType,
+            ),
+            env,
+            enums,
+            structs,
+            interfaces,
+            funcs,
+            methods,
+        )
+    }
+    got := InferExprTypeNameFromEnv(ast.FieldUpdateExprValue(fields[idx]), env, enums, structs, funcs, methods)
+    if got == "" {
+        return CheckFieldUpdatePaths(fields, structType, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ArgumentTypeCompatible(fieldType, got, interfaces, methods) {
+        return CheckFieldUpdatePaths(fields, structType, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    return CheckFieldUpdatePaths(
+        fields,
+        structType,
+        idx + 1,
+        diag.Error(
+            diagnostic.TypeErrorCategory(),
+            ast.FieldUpdateExprValue(fields[idx]).TokenPos(),
+            "update type mismatch for "+JoinStrings(path, 0)+": expected "+fieldType+", got "+got,
+        ),
+        env,
+        enums,
+        structs,
+        interfaces,
+        funcs,
+        methods,
+    )
+}
+
+func CheckOptionalExprSemantic(value Option[ast.Expr], diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if ast.ExprOptionIsNone(value) {
+        return diag
+    }
+    return CheckSemanticExpr(ast.ExprOptionValue(value), diag, env, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckFieldInitExprsSemantic(fields []ast.FieldInit, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(fields) {
+        return diag
+    }
+    next := CheckSemanticExpr(ast.FieldInitExprValue(fields[idx]), diag, env, enums, structs, interfaces, funcs, methods)
+    return CheckFieldInitExprsSemantic(fields, idx + 1, next, env, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckFieldUpdateExprsSemantic(fields []ast.FieldUpdate, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(fields) {
+        return diag
+    }
+    next := CheckSemanticExpr(ast.FieldUpdateExprValue(fields[idx]), diag, env, enums, structs, interfaces, funcs, methods)
+    return CheckFieldUpdateExprsSemantic(fields, idx + 1, next, env, enums, structs, interfaces, funcs, methods)
+}
+
+func CheckCallSignature(expr ast.Expr, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    fn := ast.ExprCallFunc(expr)
+    if ast.ExprIsIdent(fn) {
+        return CheckResolvedCall(
+            ast.ExprCallArgs(expr),
+            ResolveFuncSig(funcs, ast.ExprIdentName(fn)),
+            expr.TokenPos(),
+            diag,
+            env,
+            enums,
+            structs,
+            interfaces,
+            funcs,
+            methods,
+        )
+    }
+    if ast.ExprIsSelector(fn) {
+        recvType := InferExprTypeNameFromEnv(ast.ExprSelectorTarget(fn), env, enums, structs, funcs, methods)
+        return CheckResolvedCall(
+            ast.ExprCallArgs(expr),
+            ResolveMethodSig(methods, recvType, ast.ExprSelectorField(fn)),
+            expr.TokenPos(),
+            diag,
+            env,
+            enums,
+            structs,
+            interfaces,
+            funcs,
+            methods,
+        )
+    }
+    return diag
+}
+
+func CheckResolvedCall(args []ast.Expr, sig Option[FuncInfo], pos token.Pos, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if !isNone[FuncInfo](sig) {
+        info := unwrapOr[FuncInfo](sig, EmptyFuncInfo())
+        if len(args) == len(info.ParamTypes) {
+            return CheckCallArgTypes(args, info.ParamTypes, 0, diag, env, enums, structs, interfaces, funcs, methods)
+        }
+        return diag.Error(
+            diagnostic.TypeErrorCategory(),
+            pos,
+            "argument count mismatch: expected "+IntString(len(info.ParamTypes))+", got "+IntString(len(args)),
+        )
+    }
+    return diag
+}
+
+func CheckCallArgTypes(args []ast.Expr, expected []string, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+    if idx >= len(args) {
+        return diag
+    }
+    got := InferExprTypeNameFromEnv(args[idx], env, enums, structs, funcs, methods)
+    if expected[idx] == "" {
+        return CheckCallArgTypes(args, expected, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if got == "" {
+        return CheckCallArgTypes(args, expected, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    if ArgumentTypeCompatible(expected[idx], got, interfaces, methods) {
+        return CheckCallArgTypes(args, expected, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    }
+    return CheckCallArgTypes(
+        args,
+        expected,
+        idx + 1,
+        diag.Error(
+            diagnostic.TypeErrorCategory(),
+            args[idx].TokenPos(),
+            "argument type mismatch: expected "+expected[idx]+", got "+got,
+        ),
+        env,
+        enums,
+        structs,
+        interfaces,
+        funcs,
+        methods,
+    )
+}
+
+func ResolveFuncSig(funcs []FuncInfo, name string) Option[FuncInfo] {
+    if len(funcs) == 0 {
+        return None[FuncInfo]()
+    }
+    if funcs[0].Name == name {
+        return Some[FuncInfo](funcs[0])
+    }
+    return ResolveFuncSig(funcs[1:], name)
+}
+
+func ResolveMethodSig(methods []MethodInfo, receiverType string, name string) Option[FuncInfo] {
+    info := FindMethodInfo(methods, receiverType, name)
+    if !isNone[MethodInfo](info) {
+        item := unwrapOr[MethodInfo](info, EmptyMethodInfo())
+        return Some[FuncInfo](FuncInfo{
+            Name: item.Name,
+            TypeParams: []string{},
+            ParamTypes: item.ParamTypes,
+            ResultTypes: item.ResultTypes,
+        })
+    }
+    return None[FuncInfo]()
+}
+
+func FindEnumConstructor(funcs []FuncInfo, enumName string, variantName string) Option[FuncInfo] {
+    if len(funcs) == 0 {
+        return None[FuncInfo]()
+    }
+    if funcs[0].Name == variantName {
+        if len(funcs[0].ResultTypes) == 1 {
+            if BaseTypeName(funcs[0].ResultTypes[0]) == BaseTypeName(enumName) {
+                return Some[FuncInfo](funcs[0])
+            }
+        }
+    }
+    return FindEnumConstructor(funcs[1:], enumName, variantName)
+}
+
+func FindMethodInfo(methods []MethodInfo, receiverType string, name string) Option[MethodInfo] {
+    if len(methods) == 0 {
+        return None[MethodInfo]()
+    }
+    if BaseTypeName(methods[0].ReceiverType) == BaseTypeName(receiverType) {
+        if methods[0].Name == name {
+            return Some[MethodInfo](methods[0])
+        }
+    }
+    return FindMethodInfo(methods[1:], receiverType, name)
+}
+
+func CheckOptionalExpr(value Option[ast.Expr], visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if ast.ExprOptionIsNone(value) {
+        return diag
+    }
+    return CheckExpr(ast.ExprOptionValue(value), visible, diag, externs)
+}
+
+func CheckCallExpr(expr ast.Expr, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    next := CheckExpr(ast.ExprCallFunc(expr), visible, diag, externs)
+    fn := ast.ExprCallFunc(expr)
+    if ast.ExprIsIdent(fn) {
+        name := ast.ExprIdentName(fn)
+        if IsExternName(externs, name) {
+            if IsPureExternName(name) {
+                return next
+            }
+            return next.ErrorWithHint(
+                diagnostic.PurityCategory(),
+                expr.TokenPos(),
+                "cannot call extern function '"+name+"' inside a pure Fo function",
+                "Create and compose effect descriptions in Fo, then execute them only at the bridge layer.",
+            )
+        }
+    }
+    return next
+}
+
+func CheckFieldInitExprs(fields []ast.FieldInit, idx int, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if idx >= len(fields) {
+        return diag
+    }
+    next := CheckExpr(ast.FieldInitExprValue(fields[idx]), visible, diag, externs)
+    return CheckFieldInitExprs(fields, idx + 1, visible, next, externs)
+}
+
+func CheckFieldUpdateExprs(fields []ast.FieldUpdate, idx int, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if idx >= len(fields) {
+        return diag
+    }
+    next := CheckExpr(ast.FieldUpdateExprValue(fields[idx]), visible, diag, externs)
+    return CheckFieldUpdateExprs(fields, idx + 1, visible, next, externs)
+}
+
+func IsExternName(names []string, name string) bool {
+    if len(names) == 0 {
+        return false
+    }
+    if names[0] == name {
+        return true
+    }
+    return IsExternName(names[1:], name)
+}
+
+func IsPureExternName(name string) bool {
+    if name == "emptyMap" {
+        return true
+    }
+    if name == "mapEntries" {
+        return true
+    }
+    if name == "mapKeys" {
+        return true
+    }
+    if name == "sumValues" {
+        return true
+    }
+    if name == "lookupMap" {
+        return true
+    }
+    if name == "freezeMap" {
+        return true
+    }
+    if name == "put" {
+        return true
+    }
+    if name == "remove" {
+        return true
+    }
+    if name == "makeCmd" {
+        return true
+    }
+    if name == "mapCmd" {
+        return true
+    }
+    if name == "flatMapCmd" {
+        return true
+    }
+    if name == "zipCmd" {
+        return true
+    }
+    if name == "thenCmd" {
+        return true
+    }
+    if name == "pureCmd" {
+        return true
+    }
+    if name == "failCmd" {
+        return true
+    }
+    if name == "sequenceCmd" {
+        return true
+    }
+    if name == "runCmdValue" {
+        return true
+    }
+    if name == "makeTask" {
+        return true
+    }
+    if name == "runTask" {
+        return true
+    }
+    if name == "awaitTask" {
+        return true
+    }
+    if name == "parallelCmd" {
+        return true
+    }
+    if name == "parallel" {
+        return true
+    }
+    if name == "pureTask" {
+        return true
+    }
+    if name == "mapTask" {
+        return true
+    }
+    if name == "flatMapTask" {
+        return true
+    }
+    if name == "map2Task" {
+        return true
+    }
+    if name == "raceTask" {
+        return true
+    }
+    if name == "allTasks" {
+        return true
+    }
+    if name == "runTaskValue" {
+        return true
+    }
+    return false
+}
+
+func ExtendSeen(decl ast.Decl, seen []NameEntry) []NameEntry {
+    kind := ast.DeclKind(decl)
+    if kind == "" {
+        return seen
+    }
+    return append(seen, NameEntry{
+        Name: ast.DeclName(decl),
+        Kind: kind,
+        Pos: ast.DeclPos(decl),
+    })
+}
+
+func FindNameEntry(entries []NameEntry, name string) Option[NameEntry] {
+    if len(entries) == 0 {
+        return None[NameEntry]()
+    }
+    if entries[0].Name == name {
+        return Some[NameEntry](entries[0])
+    }
+    return FindNameEntry(entries[1:], name)
+}

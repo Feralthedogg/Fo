@@ -1,0 +1,131 @@
+package base
+
+type Cmd[T] struct {
+    Run func() (T, error)
+}
+
+type Task[T] struct {
+    Run func() (T, error)
+}
+
+type TaskResult[T] struct {
+    Value T
+    Err error
+}
+
+type Pair[A, B] struct {
+    First A
+    Second B
+}
+
+func MakeCmd[T any](f func() (T, error)) Cmd[T] {
+    return makeCmd(f)
+}
+
+func RunCmd[T any](cmd Cmd[T]) (T, error) {
+    return runCmdValue(cmd)
+}
+
+func PureCmd[T any](x T) Cmd[T] {
+    return pureCmd(x)
+}
+
+func MapCmd[A any, B any](cmd Cmd[A], f func(A) B) Cmd[B] {
+    return mapCmd(cmd, f)
+}
+
+func FlatMapCmd[A any, B any](cmd Cmd[A], f func(A) Cmd[B]) Cmd[B] {
+    return flatMapCmd(cmd, f)
+}
+
+func ZipCmd[A any, B any](a Cmd[A], b Cmd[B]) Cmd[Pair[A, B]] {
+    return zipCmd(a, b)
+}
+
+func ThenCmd[A any, B any](first Cmd[A], second Cmd[B]) Cmd[B] {
+    return thenCmd(first, second)
+}
+
+func FailCmd[T any](err error) Cmd[T] {
+    return failCmd[T](err)
+}
+
+func SequenceCmd[T any](cmds []Cmd[T]) Cmd[[]T] {
+    return sequenceCmd(cmds)
+}
+
+func MakeTask[T any](cmd Cmd[T]) Task[T] {
+    return makeTask(cmd)
+}
+
+func RunTask[T any](task Task[T]) <-chan TaskResult[T] {
+    return runTask(task)
+}
+
+func AwaitTask[T any](ch <-chan TaskResult[T]) (T, error) {
+    return awaitTask(ch)
+}
+
+func Parallel[T any](tasks []Task[T]) Cmd[[]T] {
+    return parallelCmd(tasks)
+}
+
+func ParallelTask[T any](f func() T) Task[T] {
+    return parallel(f)
+}
+
+func PureTask[T any](x T) Task[T] {
+    return pureTask(x)
+}
+
+func MapTask[A any, B any](task Task[A], f func(A) B) Task[B] {
+    return mapTask(task, f)
+}
+
+func FlatMapTask[A any, B any](task Task[A], f func(A) Task[B]) Task[B] {
+    return flatMapTask(task, f)
+}
+
+func Map2Task[A any, B any, C any](a Task[A], b Task[B], f func(A, B) C) Task[C] {
+    return map2Task(a, b, f)
+}
+
+func RaceTask[A any](a Task[A], b Task[A]) Task[A] {
+    return raceTask(a, b)
+}
+
+func AllTasks[A any](xs []Task[A]) Task[[]A] {
+    return allTasks(xs)
+}
+
+func RunTaskValue[T any](task Task[T]) (T, error) {
+    return runTaskValue(task)
+}
+
+func AwaitTaskValue[T any](task Task[T]) (T, error) {
+    return RunTaskValue(task)
+}
+
+extern func makeCmd[T any](f func() (T, error)) Cmd[T]
+extern func runCmdValue[T any](cmd Cmd[T]) (T, error)
+extern func pureCmd[T any](x T) Cmd[T]
+extern func mapCmd[A any, B any](cmd Cmd[A], f func(A) B) Cmd[B]
+extern func flatMapCmd[A any, B any](cmd Cmd[A], f func(A) Cmd[B]) Cmd[B]
+extern func zipCmd[A any, B any](a Cmd[A], b Cmd[B]) Cmd[Pair[A, B]]
+extern func thenCmd[A any, B any](first Cmd[A], second Cmd[B]) Cmd[B]
+extern func failCmd[T any](err error) Cmd[T]
+extern func sequenceCmd[T any](cmds []Cmd[T]) Cmd[[]T]
+extern func runCmd[T any](cmd Cmd[T]) T
+
+extern func makeTask[T any](cmd Cmd[T]) Task[T]
+extern func runTask[T any](task Task[T]) <-chan TaskResult[T]
+extern func awaitTask[T any](ch <-chan TaskResult[T]) (T, error)
+extern func parallelCmd[T any](xs []Task[T]) Cmd[[]T]
+extern func parallel[T any](f func() T) Task[T]
+extern func pureTask[T any](x T) Task[T]
+extern func mapTask[A any, B any](task Task[A], f func(A) B) Task[B]
+extern func flatMapTask[A any, B any](task Task[A], f func(A) Task[B]) Task[B]
+extern func map2Task[A any, B any, C any](a Task[A], b Task[B], f func(A, B) C) Task[C]
+extern func raceTask[A any](a Task[A], b Task[A]) Task[A]
+extern func allTasks[A any](xs []Task[A]) Task[[]A]
+extern func runTaskValue[T any](task Task[T]) (T, error)

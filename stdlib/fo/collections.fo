@@ -1,0 +1,305 @@
+package base
+
+func ForEach[A any](xs []A, f func(A)) {
+    foreachLoop(xs, f, 0)
+    return
+}
+
+func foreachLoop[A any](xs []A, f func(A), idx int) {
+    if idx >= len(xs) {
+        return
+    }
+    f(xs[idx])
+    foreachLoop(xs, f, idx + 1)
+    return
+}
+
+func Append[A any](xs []A, elems ...A) []A {
+    return appendLoop(FreezeSlice(xs), elems, 0)
+}
+
+func appendLoop[A any](acc []A, elems []A, idx int) []A {
+    if idx >= len(elems) {
+        return acc
+    }
+    return appendLoop(append(acc, elems[idx]), elems, idx + 1)
+}
+
+func Sum[A any](xs []A) A {
+    return sumValues(xs)
+}
+
+func Map[A any, B any](xs []A, f func(A) B) []B {
+    return mapLoop(xs, f, 0, []B{})
+}
+
+func mapLoop[A any, B any](xs []A, f func(A) B, idx int, acc []B) []B {
+    if idx >= len(xs) {
+        return acc
+    }
+    return mapLoop(xs, f, idx + 1, append(acc, f(xs[idx])))
+}
+
+func Filter[A any](xs []A, p func(A) bool) []A {
+    return filterLoop(xs, p, 0, []A{})
+}
+
+func filterLoop[A any](xs []A, p func(A) bool, idx int, acc []A) []A {
+    if idx >= len(xs) {
+        return acc
+    }
+    if p(xs[idx]) {
+        return filterLoop(xs, p, idx + 1, append(acc, xs[idx]))
+    }
+    return filterLoop(xs, p, idx + 1, acc)
+}
+
+func Fold[A any, B any](xs []A, init B, f func(B, A) B) B {
+    return foldLoop(xs, init, f, 0)
+}
+
+func foldLoop[A any, B any](xs []A, acc B, f func(B, A) B, idx int) B {
+    if idx >= len(xs) {
+        return acc
+    }
+    return foldLoop(xs, f(acc, xs[idx]), f, idx + 1)
+}
+
+func FoldRight[A any, B any](xs []A, init B, f func(A, B) B) B {
+    return foldRightLoop(xs, init, f, len(xs) - 1)
+}
+
+func foldRightLoop[A any, B any](xs []A, acc B, f func(A, B) B, idx int) B {
+    if idx < 0 {
+        return acc
+    }
+    return foldRightLoop(xs, f(xs[idx], acc), f, idx - 1)
+}
+
+
+func FlatMap[A any, B any](xs []A, f func(A) []B) []B {
+    return flatMapLoop(xs, f, 0, []B{})
+}
+
+func flatMapLoop[A any, B any](xs []A, f func(A) []B, idx int, acc []B) []B {
+    if idx >= len(xs) {
+        return acc
+    }
+    return flatMapAppend(xs, f, idx, f(xs[idx]), 0, acc)
+}
+
+func flatMapAppend[A any, B any](xs []A, f func(A) []B, idx int, segment []B, segIdx int, acc []B) []B {
+    if segIdx >= len(segment) {
+        return flatMapLoop(xs, f, idx + 1, acc)
+    }
+    return flatMapAppend(xs, f, idx, segment, segIdx + 1, append(acc, segment[segIdx]))
+}
+
+func Find[A any](xs []A, p func(A) bool) Option[A] {
+    return findLoop(xs, p, 0)
+}
+
+func findLoop[A any](xs []A, p func(A) bool, idx int) Option[A] {
+    if idx >= len(xs) {
+        return None[A]()
+    }
+    if p(xs[idx]) {
+        return Some[A](xs[idx])
+    }
+    return findLoop(xs, p, idx + 1)
+}
+
+func FreezeSlice[A any](xs []A) []A {
+    return freezeSliceLoop(xs, 0, []A{})
+}
+
+func freezeSliceLoop[A any](xs []A, idx int, acc []A) []A {
+    if idx >= len(xs) {
+        return acc
+    }
+    return freezeSliceLoop(xs, idx + 1, append(acc, xs[idx]))
+}
+
+func SetAt[A any](xs []A, idx int, value A) []A {
+    return setAtLoop(xs, idx, value, 0, []A{})
+}
+
+func setAtLoop[A any](xs []A, target int, value A, idx int, acc []A) []A {
+    if idx >= len(xs) {
+        return acc
+    }
+    if idx == target {
+        return setAtLoop(xs, target, value, idx + 1, append(acc, value))
+    }
+    return setAtLoop(xs, target, value, idx + 1, append(acc, xs[idx]))
+}
+
+func Any[A any](xs []A, p func(A) bool) bool {
+    return anyLoop(xs, p, 0)
+}
+
+func anyLoop[A any](xs []A, p func(A) bool, idx int) bool {
+    if idx >= len(xs) {
+        return false
+    }
+    if p(xs[idx]) {
+        return true
+    }
+    return anyLoop(xs, p, idx + 1)
+}
+
+func All[A any](xs []A, p func(A) bool) bool {
+    return allLoop(xs, p, 0)
+}
+
+func allLoop[A any](xs []A, p func(A) bool, idx int) bool {
+    if idx >= len(xs) {
+        return true
+    }
+    if !p(xs[idx]) {
+        return false
+    }
+    return allLoop(xs, p, idx + 1)
+}
+
+func Len[A any](xs []A) int {
+    return len(xs)
+}
+
+func Take[A any](xs []A, n int) []A {
+    return takeLoop(xs, n, 0, []A{})
+}
+
+func takeLoop[A any](xs []A, n int, idx int, acc []A) []A {
+    if idx >= len(xs) || idx >= n {
+        return acc
+    }
+    return takeLoop(xs, n, idx + 1, append(acc, xs[idx]))
+}
+
+func Drop[A any](xs []A, n int) []A {
+    return dropLoop(xs, n, 0, []A{})
+}
+
+func dropLoop[A any](xs []A, n int, idx int, acc []A) []A {
+    if idx >= len(xs) {
+        return acc
+    }
+    if idx < n {
+        return dropLoop(xs, n, idx + 1, acc)
+    }
+    return dropLoop(xs, n, idx + 1, append(acc, xs[idx]))
+}
+
+func Reverse[A any](xs []A) []A {
+    return reverseLoop(xs, len(xs) - 1, []A{})
+}
+
+func reverseLoop[A any](xs []A, idx int, acc []A) []A {
+    if idx < 0 {
+        return acc
+    }
+    return reverseLoop(xs, idx - 1, append(acc, xs[idx]))
+}
+
+func Contains[A comparable](xs []A, target A) bool {
+    return containsLoop(xs, target, 0)
+}
+
+func containsLoop[A comparable](xs []A, target A, idx int) bool {
+    if idx >= len(xs) {
+        return false
+    }
+    if xs[idx] == target {
+        return true
+    }
+    return containsLoop(xs, target, idx + 1)
+}
+
+func MapKeys[K any, V any](m map[K]V) []K {
+    return mapKeys(m)
+}
+
+func MapEntries[K any, V any, U any](m map[K]V, f func(K, V) U) map[K]U {
+    return mapEntries(m, f)
+}
+
+func MapValues[K any, V any](m map[K]V) []V {
+    return mapValuesLoop(m, MapKeys(m), 0, []V{})
+}
+
+func mapValuesLoop[K any, V any](m map[K]V, keys []K, idx int, acc []V) []V {
+    if idx >= len(keys) {
+        return acc
+    }
+    match Lookup(m, keys[idx]) {
+    case Some(v):
+        return mapValuesLoop(m, keys, idx + 1, append(acc, v))
+    case None:
+        return mapValuesLoop(m, keys, idx + 1, acc)
+    }
+}
+
+func FilterMap[K any, V any](m map[K]V, pred func(K, V) bool) map[K]V {
+    return filterMapLoop(m, MapKeys(m), 0, emptyMap[K, V](), pred)
+}
+
+func filterMapLoop[K any, V any](m map[K]V, keys []K, idx int, acc map[K]V, pred func(K, V) bool) map[K]V {
+    if idx >= len(keys) {
+        return acc
+    }
+    key := keys[idx]
+    match Lookup(m, key) {
+    case Some(v):
+        if pred(key, v) {
+            return filterMapLoop(m, keys, idx + 1, Put[K, V](acc, key, v), pred)
+        }
+        return filterMapLoop(m, keys, idx + 1, acc, pred)
+    case None:
+        return filterMapLoop(m, keys, idx + 1, acc, pred)
+    }
+}
+
+func Merge[K any, V any](m1 map[K]V, m2 map[K]V) map[K]V {
+    left := copyMapLoop(m1, MapKeys(m1), 0, emptyMap[K, V]())
+    return copyMapLoop(m2, MapKeys(m2), 0, left)
+}
+
+func copyMapLoop[K any, V any](src map[K]V, keys []K, idx int, acc map[K]V) map[K]V {
+    if idx >= len(keys) {
+        return acc
+    }
+    key := keys[idx]
+    match Lookup(src, key) {
+    case Some(v):
+        return copyMapLoop(src, keys, idx + 1, Put[K, V](acc, key, v))
+    case None:
+        return copyMapLoop(src, keys, idx + 1, acc)
+    }
+}
+
+func Lookup[K any, V any](m map[K]V, key K) Option[V] {
+    return lookupMap(m, key)
+}
+
+func FreezeMap[K any, V any](m map[K]V) map[K]V {
+    return freezeMap(m)
+}
+
+func Put[K any, V any](m map[K]V, key K, value V) map[K]V {
+    return put(m, key, value)
+}
+
+func Remove[K any, V any](m map[K]V, key K) map[K]V {
+    return remove(m, key)
+}
+
+extern func emptyMap[K any, V any]() map[K]V
+extern func mapEntries[K any, V any, U any](m map[K]V, f func(K, V) U) map[K]U
+extern func mapKeys[K any, V any](m map[K]V) []K
+extern func sumValues[A any](xs []A) A
+extern func lookupMap[K any, V any](m map[K]V, key K) Option[V]
+extern func freezeMap[K any, V any](m map[K]V) map[K]V
+
+extern func put[K any, V any](m map[K]V, key K, value V) map[K]V
+extern func remove[K any, V any](m map[K]V, key K) map[K]V

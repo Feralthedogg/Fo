@@ -1,0 +1,531 @@
+package formatfo
+
+import "github.com/Feralthedogg/Fo/internal/ast"
+import "github.com/Feralthedogg/Fo/internal/token"
+import "strings"
+
+func FormatFile(file ast.File) string {
+    pkg := FormatPackage(file)
+    imports := FormatImports(file.Imports)
+    decls := FormatDecls(file.Decls, 0)
+
+    if pkg == "" {
+        if imports == "" {
+            return decls
+        }
+        if decls == "" {
+            return imports
+        }
+        return imports + "\n" + decls
+    }
+    if imports == "" {
+        if decls == "" {
+            return pkg
+        }
+        return pkg + "\n" + decls
+    }
+    if decls == "" {
+        return pkg + "\n" + imports
+    }
+    return pkg + "\n" + imports + "\n" + decls
+}
+
+func FormatPackage(file ast.File) string {
+    name := ast.FilePackageName(file)
+    if name == "" {
+        return ""
+    }
+    return "package " + name + "\n"
+}
+
+func FormatImports(imports []ast.ImportDecl) string {
+    if len(imports) == 0 {
+        return ""
+    }
+    if len(imports) == 1 {
+        return "import " + ast.ImportPath(imports[0]) + "\n"
+    }
+    return "import (\n" + FormatImportLines(imports, 0) + ")\n"
+}
+
+func FormatImportLines(imports []ast.ImportDecl, idx int) string {
+    if idx >= len(imports) {
+        return ""
+    }
+    return "    " + ast.ImportPath(imports[idx]) + "\n" + FormatImportLines(imports, idx + 1)
+}
+
+func FormatDecls(decls []ast.Decl, idx int) string {
+    if idx >= len(decls) {
+        return ""
+    }
+    head := FormatDecl(decls[idx])
+    if idx + 1 >= len(decls) {
+        return head
+    }
+    return head + "\n\n" + FormatDecls(decls, idx + 1)
+}
+
+func FormatDecl(decl ast.Decl) string {
+    if ast.DeclIsFuncDecl(decl) {
+        return FormatFuncDecl(decl)
+    }
+    if ast.DeclIsTypeDecl(decl) {
+        return FormatTypeDecl(decl)
+    }
+    return ""
+}
+
+func FormatFuncDecl(decl ast.Decl) string {
+    prefix := FuncPrefix(ast.DeclIsExtern(decl))
+    receiver := FormatDeclReceiver(decl)
+    name := ast.DeclName(decl) + FormatTypeParams(ast.DeclTypeParams(decl))
+    params := FormatParams(ast.DeclParams(decl), 0)
+    results := FormatResultSuffix(ast.DeclResults(decl))
+
+    if ast.DeclIsExtern(decl) {
+        return prefix + receiver + name + "(" + params + ")" + results
+    }
+    return prefix + receiver + name + "(" + params + ")" + results + " " + FormatBlock(ast.DeclBodyBlock(decl), 0)
+}
+
+func FormatTypeParams(params []ast.TypeParam) string {
+    if len(params) == 0 {
+        return ""
+    }
+    return "[" + FormatTypeParamItems(params, 0) + "]"
+}
+
+func FormatTypeParamItems(params []ast.TypeParam, idx int) string {
+    if idx >= len(params) {
+        return ""
+    }
+    head := ast.TypeParamName(params[idx]) + " " + FormatTypeParamConstraint(ast.TypeParamConstraint(params[idx]))
+    if idx + 1 >= len(params) {
+        return head
+    }
+    return head + ", " + FormatTypeParamItems(params, idx + 1)
+}
+
+func FormatTypeParamConstraint(value Option[ast.TypeExpr]) string {
+    if isNone[ast.TypeExpr](value) {
+        return "any"
+    }
+    return FormatTypeExpr(unwrapOr(value, ast.MakeNamedType(ast.ZeroPos(), "any")))
+}
+
+func FuncPrefix(isExtern bool) string {
+    if isExtern {
+        return "extern func "
+    }
+    return "func "
+}
+
+func FormatDeclReceiver(decl ast.Decl) string {
+    if ast.DeclHasReceiver(decl) {
+        field := ast.DeclReceiverField(decl)
+        return "(" + ast.FieldName(field) + " " + FormatTypeExpr(ast.FieldType(field)) + ") "
+    }
+    return ""
+}
+
+func FormatTypeDecl(decl ast.Decl) string {
+    name := ast.DeclName(decl) + FormatTypeParams(ast.DeclTypeParams(decl))
+    methods := ast.DeclInterfaceMethods(decl)
+    if len(methods) > 0 {
+        return "type " + name + " interface {\n" +
+            FormatMethodLines(methods, 0) +
+            "}" + FormatDeriving(ast.DeclDerivingNames(decl))
+    }
+    variants := ast.DeclEnumVariants(decl)
+    if len(variants) > 0 {
+        return "type " + name + " enum {\n" +
+            FormatVariantLines(variants, 0) +
+            "}" + FormatDeriving(ast.DeclDerivingNames(decl))
+    }
+    return "type " + name + " struct {\n" +
+        FormatFieldLines(ast.DeclStructFields(decl), 0) +
+        "}" + FormatDeriving(ast.DeclDerivingNames(decl))
+}
+
+func FormatDeriving(items []string) string {
+    if len(items) == 0 {
+        return ""
+    }
+    return " deriving (" + JoinStrings(items, 0) + ")"
+}
+
+func JoinStrings(items []string, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    if idx + 1 >= len(items) {
+        return items[idx]
+    }
+    return items[idx] + ", " + JoinStrings(items, idx + 1)
+}
+
+func FormatParams(fields []ast.FieldDef, idx int) string {
+    if idx >= len(fields) {
+        return ""
+    }
+    head := FormatParam(fields[idx])
+    if idx + 1 >= len(fields) {
+        return head
+    }
+    return head + ", " + FormatParams(fields, idx + 1)
+}
+
+func FormatParam(field ast.FieldDef) string {
+    if ast.FieldIsVariadic(field) {
+        if ast.TypeExprIsSlice(ast.FieldType(field)) {
+            return ast.FieldName(field) + " ..." + FormatTypeExpr(ast.TypeExprSliceElem(ast.FieldType(field)))
+        }
+    }
+    return ast.FieldName(field) + " " + FormatTypeExpr(ast.FieldType(field))
+}
+
+func FormatResultSuffix(results []ast.TypeExpr) string {
+    if len(results) == 0 {
+        return ""
+    }
+    if len(results) == 1 {
+        return " " + FormatTypeExpr(results[0])
+    }
+    return " (" + FormatTypeExprs(results, 0) + ")"
+}
+
+func FormatTypeExprs(items []ast.TypeExpr, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    head := FormatTypeExpr(items[idx])
+    if idx + 1 >= len(items) {
+        return head
+    }
+    return head + ", " + FormatTypeExprs(items, idx + 1)
+}
+
+func FormatTypeExpr(expr ast.TypeExpr) string {
+    if ast.TypeExprIsQualified(expr) {
+        name := ast.TypeExprQualifiedPackage(expr) + "." + ast.TypeExprQualifiedName(expr)
+        args := ast.TypeExprQualifiedArgs(expr)
+        if len(args) == 0 {
+            return name
+        }
+        return name + "[" + FormatTypeExprs(args, 0) + "]"
+    }
+    if ast.TypeExprIsMap(expr) {
+        return "map[" + FormatTypeExpr(ast.TypeExprMapKey(expr)) + "]" + FormatTypeExpr(ast.TypeExprMapValue(expr))
+    }
+    if ast.TypeExprIsSlice(expr) {
+        return "[]" + FormatTypeExpr(ast.TypeExprSliceElem(expr))
+    }
+    if ast.TypeExprIsChan(expr) {
+        if ast.TypeExprChanReceiveOnly(expr) {
+            return "<-chan " + FormatTypeExpr(ast.TypeExprChanElem(expr))
+        }
+        return "chan " + FormatTypeExpr(ast.TypeExprChanElem(expr))
+    }
+    if ast.TypeExprIsFunc(expr) {
+        return "func(" + FormatTypeExprs(ast.TypeExprFuncParams(expr), 0) + ")" + FormatResultSuffix(ast.TypeExprFuncResults(expr))
+    }
+    name := ast.TypeExprNamedName(expr)
+    if name == "" {
+        return "any"
+    }
+    args := ast.TypeExprNamedArgs(expr)
+    if len(args) == 0 {
+        return name
+    }
+    return name + "[" + FormatTypeExprs(args, 0) + "]"
+}
+
+func FormatFieldLines(fields []ast.FieldDef, idx int) string {
+    if idx >= len(fields) {
+        return ""
+    }
+    return "    " + ast.FieldName(fields[idx]) + " " + FormatTypeExpr(ast.FieldType(fields[idx])) + "\n" +
+        FormatFieldLines(fields, idx + 1)
+}
+
+func FormatMethodLines(methods []ast.MethodSig, idx int) string {
+    if idx >= len(methods) {
+        return ""
+    }
+    head := "    " + ast.MethodSigName(methods[idx]) +
+        "(" + FormatParams(ast.MethodSigParams(methods[idx]), 0) + ")" +
+        FormatResultSuffix(ast.MethodSigResults(methods[idx])) + "\n"
+    return head + FormatMethodLines(methods, idx + 1)
+}
+
+func FormatVariantLines(variants []ast.Variant, idx int) string {
+    if idx >= len(variants) {
+        return ""
+    }
+    fields := ast.VariantFields(variants[idx])
+    head := FormatVariantLine(variants[idx], fields)
+    return head + "\n" + FormatVariantLines(variants, idx + 1)
+}
+
+func FormatVariantLine(variant ast.Variant, fields []ast.TypeExpr) string {
+    head := "    " + ast.VariantName(variant)
+    if len(fields) > 0 {
+        return head + "(" + FormatTypeExprs(fields, 0) + ")"
+    }
+    return head
+}
+
+func FormatBlock(block ast.BlockStmt, level int) string {
+    stmts := ast.BlockStatements(block)
+    if len(stmts) == 0 {
+        return "{\n" + Indent(level) + "}"
+    }
+    return "{\n" + FormatStatements(stmts, level + 1, 0) + Indent(level) + "}"
+}
+
+func FormatStatements(stmts []ast.Stmt, level int, idx int) string {
+    if idx >= len(stmts) {
+        return ""
+    }
+    return FormatStmt(stmts[idx], level) + FormatStatements(stmts, level, idx + 1)
+}
+
+func FormatStmt(stmt ast.Stmt, level int) string {
+    indent := Indent(level)
+    if ast.StmtIsBind(stmt) {
+        names := ast.StmtBindNames(stmt)
+        if len(names) == 0 {
+            return indent + "_ := " + FormatExpr(ast.StmtBindValue(stmt)) + "\n"
+        }
+        return indent + names[0] + " := " + FormatExpr(ast.StmtBindValue(stmt)) + "\n"
+    }
+    if ast.StmtIsReturn(stmt) {
+        results := ast.StmtReturnResults(stmt)
+        if len(results) == 0 {
+            return indent + "return\n"
+        }
+        return indent + "return " + FormatExprs(results, 0) + "\n"
+    }
+    if ast.StmtIsIf(stmt) {
+        return indent + "if " + FormatExpr(ast.StmtIfCond(stmt)) + " " + FormatBlock(ast.StmtIfBody(stmt), level) + "\n"
+    }
+    if ast.StmtIsSwitch(stmt) {
+        return FormatSwitchStmt(stmt, level)
+    }
+    if ast.StmtIsMatch(stmt) {
+        return FormatMatchStmt(stmt, level)
+    }
+    if ast.StmtIsExpr(stmt) {
+        return indent + FormatExpr(ast.StmtExprValue(stmt)) + "\n"
+    }
+    return indent + "\n"
+}
+
+func FormatSwitchStmt(stmt ast.Stmt, level int) string {
+    indent := Indent(level)
+    tag := FormatSwitchTag(stmt)
+    return indent + "switch" + tag + " {\n" +
+        FormatSwitchCases(ast.StmtSwitchCases(stmt), level + 1, 0) +
+        indent + "}\n"
+}
+
+func FormatSwitchTag(stmt ast.Stmt) string {
+    if ast.ExprOptionIsNone(ast.StmtSwitchTag(stmt)) {
+        return ""
+    }
+    return " " + FormatExpr(ast.ExprOptionValue(ast.StmtSwitchTag(stmt)))
+}
+
+func FormatSwitchCases(cases []ast.CaseClause, level int, idx int) string {
+    if idx >= len(cases) {
+        return ""
+    }
+    head := FormatSwitchCaseHead(cases[idx], level)
+    return head + FormatStatements(ast.SwitchCaseBody(cases[idx]), level + 1, 0) +
+        FormatSwitchCases(cases, level, idx + 1)
+}
+
+func FormatSwitchCaseHead(c ast.CaseClause, level int) string {
+    indent := Indent(level)
+    if ast.SwitchCaseIsDefault(c) {
+        return indent + "default:\n"
+    }
+    return indent + "case " + FormatExprs(ast.SwitchCaseExprs(c), 0) + ":\n"
+}
+
+func FormatMatchStmt(stmt ast.Stmt, level int) string {
+    indent := Indent(level)
+    return indent + "match " + FormatExpr(ast.StmtMatchTag(stmt)) + " {\n" +
+        FormatMatchCases(ast.StmtMatchCases(stmt), level + 1, 0) +
+        indent + "}\n"
+}
+
+func FormatMatchCases(cases []ast.MatchCase, level int, idx int) string {
+    if idx >= len(cases) {
+        return ""
+    }
+    indent := Indent(level)
+    return indent + "case " + FormatPattern(ast.MatchCasePattern(cases[idx])) + ":\n" +
+        FormatStatements(ast.MatchCaseBody(cases[idx]), level + 1, 0) +
+        FormatMatchCases(cases, level, idx + 1)
+}
+
+func FormatExprs(items []ast.Expr, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    head := FormatExpr(items[idx])
+    if idx + 1 >= len(items) {
+        return head
+    }
+    return head + ", " + FormatExprs(items, idx + 1)
+}
+
+func FormatExpr(expr ast.Expr) string {
+    if ast.ExprIsPipeline(expr) {
+        return FormatExpr(ast.ExprPipelineLeft(expr)) + " |> " + FormatExpr(ast.ExprPipelineRight(expr))
+    }
+    if ast.ExprIsUnary(expr) {
+        return token.TypeString(ast.ExprUnaryOp(expr)) + FormatExpr(ast.ExprUnaryOperand(expr))
+    }
+    if ast.ExprIsBinary(expr) {
+        return FormatExpr(ast.ExprBinaryLeft(expr)) + " " +
+            token.TypeString(ast.ExprBinaryOp(expr)) + " " +
+            FormatExpr(ast.ExprBinaryRight(expr))
+    }
+    if ast.ExprIsCall(expr) {
+        return FormatExpr(ast.ExprCallFunc(expr)) +
+            FormatTypeArgSuffix(ast.ExprCallTypeArgs(expr)) +
+            "(" + FormatExprs(ast.ExprCallArgs(expr), 0) + ")"
+    }
+    if ast.ExprIsSelector(expr) {
+        return FormatExpr(ast.ExprSelectorTarget(expr)) + "." + ast.ExprSelectorField(expr)
+    }
+    if ast.ExprIsIndex(expr) {
+        return FormatExpr(ast.ExprIndexTarget(expr)) + "[" + FormatExpr(ast.ExprIndexValue(expr)) + "]"
+    }
+    if ast.ExprIsSlice(expr) {
+        return FormatExpr(ast.ExprSliceTarget(expr)) + "[" +
+            FormatOptionalExpr(ast.ExprSliceLow(expr)) + ":" +
+            FormatOptionalExpr(ast.ExprSliceHigh(expr)) + "]"
+    }
+    if ast.ExprIsStructLit(expr) {
+        return ast.ExprStructLitType(expr) + "{ " + FormatFieldInits(ast.ExprStructLitFields(expr), 0) + " }"
+    }
+    if ast.ExprIsCopyUpdate(expr) {
+        return FormatExpr(ast.ExprCopyUpdateSource(expr)) + "{ " + FormatFieldUpdates(ast.ExprCopyUpdateUpdates(expr), 0) + " }"
+    }
+    if ast.ExprIsSliceLit(expr) {
+        return "[]" + FormatOptionalTypeExpr(ast.ExprSliceLitType(expr)) + "{ " + FormatExprs(ast.ExprSliceLitElems(expr), 0) + " }"
+    }
+    if ast.ExprIsIdent(expr) {
+        return ast.ExprIdentName(expr)
+    }
+    if ast.ExprIsBasicLit(expr) {
+        return ast.ExprBasicLitValue(expr)
+    }
+    return "_"
+}
+
+func FormatTypeArgSuffix(items []ast.TypeExpr) string {
+    if len(items) == 0 {
+        return ""
+    }
+    return "[" + FormatTypeExprs(items, 0) + "]"
+}
+
+func FormatOptionalExpr(value Option[ast.Expr]) string {
+    if ast.ExprOptionIsNone(value) {
+        return ""
+    }
+    return FormatExpr(ast.ExprOptionValue(value))
+}
+
+func FormatOptionalTypeExpr(value Option[ast.TypeExpr]) string {
+    if isNone[ast.TypeExpr](value) {
+        return ""
+    }
+    return FormatTypeExpr(unwrapOr(value, ast.MakeNamedType(ast.ZeroPos(), "any")))
+}
+
+func FormatFieldInits(fields []ast.FieldInit, idx int) string {
+    if idx >= len(fields) {
+        return ""
+    }
+    head := ast.FieldInitNameValue(fields[idx]) + ": " + FormatExpr(ast.FieldInitExprValue(fields[idx]))
+    if idx + 1 >= len(fields) {
+        return head
+    }
+    return head + ", " + FormatFieldInits(fields, idx + 1)
+}
+
+func FormatFieldUpdates(fields []ast.FieldUpdate, idx int) string {
+    if idx >= len(fields) {
+        return ""
+    }
+    head := FormatFieldPath(ast.FieldUpdatePathValue(fields[idx]), 0) + ": " + FormatExpr(ast.FieldUpdateExprValue(fields[idx]))
+    if idx + 1 >= len(fields) {
+        return head
+    }
+    return head + ", " + FormatFieldUpdates(fields, idx + 1)
+}
+
+func FormatFieldPath(path []string, idx int) string {
+    if idx >= len(path) {
+        return ""
+    }
+    if idx + 1 >= len(path) {
+        return path[idx]
+    }
+    return path[idx] + "." + FormatFieldPath(path, idx + 1)
+}
+
+func FormatPattern(p ast.Pattern) string {
+    if ast.PatternIsWildcard(p) {
+        return "_"
+    }
+    if ast.PatternIsEnum(p) {
+        items := ast.PatternEnumSubPats(p)
+        if len(items) == 0 {
+            return ast.PatternEnumName(p)
+        }
+        return ast.PatternEnumName(p) + "(" + FormatPatterns(items, 0) + ")"
+    }
+    if ast.PatternIsStruct(p) {
+        return ast.PatternStructType(p) + "{ " + FormatPatternFields(ast.PatternStructFields(p), 0) + " }"
+    }
+    if ast.PatternIsIdent(p) {
+        return ast.PatternIdentName(p)
+    }
+    return "_"
+}
+
+func FormatPatterns(items []ast.Pattern, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    head := FormatPattern(items[idx])
+    if idx + 1 >= len(items) {
+        return head
+    }
+    return head + ", " + FormatPatterns(items, idx + 1)
+}
+
+func FormatPatternFields(fields []ast.FieldPattern, idx int) string {
+    if idx >= len(fields) {
+        return ""
+    }
+    head := ast.FieldPatternNameValue(fields[idx]) + ": " + FormatPattern(ast.FieldPatternPatternValue(fields[idx]))
+    if idx + 1 >= len(fields) {
+        return head
+    }
+    return head + ", " + FormatPatternFields(fields, idx + 1)
+}
+
+func Indent(level int) string {
+    if level <= 0 {
+        return ""
+    }
+    return strings.Repeat("    ", level)
+}

@@ -1,0 +1,295 @@
+package toolchain
+
+import "github.com/Feralthedogg/Fo/internal/driver"
+import "github.com/Feralthedogg/Fo/internal/project"
+
+type ExecPlanResult struct {
+    HasError bool
+    Error string
+    Action project.ExecAction
+}
+
+type ProjectPlanResult struct {
+    HasError bool
+    Error string
+    Action project.ProjectAction
+}
+
+type ToolResult struct {
+    ExitCode int
+    Output string
+    HasExecAction bool
+    ExecAction project.ExecAction
+    HasProjectAction bool
+    ProjectAction project.ProjectAction
+}
+
+func VersionString() string {
+    return "fo-selfhost-dev"
+}
+
+func UsageString() string {
+    return "Fo - self-hosted Fo toolchain core\n\n" +
+        "Usage:\n" +
+        "  fo init [module]\n" +
+        "  fo new <module|name>\n" +
+        "  fo mod <cmd>\n" +
+        "  fo build [path...]\n" +
+        "  fo check [path...]\n" +
+        "  fo run [path...]\n" +
+        "  fo test [path...]\n" +
+        "  fo fmt [path...]\n" +
+        "  fo format [path...]\n" +
+        "  fo version\n" +
+        "  fo help\n"
+}
+
+func CompileErrors(result driver.CompileResult) string {
+    if result.ParseDiag.HasError {
+        return result.ParseDiag.Format()
+    }
+    if result.CheckDiag.HasError {
+        return result.CheckDiag.Format()
+    }
+    return ""
+}
+
+func DefaultPathArgs(args []string) []string {
+    if len(args) == 0 {
+        return []string{"."}
+    }
+    return args
+}
+
+func BuildPlan(args []string, src string, filename string) ExecPlanResult {
+    return CompilePlan("build", args, src, filename)
+}
+
+func RunPlan(args []string, src string, filename string) ExecPlanResult {
+    return CompilePlan("run", args, src, filename)
+}
+
+func TestPlan(args []string, src string, filename string) ExecPlanResult {
+    return CompilePlan("test", args, src, filename)
+}
+
+func FmtPlan(args []string, src string, filename string) ExecPlanResult {
+    return CompilePlan("fmt", args, src, filename)
+}
+
+func CompilePlan(kind string, args []string, src string, filename string) ExecPlanResult {
+    result := driver.CompileSource(src, filename)
+    if result.ParseDiag.HasError || result.CheckDiag.HasError {
+        return ExecPlanError(CompileErrors(result))
+    }
+    if kind == "build" {
+        return ExecPlanOk(project.BuildAction(filename, result.GoSource))
+    }
+    if kind == "run" {
+        return ExecPlanOk(project.RunAction(filename, result.GoSource))
+    }
+    if kind == "fmt" {
+        return ExecPlanOk(project.FmtAction(filename, result.GoSource))
+    }
+    if kind == "test" {
+        return ExecPlanOk(project.TestAction(filename, args, result.GoSource))
+    }
+    return ExecPlanError("unknown compile command: " + kind)
+}
+
+func CheckPlan(src string, filename string) ExecPlanResult {
+    result := driver.CompileSource(src, filename)
+    if result.ParseDiag.HasError || result.CheckDiag.HasError {
+        return ExecPlanError(CompileErrors(result))
+    }
+    return ExecPlanOk(project.CheckAction("check passed"))
+}
+
+func InitProject(args []string) ProjectPlanResult {
+    if len(args) == 0 {
+        return ProjectPlanError("usage: fo init <module>")
+    }
+    return ProjectPlanOk(project.InitAction(args[0]))
+}
+
+func NewProject(args []string) ProjectPlanResult {
+    if len(args) == 0 {
+        return ProjectPlanError("usage: fo new <module|name>")
+    }
+    return ProjectPlanOk(project.NewAction(args[0]))
+}
+
+func ModProject(args []string) ProjectPlanResult {
+    if len(args) == 0 {
+        return ProjectPlanError("usage: fo mod <init|tidy|graph>")
+    }
+    sub := args[0]
+    rest := args[1:]
+    if sub == "init" {
+        if len(rest) == 0 {
+            return ProjectPlanError("usage: fo mod init <module>")
+        }
+        return ProjectPlanOk(project.ModInitAction(rest[0]))
+    }
+    if sub == "tidy" {
+        return ProjectPlanOk(project.ModTidyPlan())
+    }
+    if sub == "graph" {
+        return ProjectPlanOk(project.ModGraphPlan())
+    }
+    return ProjectPlanError("unknown mod command: " + sub)
+}
+
+func ExecPlanOk(action project.ExecAction) ExecPlanResult {
+    return ExecPlanResult{
+        HasError: false,
+        Error: "",
+        Action: action,
+    }
+}
+
+func ExecPlanError(msg string) ExecPlanResult {
+    return ExecPlanResult{
+        HasError: true,
+        Error: msg,
+        Action: project.ExecMessage(""),
+    }
+}
+
+func ProjectPlanOk(action project.ProjectAction) ProjectPlanResult {
+    return ProjectPlanResult{
+        HasError: false,
+        Error: "",
+        Action: action,
+    }
+}
+
+func ProjectPlanError(msg string) ProjectPlanResult {
+    return ProjectPlanResult{
+        HasError: true,
+        Error: msg,
+        Action: project.MessageAction(""),
+    }
+}
+
+func HelpResult() ToolResult {
+    return ToolResult{
+        ExitCode: 0,
+        Output: UsageString(),
+        HasExecAction: false,
+        ExecAction: project.ExecMessage(""),
+        HasProjectAction: false,
+        ProjectAction: project.MessageAction(""),
+    }
+}
+
+func VersionResult() ToolResult {
+    return ToolResult{
+        ExitCode: 0,
+        Output: VersionString(),
+        HasExecAction: false,
+        ExecAction: project.ExecMessage(""),
+        HasProjectAction: false,
+        ProjectAction: project.MessageAction(""),
+    }
+}
+
+func FailureResult(msg string) ToolResult {
+    return ToolResult{
+        ExitCode: 1,
+        Output: msg,
+        HasExecAction: false,
+        ExecAction: project.ExecMessage(""),
+        HasProjectAction: false,
+        ProjectAction: project.MessageAction(""),
+    }
+}
+
+func ProjectResult(action project.ProjectAction) ToolResult {
+    return ToolResult{
+        ExitCode: 0,
+        Output: project.ProjectActionOutput(action),
+        HasExecAction: false,
+        ExecAction: project.ExecMessage(""),
+        HasProjectAction: true,
+        ProjectAction: action,
+    }
+}
+
+func ExecResult(action project.ExecAction) ToolResult {
+    return ToolResult{
+        ExitCode: 0,
+        Output: project.ExecActionOutput(action),
+        HasExecAction: true,
+        ExecAction: action,
+        HasProjectAction: false,
+        ProjectAction: project.MessageAction(""),
+    }
+}
+
+func UnknownCommand(cmd string) ToolResult {
+    return FailureResult("unknown command: " + cmd + "\n" + UsageString())
+}
+
+func PlanCommand(args []string, src string, filename string) ToolResult {
+    if len(args) == 0 {
+        return HelpResult()
+    }
+    cmd := args[0]
+    rest := args[1:]
+    if cmd == "help" || cmd == "--help" || cmd == "-h" {
+        return HelpResult()
+    }
+    if cmd == "version" {
+        return VersionResult()
+    }
+    if cmd == "init" {
+        return planProject(InitProject(rest))
+    }
+    if cmd == "new" {
+        return planProject(NewProject(rest))
+    }
+    if cmd == "mod" {
+        return planProject(ModProject(rest))
+    }
+    if cmd == "build" {
+        return planExec(BuildPlan(rest, src, filename))
+    }
+    if cmd == "check" {
+        return planExec(CheckPlan(src, filename))
+    }
+    if cmd == "run" {
+        return planExec(RunPlan(rest, src, filename))
+    }
+    if cmd == "test" {
+        return planExec(TestPlan(rest, src, filename))
+    }
+    if cmd == "fmt" {
+        return planExec(FmtPlan(rest, src, filename))
+    }
+    if cmd == "format" {
+        return ToolResult{
+            ExitCode: 0,
+            Output: "format planned",
+            HasExecAction: false,
+            ExecAction: project.ExecMessage(""),
+            HasProjectAction: false,
+            ProjectAction: project.MessageAction(""),
+        }
+    }
+    return UnknownCommand(cmd)
+}
+
+func planExec(plan ExecPlanResult) ToolResult {
+    if plan.HasError {
+        return FailureResult(plan.Error)
+    }
+    return ExecResult(plan.Action)
+}
+
+func planProject(plan ProjectPlanResult) ToolResult {
+    if plan.HasError {
+        return FailureResult(plan.Error)
+    }
+    return ProjectResult(plan.Action)
+}

@@ -1,0 +1,551 @@
+package token
+
+type Type enum {
+    ILLEGAL
+    EOF
+    COMMENT
+
+    IDENT
+    INT_LIT
+    FLOAT_LIT
+    STRING_LIT
+    RUNE_LIT
+
+    PACKAGE
+    IMPORT
+    FUNC
+    TYPE
+    STRUCT
+    INTERFACE
+    ENUM
+    MATCH
+    CASE
+    DEFAULT
+    IF
+    ELSE
+    SWITCH
+    RETURN
+    EXTERN
+    DERIVING
+    TRUE
+    FALSE
+    ANY
+
+    VAR
+    FOR
+    GO
+    DEFER
+    SELECT
+    GOTO
+    FALLTHROUGH
+    CHAN
+    PANIC
+    RECOVER
+
+    PLUS
+    MINUS
+    STAR
+    SLASH
+    PERCENT
+    PIPE_ARROW
+    ARROW
+    WALRUS
+
+    EQ
+    NEQ
+    LT
+    GT
+    LTE
+    GTE
+
+    LAND
+    LOR
+    NOT
+
+    LPAREN
+    RPAREN
+    LBRACE
+    RBRACE
+    LBRACKET
+    RBRACKET
+    COMMA
+    ELLIPSIS
+    DOT
+    COLON
+    SEMICOLON
+    PIPE
+
+    ASSIGN
+    PLUS_ASSIGN
+    MINUS_ASSIGN
+    INC
+    DEC
+}
+
+type Pos struct {
+    File string
+    Line int
+    Column int
+    Offset int
+}
+
+type Token struct {
+    Type Type
+    Literal string
+    Pos Pos
+}
+
+func MakeToken(t Type, literal string, pos Pos) Token {
+    return Token{
+        Type: t,
+        Literal: literal,
+        Pos: pos,
+    }
+}
+
+func IllegalType() Type { return ILLEGAL }
+func EOFType() Type { return EOF }
+func IdentType() Type { return IDENT }
+func IntLitType() Type { return INT_LIT }
+func StringLitType() Type { return STRING_LIT }
+func TrueType() Type { return TRUE }
+func FalseType() Type { return FALSE }
+func PackageType() Type { return PACKAGE }
+func ImportType() Type { return IMPORT }
+func FuncType() Type { return FUNC }
+func TypeDeclType() Type { return TYPE }
+func StructType() Type { return STRUCT }
+func InterfaceType() Type { return INTERFACE }
+func EnumType() Type { return ENUM }
+func MatchType() Type { return MATCH }
+func IfType() Type { return IF }
+func ElseType() Type { return ELSE }
+func SwitchType() Type { return SWITCH }
+func CaseType() Type { return CASE }
+func DefaultType() Type { return DEFAULT }
+func ReturnType() Type { return RETURN }
+func ExternType() Type { return EXTERN }
+func AnyType() Type { return ANY }
+func ChanType() Type { return CHAN }
+func LParenType() Type { return LPAREN }
+func RParenType() Type { return RPAREN }
+func LBraceType() Type { return LBRACE }
+func RBraceType() Type { return RBRACE }
+func LBracketType() Type { return LBRACKET }
+func RBracketType() Type { return RBRACKET }
+func CommaType() Type { return COMMA }
+func EllipsisType() Type { return ELLIPSIS }
+func DotType() Type { return DOT }
+func ColonType() Type { return COLON }
+func SemicolonType() Type { return SEMICOLON }
+func WalrusType() Type { return WALRUS }
+func EqType() Type { return EQ }
+func ArrowType() Type { return ARROW }
+func AssignType() Type { return ASSIGN }
+func NotType() Type { return NOT }
+func NeqType() Type { return NEQ }
+func LtType() Type { return LT }
+func LteType() Type { return LTE }
+func GtType() Type { return GT }
+func GteType() Type { return GTE }
+func PlusType() Type { return PLUS }
+func PlusAssignType() Type { return PLUS_ASSIGN }
+func IncType() Type { return INC }
+func MinusType() Type { return MINUS }
+func MinusAssignType() Type { return MINUS_ASSIGN }
+func DecType() Type { return DEC }
+func StarType() Type { return STAR }
+func SlashType() Type { return SLASH }
+func PercentType() Type { return PERCENT }
+func PipeType() Type { return PIPE }
+func LorType() Type { return LOR }
+func PipeArrowType() Type { return PIPE_ARROW }
+func LandType() Type { return LAND }
+
+func MakePos(file string, line int, column int, offset int) Pos {
+    return Pos{
+        File: file,
+        Line: line,
+        Column: column,
+        Offset: offset,
+    }
+}
+
+func TypeString(t Type) string {
+    switch t {
+    case ILLEGAL:
+        return "ILLEGAL"
+    case EOF:
+        return "EOF"
+    case COMMENT:
+        return "COMMENT"
+    case IDENT:
+        return "IDENT"
+    case INT_LIT:
+        return "INT"
+    case FLOAT_LIT:
+        return "FLOAT"
+    case STRING_LIT:
+        return "STRING"
+    case RUNE_LIT:
+        return "RUNE"
+    case PACKAGE:
+        return "package"
+    case IMPORT:
+        return "import"
+    case FUNC:
+        return "func"
+    case TYPE:
+        return "type"
+    case STRUCT:
+        return "struct"
+    case INTERFACE:
+        return "interface"
+    case ENUM:
+        return "enum"
+    case MATCH:
+        return "match"
+    case CASE:
+        return "case"
+    case DEFAULT:
+        return "default"
+    case IF:
+        return "if"
+    case ELSE:
+        return "else"
+    case SWITCH:
+        return "switch"
+    case RETURN:
+        return "return"
+    case EXTERN:
+        return "extern"
+    case DERIVING:
+        return "deriving"
+    case TRUE:
+        return "true"
+    case FALSE:
+        return "false"
+    case ANY:
+        return "any"
+    case VAR:
+        return "var"
+    case FOR:
+        return "for"
+    case GO:
+        return "go"
+    case DEFER:
+        return "defer"
+    case SELECT:
+        return "select"
+    case GOTO:
+        return "goto"
+    case FALLTHROUGH:
+        return "fallthrough"
+    case CHAN:
+        return "chan"
+    case PANIC:
+        return "panic"
+    case RECOVER:
+        return "recover"
+    case PLUS:
+        return "+"
+    case MINUS:
+        return "-"
+    case STAR:
+        return "*"
+    case SLASH:
+        return "/"
+    case PERCENT:
+        return "%"
+    case PIPE_ARROW:
+        return "|>"
+    case ARROW:
+        return "=>"
+    case WALRUS:
+        return ":="
+    case EQ:
+        return "=="
+    case NEQ:
+        return "!="
+    case LT:
+        return "<"
+    case GT:
+        return ">"
+    case LTE:
+        return "<="
+    case GTE:
+        return ">="
+    case LAND:
+        return "&&"
+    case LOR:
+        return "||"
+    case NOT:
+        return "!"
+    case LPAREN:
+        return "("
+    case RPAREN:
+        return ")"
+    case LBRACE:
+        return "{"
+    case RBRACE:
+        return "}"
+    case LBRACKET:
+        return "["
+    case RBRACKET:
+        return "]"
+    case COMMA:
+        return ","
+    case ELLIPSIS:
+        return "..."
+    case DOT:
+        return "."
+    case COLON:
+        return ":"
+    case SEMICOLON:
+        return ";"
+    case PIPE:
+        return "|"
+    case ASSIGN:
+        return "="
+    case PLUS_ASSIGN:
+        return "+="
+    case MINUS_ASSIGN:
+        return "-="
+    case INC:
+        return "++"
+    case DEC:
+        return "--"
+    }
+    return "UNKNOWN"
+}
+
+func LookupIdent(ident string) Type {
+    switch ident {
+    case "package":
+        return PACKAGE
+    case "import":
+        return IMPORT
+    case "func":
+        return FUNC
+    case "type":
+        return TYPE
+    case "struct":
+        return STRUCT
+    case "interface":
+        return INTERFACE
+    case "enum":
+        return ENUM
+    case "match":
+        return MATCH
+    case "case":
+        return CASE
+    case "default":
+        return DEFAULT
+    case "if":
+        return IF
+    case "else":
+        return ELSE
+    case "switch":
+        return SWITCH
+    case "return":
+        return RETURN
+    case "extern":
+        return EXTERN
+    case "deriving":
+        return DERIVING
+    case "true":
+        return TRUE
+    case "false":
+        return FALSE
+    case "any":
+        return ANY
+    case "var":
+        return VAR
+    case "for":
+        return FOR
+    case "go":
+        return GO
+    case "defer":
+        return DEFER
+    case "select":
+        return SELECT
+    case "goto":
+        return GOTO
+    case "fallthrough":
+        return FALLTHROUGH
+    case "chan":
+        return CHAN
+    case "panic":
+        return PANIC
+    case "recover":
+        return RECOVER
+    default:
+        return IDENT
+    }
+}
+
+func IsBanned(t Type) bool {
+    if t == VAR {
+        return true
+    }
+    if t == FOR {
+        return true
+    }
+    if t == GO {
+        return true
+    }
+    if t == DEFER {
+        return true
+    }
+    if t == SELECT {
+        return true
+    }
+    if t == GOTO {
+        return true
+    }
+    if t == FALLTHROUGH {
+        return true
+    }
+    if t == CHAN {
+        return true
+    }
+    if t == PANIC {
+        return true
+    }
+    if t == RECOVER {
+        return true
+    }
+    return false
+}
+
+func IsKeyword(t Type) bool {
+    if t == PACKAGE {
+        return true
+    }
+    if t == IMPORT {
+        return true
+    }
+    if t == FUNC {
+        return true
+    }
+    if t == TYPE {
+        return true
+    }
+    if t == STRUCT {
+        return true
+    }
+    if t == INTERFACE {
+        return true
+    }
+    if t == ENUM {
+        return true
+    }
+    if t == MATCH {
+        return true
+    }
+    if t == CASE {
+        return true
+    }
+    if t == DEFAULT {
+        return true
+    }
+    if t == IF {
+        return true
+    }
+    if t == ELSE {
+        return true
+    }
+    if t == SWITCH {
+        return true
+    }
+    if t == RETURN {
+        return true
+    }
+    if t == EXTERN {
+        return true
+    }
+    if t == DERIVING {
+        return true
+    }
+    if t == TRUE {
+        return true
+    }
+    if t == FALSE {
+        return true
+    }
+    if t == ANY {
+        return true
+    }
+    return false
+}
+
+func BannedMessage(ident string) string {
+    if ident == "var" {
+        return "`var` is not allowed in Fo. Use `:=` instead."
+    }
+    if ident == "for" {
+        return "`for` is not allowed in Fo. Use recursion or collection combinators instead."
+    }
+    if ident == "go" {
+        return "`go` is not allowed in Fo. Use `parallel()` or `Task` instead."
+    }
+    if ident == "defer" {
+        return "`defer` is not allowed in Fo."
+    }
+    if ident == "select" {
+        return "`select` is not allowed in Fo. Use `Task` combinators instead."
+    }
+    if ident == "goto" {
+        return "`goto` is not allowed in Fo."
+    }
+    if ident == "fallthrough" {
+        return "`fallthrough` is not allowed in Fo."
+    }
+    if ident == "chan" {
+        return "`chan` is not allowed in Fo. Use `Task` or `Stream` instead."
+    }
+    if ident == "panic" {
+        return "`panic` is not allowed in Fo. Use `Result` instead."
+    }
+    if ident == "recover" {
+        return "`recover` is not allowed in Fo."
+    }
+    return ""
+}
+
+func NeedsAutoSemicolon(t Type) bool {
+    if t == IDENT {
+        return true
+    }
+    if t == INT_LIT {
+        return true
+    }
+    if t == FLOAT_LIT {
+        return true
+    }
+    if t == STRING_LIT {
+        return true
+    }
+    if t == RUNE_LIT {
+        return true
+    }
+    if t == TRUE {
+        return true
+    }
+    if t == FALSE {
+        return true
+    }
+    if t == RETURN {
+        return true
+    }
+    if t == RPAREN {
+        return true
+    }
+    if t == RBRACE {
+        return true
+    }
+    if t == RBRACKET {
+        return true
+    }
+    return false
+}

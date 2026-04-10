@@ -1,0 +1,119 @@
+package genesis
+
+func SeedManifestExpr() Expr {
+    return TextExpr(
+        "Cold-start seed snapshot for Fo.\n\n" +
+            "This directory is generated from the current self-hosted compiler binary in\n" +
+            "build/fo and is intended to provide a Go-only seed path without depending on\n" +
+            "archived bootstrap source trees at build time.\n",
+    )
+}
+
+func SeedTargetDir() string {
+    return "bootstrap/seed"
+}
+
+func SeedGoModContent() string {
+    return "module github.com/Feralthedogg/Fo\n\ngo 1.25.6\n"
+}
+
+func SeedManifestContent() string {
+    return "Cold-start seed snapshot for Fo.\n\n" +
+        "This directory is generated from the current self-hosted compiler binary in\n" +
+        "build/fo and is intended to provide a Go-only seed path without depending on\n" +
+        "archived bootstrap source trees at build time.\n"
+}
+
+func SeedGeneratedPaths() []string {
+    return []string{
+        "cmd/fo/main.go",
+        "cmd/fohost/main.go",
+        "internal/ast/ast.go",
+        "internal/checker/checker.go",
+        "internal/codegen/codegen.go",
+        "internal/diagnostic/diagnostic.go",
+        "internal/driver/driver.go",
+        "internal/fomod/fomod.go",
+        "internal/hostplan/hostplan.go",
+        "internal/lexer/lexer.go",
+        "internal/token/token.go",
+        "internal/parser/parser.go",
+        "internal/project/project.go",
+        "internal/toolchain/toolchain.go",
+        "stdlib/fo/runtime.go",
+        "stdlib/fo/collections_generated.go",
+        "stdlib/fo/effects_generated.go",
+        "stdlib/fo/bridge.go",
+    }
+}
+
+func SeedHostPaths() []string {
+    return []string{}
+}
+
+func SeedSupportPaths() []string {
+    return []string{}
+}
+
+func SeedStdlibPaths() []string {
+    return []string{}
+}
+
+func SeedCanonicalPaths() []string {
+    return []string{
+        "go.mod",
+        "SEED.txt",
+        "cmd/fo/main.go",
+        "cmd/fohost/main.go",
+        "internal/ast/ast.go",
+        "internal/checker/checker.go",
+        "internal/codegen/codegen.go",
+        "internal/diagnostic/diagnostic.go",
+        "internal/driver/driver.go",
+        "internal/fomod/fomod.go",
+        "internal/hostplan/hostplan.go",
+        "internal/lexer/lexer.go",
+        "internal/token/token.go",
+        "internal/parser/parser.go",
+        "internal/project/project.go",
+        "internal/toolchain/toolchain.go",
+        "stdlib/fo/runtime.go",
+        "stdlib/fo/collections_generated.go",
+        "stdlib/fo/effects_generated.go",
+        "stdlib/fo/bridge.go",
+    }
+}
+
+func SeedFilesExpr() Expr {
+    return TupleExpr([]Expr{
+        FileExpr(TextExpr("go.mod"), TextExpr(SeedGoModContent())),
+        FileExpr(TextExpr("SEED.txt"), SeedManifestExpr()),
+        FileExpr(TextExpr("cmd/fo/main.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/ast/ast.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/checker/checker.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/codegen/codegen.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/diagnostic/diagnostic.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/driver/driver.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/fomod/fomod.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/hostplan/hostplan.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/lexer/lexer.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/token/token.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/parser/parser.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/project/project.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/toolchain/toolchain.go"), TextExpr("generated")),
+        FileExpr(TextExpr("cmd/fohost/main.go"), TextExpr("generated")),
+        FileExpr(TextExpr("stdlib/fo/runtime.go"), TextExpr("generated")),
+        FileExpr(TextExpr("stdlib/fo/collections_generated.go"), TextExpr("generated")),
+        FileExpr(TextExpr("stdlib/fo/effects_generated.go"), TextExpr("generated")),
+        FileExpr(TextExpr("stdlib/fo/bridge.go"), TextExpr("generated")),
+    })
+}
+
+func SeedPlanExpr() Expr {
+    return PlanExpr(
+        TextExpr("seed_snapshot"),
+        TextExpr("bootstrap/seed"),
+        SeedFilesExpr(),
+        TextExpr("seed planned"),
+    )
+}

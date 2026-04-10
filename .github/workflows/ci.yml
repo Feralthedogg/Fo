@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hygiene:
+    name: Hygiene (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect host
+        run: |
+          uname -s
+          make print-os
+
+      - name: Verify Perl entrypoints compile
+        env:
+          PERL5LIB: scripts/lib
+        run: |
+          perl -c scripts/lib/Fo/Util.pm
+          perl -c scripts/lib/Fo/Scripts.pm
+          while IFS= read -r script; do
+            perl -c "$script"
+          done < <(find scripts -maxdepth 1 -type f -name '*.sh' | sort)
+
+      - name: Clean transient outputs
+        run: make clean
+
+      - name: Check no archived genesis rebuild dependency
+        run: perl scripts/check-no-genesis-build-dependency.sh
+
+      - name: Check canonical Go hygiene
+        run: perl scripts/check-canonical-go-core.sh
+
+      - name: Verify clean removed local caches
+        run: |
+          test ! -e .fo-cache
+          test ! -e .fo-build
+          test ! -e .fo-build-stage
+          test ! -e seedwork
+
+  seeded-selfhosted:
+    name: Seeded Self-Hosted (${{ matrix.os }})
+    if: ${{ vars.FO_SEED_URL != '' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.6'
+          check-latest: true
+
+      - name: Fetch seed compiler
+        env:
+          FO_SEED_URL: ${{ vars.FO_SEED_URL }}
+          FO_SEED_SHA256: ${{ vars.FO_SEED_SHA256 }}
+        run: |
+          mkdir -p build
+          curl -fsSL "$FO_SEED_URL" -o build/fo
+          chmod +x build/fo
+          if [ -n "${FO_SEED_SHA256:-}" ]; then
+            printf '%s  %s\n' "$FO_SEED_SHA256" "build/fo" | sha256sum -c -
+          fi
+          ./build/fo version
+
+      - name: Clean transient outputs
+        run: make clean
+
+      - name: Build self-hosted compiler
+        run: perl scripts/build-selfhosted-cli.sh
+
+      - name: Verify self-hosted workflow
+        run: perl scripts/check-selfhosted-workflow.sh
+
+      - name: Verify bootstrapless rebuild
+        run: perl scripts/check-bootstrapless-rebuild.sh
+
+      - name: Verify cold-seed CLI
+        run: perl scripts/check-cold-seed-cli.sh
+
+      - name: Verify genesis bootstrap candidate
+        run: perl scripts/check-genesis-bootstrap-candidate.sh
+
+      - name: Verify package binary build path
+        run: |
+          ./build/fo-selfhosted build ./cmd/fohost
+          test -x build/cmd/fohost
+
+      - name: Upload compiler artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: seeded-selfhosted-${{ runner.os }}
+          path: |
+            build/fo
+            build/fo-selfhosted
+            build/cmd/fohost

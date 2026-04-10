@@ -1,0 +1,317 @@
+package diagnostic
+
+import "fmt"
+import "strings"
+import "github.com/Feralthedogg/Fo/internal/token"
+
+type Severity enum {
+    Error
+    Warning
+    Info
+}
+
+type Category enum {
+    Lexical
+    Syntax
+    TypeError
+    Purity
+    Immutability
+    Exhaustiveness
+    Recursion
+}
+
+type Diagnostic struct {
+    Severity Severity
+    Category Category
+    Pos token.Pos
+    Message string
+    Hint string
+}
+
+type Diagnostics struct {
+    Items []Diagnostic
+    HasError bool
+}
+
+type SourceContext struct {
+    Lines []string
+    Filename string
+}
+
+func New() Diagnostics {
+    return Diagnostics{
+        Items: []Diagnostic{},
+        HasError: false,
+    }
+}
+
+func NewSourceContext(src string, filename string) SourceContext {
+    return SourceContext{
+        Lines: strings.Split(src, "\n"),
+        Filename: filename,
+    }
+}
+
+func SeverityString(s Severity) string {
+    match s {
+    case Error:
+        return "error"
+    case Warning:
+        return "warning"
+    case Info:
+        return "info"
+    }
+}
+
+func CategoryString(c Category) string {
+    match c {
+    case Lexical:
+        return "lexical"
+    case Syntax:
+        return "syntax"
+    case TypeError:
+        return "type"
+    case Purity:
+        return "purity"
+    case Immutability:
+        return "immutability"
+    case Exhaustiveness:
+        return "exhaustiveness"
+    case Recursion:
+        return "recursion"
+    }
+}
+
+func SyntaxCategory() Category {
+    return Syntax
+}
+
+func LexicalCategory() Category {
+    return Lexical
+}
+
+func TypeErrorCategory() Category {
+    return TypeError
+}
+
+func PurityCategory() Category {
+    return Purity
+}
+
+func ImmutabilityCategory() Category {
+    return Immutability
+}
+
+func ExhaustivenessCategory() Category {
+    return Exhaustiveness
+}
+
+func PosString(p token.Pos) string {
+    if p.File == "" {
+        return fmt.Sprintf("%d:%d", p.Line, p.Column)
+    }
+    return fmt.Sprintf("%s:%d:%d", p.File, p.Line, p.Column)
+}
+
+func (d Diagnostic) String() string {
+    if d.Hint == "" {
+        return PosString(d.Pos) + ": " + SeverityString(d.Severity) + ": " + d.Message
+    }
+    return PosString(d.Pos) + ": " + SeverityString(d.Severity) + ": " + d.Message + "\n  hint: " + d.Hint
+}
+
+func (d Diagnostics) Add(diag Diagnostic) Diagnostics {
+    return Diagnostics{
+        Items: append(d.Items, diag),
+        HasError: d.HasError || IsError(diag.Severity),
+    }
+}
+
+func (d Diagnostics) Error(cat Category, pos token.Pos, msg string) Diagnostics {
+    return d.Add(Diagnostic{
+        Severity: Error,
+        Category: cat,
+        Pos: pos,
+        Message: msg,
+        Hint: "",
+    })
+}
+
+func (d Diagnostics) ErrorWithHint(cat Category, pos token.Pos, msg string, hint string) Diagnostics {
+    return d.Add(Diagnostic{
+        Severity: Error,
+        Category: cat,
+        Pos: pos,
+        Message: msg,
+        Hint: hint,
+    })
+}
+
+func (d Diagnostics) Warning(cat Category, pos token.Pos, msg string) Diagnostics {
+    return d.Add(Diagnostic{
+        Severity: Warning,
+        Category: cat,
+        Pos: pos,
+        Message: msg,
+        Hint: "",
+    })
+}
+
+func (d Diagnostics) Info(cat Category, pos token.Pos, msg string) Diagnostics {
+    return d.Add(Diagnostic{
+        Severity: Info,
+        Category: cat,
+        Pos: pos,
+        Message: msg,
+        Hint: "",
+    })
+}
+
+func (d Diagnostics) Len() int {
+    return len(d.Items)
+}
+
+func (d Diagnostics) Snapshot() int {
+    return len(d.Items)
+}
+
+func (d Diagnostics) Restore(n int) Diagnostics {
+    if n < 0 {
+        return New()
+    }
+    if n >= len(d.Items) {
+        return d
+    }
+    trimmed := TrimDiagnostics(d.Items, n, 0, []Diagnostic{})
+    return Diagnostics{
+        Items: trimmed,
+        HasError: AnyError(trimmed),
+    }
+}
+
+func (d Diagnostics) Format() string {
+    return JoinDiagnostics(d.Items, 0)
+}
+
+func (sc SourceContext) FormatDiagnostic(d Diagnostic) string {
+    lineBlock := FormatLineBlock(sc.Lines, d.Pos.Line, d.Pos.Column)
+    hintBlock := FormatHint(d.Hint)
+    return SeverityString(d.Severity) + "[" + CategoryString(d.Category) + "]: " + d.Message +
+        "\n  --> " + PosString(d.Pos) +
+        lineBlock +
+        hintBlock
+}
+
+func (sc SourceContext) FormatAll(diags Diagnostics) string {
+    body := JoinFormattedDiagnostics(sc, diags.Items, 0)
+    if diags.Len() == 0 {
+        return body
+    }
+    return body + "\n" + Summary(diags.Items, 0, 0, 0)
+}
+
+func JoinFormattedDiagnostics(sc SourceContext, items []Diagnostic, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    head := sc.FormatDiagnostic(items[idx])
+    if idx + 1 >= len(items) {
+        return head
+    }
+    return head + "\n" + JoinFormattedDiagnostics(sc, items, idx + 1)
+}
+
+func FormatLineBlock(lines []string, line int, col int) string {
+    if line <= 0 || line > len(lines) {
+        return ""
+    }
+    text := lines[line - 1]
+    padding := fmt.Sprintf("%d", line)
+    underline := strings.Repeat(" ", col - 1) + "^"
+    return "\n " + strings.Repeat(" ", len(padding)) + " |\n " +
+        padding + " | " + text + "\n " +
+        strings.Repeat(" ", len(padding)) + " | " + underline + "\n " +
+        strings.Repeat(" ", len(padding)) + " |"
+}
+
+func FormatHint(hint string) string {
+    if hint == "" {
+        return ""
+    }
+    return "\n  hint: " + hint
+}
+
+func Summary(items []Diagnostic, idx int, errs int, warns int) string {
+    if idx >= len(items) {
+        return SummaryCounts(errs, warns)
+    }
+
+    item := items[idx]
+    match item.Severity {
+    case Error:
+        return Summary(items, idx + 1, errs + 1, warns)
+    case Warning:
+        return Summary(items, idx + 1, errs, warns + 1)
+    case Info:
+        return Summary(items, idx + 1, errs, warns)
+    }
+}
+
+func SummaryCounts(errs int, warns int) string {
+    if errs > 0 {
+        if warns > 0 {
+            return fmt.Sprintf("%d error(s), %d warning(s)", errs, warns)
+        }
+        return fmt.Sprintf("%d error(s)", errs)
+    }
+    if warns > 0 {
+        return fmt.Sprintf("%d warning(s)", warns)
+    }
+    return ""
+}
+
+func IsError(s Severity) bool {
+    match s {
+    case Error:
+        return true
+    case Warning:
+        return false
+    case Info:
+        return false
+    }
+}
+
+func AnyError(items []Diagnostic) bool {
+    return AnyErrorFrom(items, 0)
+}
+
+func AnyErrorFrom(items []Diagnostic, idx int) bool {
+    if idx >= len(items) {
+        return false
+    }
+    if IsError(items[idx].Severity) {
+        return true
+    }
+    return AnyErrorFrom(items, idx + 1)
+}
+
+func JoinDiagnostics(items []Diagnostic, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    head := items[idx].String()
+    if idx + 1 >= len(items) {
+        return head
+    }
+    return head + "\n" + JoinDiagnostics(items, idx + 1)
+}
+
+func TrimDiagnostics(items []Diagnostic, limit int, idx int, acc []Diagnostic) []Diagnostic {
+    if idx >= limit {
+        return acc
+    }
+    if idx >= len(items) {
+        return acc
+    }
+    return TrimDiagnostics(items, limit, idx + 1, append(acc, items[idx]))
+}

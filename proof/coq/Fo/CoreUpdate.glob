@@ -1,0 +1,435 @@
+DIGEST 023b1bd5ab8a4eee95797dbac8533da0
+FFo.CoreUpdate
+R24:27 Stdlib.Lists.List <> <> lib
+R29:34 Stdlib.Strings.String <> <> lib
+R44:56 Stdlib.Lists.List ListNotations <> mod
+R74:85 Fo.Semantics <> <> lib
+mod 96:107 <> FoCoreUpdate
+R117:127 Fo.Semantics FoSemantics <> mod
+def 142:152 FoCoreUpdate field_store
+R157:160 Corelib.Init.Datatypes <> list ind
+R169:171 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R163:168 Stdlib.Strings.String <> string ind
+R172:176 Fo.Semantics FoSemantics value ind
+def 190:201 FoCoreUpdate lookup_field
+R209:219 Fo.CoreUpdate FoCoreUpdate field_store def
+binder 204:205 <> fs:1
+R230:235 Stdlib.Strings.String <> string ind
+binder 223:226 <> name:2
+R240:245 Corelib.Init.Datatypes <> option ind
+R247:251 Fo.Semantics FoSemantics value ind
+R264:265 Fo.CoreUpdate <> fs:1 var
+R276:277 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R282:285 Corelib.Init.Datatypes <> None constr
+R297:300 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R291:291 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R293:294 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R296:296 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R312:321 Stdlib.Strings.String <> eqb def
+R323:326 Fo.CoreUpdate <> name:2 var
+R347:358 Fo.CoreUpdate <> lookup_field:3 def
+R365:368 Fo.CoreUpdate <> name:2 var
+R335:338 Corelib.Init.Datatypes <> Some constr
+def 387:398 FoCoreUpdate update_field
+R406:416 Fo.CoreUpdate FoCoreUpdate field_store def
+binder 401:402 <> fs:5
+R427:432 Stdlib.Strings.String <> string ind
+binder 420:423 <> name:6
+R440:444 Fo.Semantics FoSemantics value ind
+binder 436:436 <> v:7
+R449:459 Fo.CoreUpdate FoCoreUpdate field_store def
+R472:473 Fo.CoreUpdate <> fs:5 var
+R484:485 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R490:490 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R500:500 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R491:491 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R496:497 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R499:499 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R492:495 Fo.CoreUpdate <> name:6 var
+R498:498 Fo.CoreUpdate <> v:7 var
+R514:517 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R506:506 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R508:509 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R513:513 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R535:544 Stdlib.Strings.String <> eqb def
+R546:549 Fo.CoreUpdate <> name:6 var
+R586:589 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R578:578 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R580:581 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R585:585 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R590:601 Fo.CoreUpdate <> update_field:8 def
+R613:613 Fo.CoreUpdate <> v:7 var
+R608:611 Fo.CoreUpdate <> name:6 var
+R564:567 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R558:558 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R560:561 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R563:563 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R562:562 Fo.CoreUpdate <> v:7 var
+prf 629:644 FoCoreUpdate lookup_field_nil
+binder 657:660 <> name:10
+R683:685 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R663:674 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R676:677 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R679:682 Fo.CoreUpdate <> name:10 var
+R686:689 Corelib.Init.Datatypes <> None constr
+prf 726:744 FoCoreUpdate lookup_field_shadow
+binder 757:760 <> name:11
+binder 762:762 <> v:12
+binder 764:767 <> rest:13
+R811:813 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R774:785 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R797:800 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R788:788 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R793:794 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R796:796 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R789:792 Fo.CoreUpdate <> name:11 var
+R795:795 Fo.CoreUpdate <> v:12 var
+R801:804 Fo.CoreUpdate <> rest:13 var
+R807:810 Fo.CoreUpdate <> name:11 var
+R814:817 Corelib.Init.Datatypes <> Some constr
+R819:819 Fo.CoreUpdate <> v:12 var
+R854:868 Stdlib.Strings.String <> eqb_refl thm
+R854:868 Stdlib.Strings.String <> eqb_refl thm
+R854:868 Stdlib.Strings.String <> eqb_refl thm
+prf 898:916 FoCoreUpdate update_field_shadow
+binder 929:930 <> fs:14
+binder 932:935 <> name:15
+binder 937:938 <> v1:16
+binder 940:941 <> v2:17
+R994:996 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R948:959 Fo.CoreUpdate FoCoreUpdate update_field def
+R962:973 Fo.CoreUpdate FoCoreUpdate update_field def
+R975:976 Fo.CoreUpdate <> fs:14 var
+R978:981 Fo.CoreUpdate <> name:15 var
+R983:984 Fo.CoreUpdate <> v1:16 var
+R987:990 Fo.CoreUpdate <> name:15 var
+R992:993 Fo.CoreUpdate <> v2:17 var
+R997:1008 Fo.CoreUpdate FoCoreUpdate update_field def
+R1010:1011 Fo.CoreUpdate <> fs:14 var
+R1013:1016 Fo.CoreUpdate <> name:15 var
+R1018:1019 Fo.CoreUpdate <> v2:17 var
+R1097:1106 Stdlib.Strings.String <> eqb def
+R1097:1106 Stdlib.Strings.String <> eqb def
+R1159:1172 Stdlib.Strings.String <> eqb_neq thm
+R1159:1172 Stdlib.Strings.String <> eqb_neq thm
+R1218:1227 Stdlib.Strings.String <> eqb def
+R1218:1227 Stdlib.Strings.String <> eqb def
+prf 1344:1377 FoCoreUpdate update_field_idempotent_same_value
+binder 1390:1391 <> fs:18
+binder 1393:1396 <> name:19
+binder 1398:1398 <> v:20
+R1449:1451 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1405:1416 Fo.CoreUpdate FoCoreUpdate update_field def
+R1419:1430 Fo.CoreUpdate FoCoreUpdate update_field def
+R1432:1433 Fo.CoreUpdate <> fs:18 var
+R1435:1438 Fo.CoreUpdate <> name:19 var
+R1440:1440 Fo.CoreUpdate <> v:20 var
+R1443:1446 Fo.CoreUpdate <> name:19 var
+R1448:1448 Fo.CoreUpdate <> v:20 var
+R1452:1463 Fo.CoreUpdate FoCoreUpdate update_field def
+R1465:1466 Fo.CoreUpdate <> fs:18 var
+R1468:1471 Fo.CoreUpdate <> name:19 var
+R1473:1473 Fo.CoreUpdate <> v:20 var
+R1501:1519 Fo.CoreUpdate FoCoreUpdate update_field_shadow thm
+R1501:1519 Fo.CoreUpdate FoCoreUpdate update_field_shadow thm
+R1501:1519 Fo.CoreUpdate FoCoreUpdate update_field_shadow thm
+prf 1549:1572 FoCoreUpdate core_update_path_correct
+binder 1585:1586 <> fs:21
+binder 1588:1591 <> name:22
+binder 1593:1593 <> v:23
+R1642:1644 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R1600:1611 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R1614:1625 Fo.CoreUpdate FoCoreUpdate update_field def
+R1627:1628 Fo.CoreUpdate <> fs:21 var
+R1630:1633 Fo.CoreUpdate <> name:22 var
+R1635:1635 Fo.CoreUpdate <> v:23 var
+R1638:1641 Fo.CoreUpdate <> name:22 var
+R1645:1648 Corelib.Init.Datatypes <> Some constr
+R1650:1650 Fo.CoreUpdate <> v:23 var
+R1726:1740 Stdlib.Strings.String <> eqb_refl thm
+R1726:1740 Stdlib.Strings.String <> eqb_refl thm
+R1726:1740 Stdlib.Strings.String <> eqb_refl thm
+R1777:1786 Stdlib.Strings.String <> eqb def
+R1777:1786 Stdlib.Strings.String <> eqb def
+def 1904:1920 FoCoreUpdate lookup_value_path
+R1927:1931 Fo.Semantics FoSemantics value ind
+binder 1923:1923 <> v:24
+R1942:1945 Corelib.Init.Datatypes <> list ind
+R1947:1952 Stdlib.Strings.String <> string ind
+binder 1935:1938 <> path:25
+R1957:1962 Corelib.Init.Datatypes <> option ind
+R1964:1968 Fo.Semantics FoSemantics value ind
+R1981:1984 Fo.CoreUpdate <> path:25 var
+R1995:1996 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2001:2004 Corelib.Init.Datatypes <> Some constr
+R2006:2006 Fo.CoreUpdate <> v:24 var
+R2015:2018 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R2039:2039 Fo.CoreUpdate <> v:24 var
+R2054:2060 Fo.Semantics FoSemantics VStruct constr
+R2086:2097 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R2123:2126 Corelib.Init.Datatypes <> Some constr
+R2137:2153 Fo.CoreUpdate <> lookup_value_path:26 def
+R2178:2181 Corelib.Init.Datatypes <> None constr
+R2186:2189 Corelib.Init.Datatypes <> None constr
+R2218:2221 Corelib.Init.Datatypes <> None constr
+def 2250:2266 FoCoreUpdate update_value_path
+R2273:2277 Fo.Semantics FoSemantics value ind
+binder 2269:2269 <> v:29
+R2288:2291 Corelib.Init.Datatypes <> list ind
+R2293:2298 Stdlib.Strings.String <> string ind
+binder 2281:2284 <> path:30
+R2309:2313 Fo.Semantics FoSemantics value ind
+binder 2302:2305 <> newv:31
+R2318:2323 Corelib.Init.Datatypes <> option ind
+R2325:2329 Fo.Semantics FoSemantics value ind
+R2342:2345 Fo.CoreUpdate <> path:30 var
+R2356:2357 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2362:2365 Corelib.Init.Datatypes <> Some constr
+R2367:2370 Fo.CoreUpdate <> newv:31 var
+R2379:2382 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R2403:2403 Fo.CoreUpdate <> v:29 var
+R2418:2424 Fo.Semantics FoSemantics VStruct constr
+R2453:2464 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R2490:2493 Corelib.Init.Datatypes <> Some constr
+R2524:2540 Fo.CoreUpdate <> update_value_path:32 def
+R2553:2556 Fo.CoreUpdate <> newv:31 var
+R2579:2582 Corelib.Init.Datatypes <> Some constr
+R2594:2597 Corelib.Init.Datatypes <> Some constr
+R2600:2606 Fo.Semantics FoSemantics VStruct constr
+R2614:2625 Fo.CoreUpdate FoCoreUpdate update_field def
+R2659:2662 Corelib.Init.Datatypes <> None constr
+R2667:2670 Corelib.Init.Datatypes <> None constr
+R2702:2705 Corelib.Init.Datatypes <> None constr
+R2710:2713 Corelib.Init.Datatypes <> None constr
+R2742:2745 Corelib.Init.Datatypes <> None constr
+prf 2771:2792 FoCoreUpdate lookup_value_path_root
+binder 2805:2805 <> v:35
+R2830:2832 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2808:2824 Fo.CoreUpdate FoCoreUpdate lookup_value_path def
+R2826:2826 Fo.CoreUpdate <> v:35 var
+R2828:2829 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2833:2836 Corelib.Init.Datatypes <> Some constr
+R2838:2838 Fo.CoreUpdate <> v:35 var
+prf 2875:2896 FoCoreUpdate update_value_path_root
+binder 2909:2909 <> v:36
+binder 2911:2914 <> newv:37
+R2944:2946 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R2917:2933 Fo.CoreUpdate FoCoreUpdate update_value_path def
+R2935:2935 Fo.CoreUpdate <> v:36 var
+R2937:2938 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R2940:2943 Fo.CoreUpdate <> newv:37 var
+R2947:2950 Corelib.Init.Datatypes <> Some constr
+R2952:2955 Fo.CoreUpdate <> newv:37 var
+prf 2994:3030 FoCoreUpdate update_value_path_one_segment_correct
+binder 3043:3046 <> name:38
+binder 3048:3049 <> fs:39
+binder 3051:3053 <> key:40
+binder 3055:3058 <> newv:41
+R3229:3237 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R3065:3081 Fo.CoreUpdate FoCoreUpdate lookup_value_path def
+R3096:3112 Fo.CoreUpdate FoCoreUpdate update_value_path def
+R3115:3121 Fo.Semantics FoSemantics VStruct constr
+R3123:3126 Fo.CoreUpdate <> name:38 var
+R3128:3129 Fo.CoreUpdate <> fs:39 var
+R3132:3132 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R3136:3136 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R3133:3135 Fo.CoreUpdate <> key:40 var
+R3138:3141 Fo.CoreUpdate <> newv:41 var
+R3157:3160 Corelib.Init.Datatypes <> Some constr
+R3182:3185 Corelib.Init.Datatypes <> None constr
+R3190:3196 Fo.Semantics FoSemantics VStruct constr
+R3198:3201 Fo.CoreUpdate <> name:38 var
+R3203:3204 Fo.CoreUpdate <> fs:39 var
+R3224:3224 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R3228:3228 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R3225:3227 Fo.CoreUpdate <> key:40 var
+R3244:3255 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R3257:3258 Fo.CoreUpdate <> fs:39 var
+R3260:3262 Fo.CoreUpdate <> key:40 var
+R3277:3280 Corelib.Init.Datatypes <> Some constr
+R3287:3290 Corelib.Init.Datatypes <> Some constr
+R3292:3295 Fo.CoreUpdate <> newv:41 var
+R3305:3308 Corelib.Init.Datatypes <> None constr
+R3313:3316 Corelib.Init.Datatypes <> None constr
+R3365:3376 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R3365:3376 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R3416:3439 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R3416:3439 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R3416:3439 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+prf 3501:3537 FoCoreUpdate update_value_path_two_segment_correct
+binder 3550:3554 <> outer:42
+binder 3556:3562 <> innerFs:43
+binder 3564:3570 <> outerFs:44
+binder 3572:3580 <> innerName:45
+binder 3582:3584 <> key:46
+binder 3586:3589 <> newv:47
+R3659:3666 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R3626:3628 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R3596:3607 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R3609:3615 Fo.CoreUpdate <> outerFs:44 var
+R3617:3625 Fo.CoreUpdate <> innerName:45 var
+R3629:3632 Corelib.Init.Datatypes <> Some constr
+R3635:3641 Fo.Semantics FoSemantics VStruct constr
+R3651:3657 Fo.CoreUpdate <> innerFs:43 var
+R3865:3873 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R3667:3683 Fo.CoreUpdate FoCoreUpdate lookup_value_path def
+R3698:3714 Fo.CoreUpdate FoCoreUpdate update_value_path def
+R3717:3723 Fo.Semantics FoSemantics VStruct constr
+R3725:3729 Fo.CoreUpdate <> outer:42 var
+R3731:3737 Fo.CoreUpdate <> outerFs:44 var
+R3740:3740 Stdlib.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R3750:3751 Stdlib.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R3755:3755 Stdlib.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R3741:3749 Fo.CoreUpdate <> innerName:45 var
+R3752:3754 Fo.CoreUpdate <> key:46 var
+R3757:3760 Fo.CoreUpdate <> newv:47 var
+R3776:3779 Corelib.Init.Datatypes <> Some constr
+R3801:3804 Corelib.Init.Datatypes <> None constr
+R3809:3815 Fo.Semantics FoSemantics VStruct constr
+R3817:3821 Fo.CoreUpdate <> outer:42 var
+R3823:3829 Fo.CoreUpdate <> outerFs:44 var
+R3849:3849 Stdlib.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R3859:3860 Stdlib.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R3864:3864 Stdlib.Lists.List ListNotations ::list_scope:'['_x_';'_x_';'_'..'_';'_x_']' not
+R3850:3858 Fo.CoreUpdate <> innerName:45 var
+R3861:3863 Fo.CoreUpdate <> key:46 var
+R3880:3891 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R3893:3899 Fo.CoreUpdate <> innerFs:43 var
+R3901:3903 Fo.CoreUpdate <> key:46 var
+R3918:3921 Corelib.Init.Datatypes <> Some constr
+R3928:3931 Corelib.Init.Datatypes <> Some constr
+R3933:3936 Fo.CoreUpdate <> newv:47 var
+R3946:3949 Corelib.Init.Datatypes <> None constr
+R3954:3957 Corelib.Init.Datatypes <> None constr
+R4079:4090 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R4079:4090 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R4136:4147 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R4158:4169 Fo.CoreUpdate FoCoreUpdate update_field def
+R4190:4196 Fo.Semantics FoSemantics VStruct constr
+R4207:4218 Fo.CoreUpdate FoCoreUpdate update_field def
+R4271:4274 Corelib.Init.Datatypes <> Some constr
+R4277:4283 Fo.Semantics FoSemantics VStruct constr
+R4294:4305 Fo.CoreUpdate FoCoreUpdate update_field def
+R4136:4147 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R4158:4169 Fo.CoreUpdate FoCoreUpdate update_field def
+R4190:4196 Fo.Semantics FoSemantics VStruct constr
+R4207:4218 Fo.CoreUpdate FoCoreUpdate update_field def
+R4271:4274 Corelib.Init.Datatypes <> Some constr
+R4277:4283 Fo.Semantics FoSemantics VStruct constr
+R4294:4305 Fo.CoreUpdate FoCoreUpdate update_field def
+R4369:4380 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R4383:4394 Fo.CoreUpdate FoCoreUpdate update_field def
+R4433:4436 Corelib.Init.Datatypes <> Some constr
+R4447:4450 Corelib.Init.Datatypes <> Some constr
+R4468:4471 Corelib.Init.Datatypes <> None constr
+R4476:4479 Corelib.Init.Datatypes <> None constr
+R4505:4508 Corelib.Init.Datatypes <> Some constr
+R4369:4380 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R4383:4394 Fo.CoreUpdate FoCoreUpdate update_field def
+R4433:4436 Corelib.Init.Datatypes <> Some constr
+R4447:4450 Corelib.Init.Datatypes <> Some constr
+R4468:4471 Corelib.Init.Datatypes <> None constr
+R4476:4479 Corelib.Init.Datatypes <> None constr
+R4505:4508 Corelib.Init.Datatypes <> Some constr
+R4555:4578 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R4555:4578 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R4555:4578 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R4634:4657 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R4634:4657 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+prf 4737:4774 FoCoreUpdate core_update_preserves_untouched_fields
+binder 4787:4788 <> fs:48
+binder 4790:4795 <> target:49
+binder 4797:4801 <> other:50
+binder 4803:4803 <> v:51
+binder 4805:4808 <> kept:52
+R4830:4837 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4820:4823 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R4815:4819 Fo.CoreUpdate <> other:50 var
+R4824:4829 Fo.CoreUpdate <> target:49 var
+R4871:4878 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R4859:4861 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4838:4849 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R4851:4852 Fo.CoreUpdate <> fs:48 var
+R4854:4858 Fo.CoreUpdate <> other:50 var
+R4862:4865 Corelib.Init.Datatypes <> Some constr
+R4867:4870 Fo.CoreUpdate <> kept:52 var
+R4924:4926 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R4879:4890 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R4893:4904 Fo.CoreUpdate FoCoreUpdate update_field def
+R4906:4907 Fo.CoreUpdate <> fs:48 var
+R4909:4914 Fo.CoreUpdate <> target:49 var
+R4916:4916 Fo.CoreUpdate <> v:51 var
+R4919:4923 Fo.CoreUpdate <> other:50 var
+R4927:4930 Corelib.Init.Datatypes <> Some constr
+R4932:4935 Fo.CoreUpdate <> kept:52 var
+R5059:5073 Stdlib.Strings.String <> eqb_spec thm
+R5059:5073 Stdlib.Strings.String <> eqb_spec thm
+R5114:5128 Stdlib.Strings.String <> eqb_spec thm
+R5114:5128 Stdlib.Strings.String <> eqb_spec thm
+R5215:5229 Stdlib.Strings.String <> eqb_refl thm
+R5215:5229 Stdlib.Strings.String <> eqb_refl thm
+R5215:5229 Stdlib.Strings.String <> eqb_refl thm
+R5261:5275 Stdlib.Strings.String <> eqb_spec thm
+R5261:5275 Stdlib.Strings.String <> eqb_spec thm
+R5320:5334 Stdlib.Strings.String <> eqb_spec thm
+R5320:5334 Stdlib.Strings.String <> eqb_spec thm
+R5422:5436 Stdlib.Strings.String <> eqb_spec thm
+R5422:5436 Stdlib.Strings.String <> eqb_spec thm
+prf 5519:5564 FoCoreUpdate core_update_preserves_missing_untouched_fields
+binder 5577:5578 <> fs:53
+binder 5580:5585 <> target:54
+binder 5587:5591 <> other:55
+binder 5593:5593 <> v:56
+R5615:5622 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5605:5608 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R5600:5604 Fo.CoreUpdate <> other:55 var
+R5609:5614 Fo.CoreUpdate <> target:54 var
+R5651:5658 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R5644:5646 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5623:5634 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R5636:5637 Fo.CoreUpdate <> fs:53 var
+R5639:5643 Fo.CoreUpdate <> other:55 var
+R5647:5650 Corelib.Init.Datatypes <> None constr
+R5704:5706 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5659:5670 Fo.CoreUpdate FoCoreUpdate lookup_field def
+R5673:5684 Fo.CoreUpdate FoCoreUpdate update_field def
+R5686:5687 Fo.CoreUpdate <> fs:53 var
+R5689:5694 Fo.CoreUpdate <> target:54 var
+R5696:5696 Fo.CoreUpdate <> v:56 var
+R5699:5703 Fo.CoreUpdate <> other:55 var
+R5707:5710 Corelib.Init.Datatypes <> None constr
+R5788:5802 Stdlib.Strings.String <> eqb_spec thm
+R5788:5802 Stdlib.Strings.String <> eqb_spec thm
+R5895:5909 Stdlib.Strings.String <> eqb_spec thm
+R5895:5909 Stdlib.Strings.String <> eqb_spec thm
+R5950:5964 Stdlib.Strings.String <> eqb_spec thm
+R5950:5964 Stdlib.Strings.String <> eqb_spec thm
+R6045:6059 Stdlib.Strings.String <> eqb_spec thm
+R6045:6059 Stdlib.Strings.String <> eqb_spec thm
+R6104:6118 Stdlib.Strings.String <> eqb_spec thm
+R6104:6118 Stdlib.Strings.String <> eqb_spec thm
+R6206:6220 Stdlib.Strings.String <> eqb_spec thm
+R6206:6220 Stdlib.Strings.String <> eqb_spec thm
+prf 6303:6327 FoCoreUpdate core_update_deterministic
+binder 6340:6341 <> fs:57
+binder 6343:6346 <> name:58
+binder 6348:6349 <> v1:59
+binder 6351:6352 <> v2:60
+R6408:6415 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6382:6384 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6359:6370 Fo.CoreUpdate FoCoreUpdate update_field def
+R6372:6373 Fo.CoreUpdate <> fs:57 var
+R6375:6378 Fo.CoreUpdate <> name:58 var
+R6380:6381 Fo.CoreUpdate <> v1:59 var
+R6385:6396 Fo.CoreUpdate FoCoreUpdate update_field def
+R6398:6399 Fo.CoreUpdate <> fs:57 var
+R6401:6404 Fo.CoreUpdate <> name:58 var
+R6406:6407 Fo.CoreUpdate <> v2:60 var
+R6418:6420 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6416:6417 Fo.CoreUpdate <> v1:59 var
+R6421:6422 Fo.CoreUpdate <> v2:60 var
+R6472:6495 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R6472:6495 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R6530:6553 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R6530:6553 Fo.CoreUpdate FoCoreUpdate core_update_path_correct thm
+R6652:6663 Fo.CoreUpdate FoCoreUpdate <> mod

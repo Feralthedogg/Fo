@@ -1,0 +1,40 @@
+package main
+
+import "fmt"
+
+func Add(x int, y int) int {
+	return x + y
+}
+
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func Factorial(n int, acc int) int {
+	if n <= 0 {
+		return acc
+	}
+	return Factorial(n - 1, acc * n)
+}
+
+func Double(x int) int {
+	return x * 2
+}
+
+func Inc(x int) int {
+	return x + 1
+}
+
+func Transform(x int) int {
+	return x |> Double |> Inc
+}
+
+func main() {
+	fmt.Println(Add(3, 4))
+	fmt.Println(Abs(-5))
+	fmt.Println(Factorial(5, 1))
+	fmt.Println(Transform(10))
+}

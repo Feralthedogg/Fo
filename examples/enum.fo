@@ -1,0 +1,29 @@
+package main
+
+type Shape enum {
+	Circle(int)
+	Rect(int, int)
+	Dot
+}
+
+func Area(s Shape) int {
+	match s {
+	case Circle(r):
+		return r * r * 3
+	case Rect(w, h):
+		return w * h
+	case Dot:
+		return 0
+	}
+}
+
+func Perimeter(s Shape) int {
+	match s {
+	case Circle(r):
+		return r * 2 * 3
+	case Rect(w, h):
+		return w * 2 + h * 2
+	case _:
+		return 0
+	}
+}

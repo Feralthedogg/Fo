@@ -1,0 +1,416 @@
+package base
+
+import (
+	"fmt"
+	"reflect"
+	"sync"
+)
+
+func Zip[T any, U any](xs []T, ys []U) []struct {
+	First  T
+	Second U
+} {
+	n := len(xs)
+	if len(ys) < n {
+		n = len(ys)
+	}
+	result := make([]struct {
+		First  T
+		Second U
+	}, n)
+	for i := 0; i < n; i++ {
+		result[i] = struct {
+			First  T
+			Second U
+		}{xs[i], ys[i]}
+	}
+	return result
+}
+
+func sumValues[T any](xs []T) T {
+	var zero T
+	if len(xs) == 0 {
+		return zero
+	}
+	typ := reflect.TypeOf(zero)
+	if typ == nil {
+		return zero
+	}
+	switch typ.Kind() {
+	case reflect.Int:
+		total := int(0)
+		for _, x := range xs {
+			total += int(reflect.ValueOf(x).Convert(reflect.TypeOf(int(0))).Int())
+		}
+		return reflect.ValueOf(total).Convert(typ).Interface().(T)
+	case reflect.Int64:
+		total := int64(0)
+		for _, x := range xs {
+			total += reflect.ValueOf(x).Convert(reflect.TypeOf(int64(0))).Int()
+		}
+		return reflect.ValueOf(total).Convert(typ).Interface().(T)
+	case reflect.Float64:
+		total := float64(0)
+		for _, x := range xs {
+			total += reflect.ValueOf(x).Convert(reflect.TypeOf(float64(0))).Float()
+		}
+		return reflect.ValueOf(total).Convert(typ).Interface().(T)
+	default:
+		panic("unsupported Sum element type: " + typ.String())
+	}
+}
+
+func emptyMap[K comparable, V any]() map[K]V {
+	return make(map[K]V)
+}
+
+func mapKeys[K comparable, V any](m map[K]V) []K {
+	keys := make([]K, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func mapEntries[K comparable, V any, U any](m map[K]V, f func(K, V) U) map[K]U {
+	result := make(map[K]U, len(m))
+	for k, v := range m {
+		result[k] = f(k, v)
+	}
+	return result
+}
+
+func lookupMap[K comparable, V any](m map[K]V, key K) Option[V] {
+	if v, ok := m[key]; ok {
+		return Some[V]{Value: v}
+	}
+	return None[V]{}
+}
+
+func freezeMap[K comparable, V any](m map[K]V) map[K]V {
+	result := make(map[K]V, len(m))
+	for k, v := range m {
+		result[k] = v
+	}
+	return result
+}
+
+func put[K comparable, V any](m map[K]V, key K, value V) map[K]V {
+	result := make(map[K]V, len(m)+1)
+	for k, v := range m {
+		result[k] = v
+	}
+	result[key] = value
+	return result
+}
+
+func remove[K comparable, V any](m map[K]V, key K) map[K]V {
+	result := make(map[K]V, len(m))
+	for k, v := range m {
+		if k == key {
+			continue
+		}
+		result[k] = v
+	}
+	return result
+}
+
+func makeCmd[T any](f func() (T, error)) Cmd[T] {
+	return Cmd[T]{Run: f}
+}
+
+func runCmdValue[T any](cmd Cmd[T]) (T, error) {
+	return cmd.Run()
+}
+
+func mapCmd[T any, U any](cmd Cmd[T], f func(T) U) Cmd[U] {
+	return Cmd[U]{
+		Run: func() (U, error) {
+			val, err := cmd.Run()
+			if err != nil {
+				var zero U
+				return zero, err
+			}
+			return f(val), nil
+		},
+	}
+}
+
+func flatMapCmd[T any, U any](cmd Cmd[T], f func(T) Cmd[U]) Cmd[U] {
+	return Cmd[U]{
+		Run: func() (U, error) {
+			val, err := cmd.Run()
+			if err != nil {
+				var zero U
+				return zero, err
+			}
+			return f(val).Run()
+		},
+	}
+}
+
+func thenCmd[T any, U any](first Cmd[T], second Cmd[U]) Cmd[U] {
+	return Cmd[U]{
+		Run: func() (U, error) {
+			_, err := first.Run()
+			if err != nil {
+				var zero U
+				return zero, err
+			}
+			return second.Run()
+		},
+	}
+}
+
+func pureCmd[T any](val T) Cmd[T] {
+	return Cmd[T]{
+		Run: func() (T, error) {
+			return val, nil
+		},
+	}
+}
+
+func failCmd[T any](err error) Cmd[T] {
+	return Cmd[T]{
+		Run: func() (T, error) {
+			var zero T
+			return zero, err
+		},
+	}
+}
+
+func sequenceCmd[T any](cmds []Cmd[T]) Cmd[[]T] {
+	return Cmd[[]T]{
+		Run: func() ([]T, error) {
+			results := make([]T, len(cmds))
+			for i, cmd := range cmds {
+				val, err := cmd.Run()
+				if err != nil {
+					return nil, err
+				}
+				results[i] = val
+			}
+			return results, nil
+		},
+	}
+}
+
+func makeTask[T any](cmd Cmd[T]) Task[T] {
+	return Task[T]{Run: cmd.Run}
+}
+
+func runTask[T any](task Task[T]) chan TaskResult[T] {
+	ch := make(chan TaskResult[T], 1)
+	go func() {
+		val, err := task.Run()
+		ch <- TaskResult[T]{Value: val, Err: err}
+	}()
+	return ch
+}
+
+func awaitTask[T any](ch <-chan TaskResult[T]) (T, error) {
+	result := <-ch
+	return result.Value, result.Err
+}
+
+func parallelCmd[T any](tasks []Task[T]) Cmd[[]T] {
+	return Cmd[[]T]{
+		Run: func() ([]T, error) {
+			results := make([]T, len(tasks))
+			errs := make([]error, len(tasks))
+			var wg sync.WaitGroup
+
+			for i, task := range tasks {
+				wg.Add(1)
+				go func(idx int, t Task[T]) {
+					defer wg.Done()
+					val, err := t.Run()
+					results[idx] = val
+					errs[idx] = err
+				}(i, task)
+			}
+
+			wg.Wait()
+
+			for _, err := range errs {
+				if err != nil {
+					return nil, err
+				}
+			}
+			return results, nil
+		},
+	}
+}
+
+func mapTask[T any, U any](task Task[T], f func(T) U) Task[U] {
+	return Task[U]{
+		Run: func() (U, error) {
+			val, err := task.Run()
+			if err != nil {
+				var zero U
+				return zero, err
+			}
+			return f(val), nil
+		},
+	}
+}
+
+func flatMapTask[T any, U any](task Task[T], f func(T) Task[U]) Task[U] {
+	return Task[U]{
+		Run: func() (U, error) {
+			val, err := task.Run()
+			if err != nil {
+				var zero U
+				return zero, err
+			}
+			return f(val).Run()
+		},
+	}
+}
+
+func parallel[T any](f func() T) Task[T] {
+	return Task[T]{
+		Run: func() (T, error) {
+			return f(), nil
+		},
+	}
+}
+
+func pureTask[T any](val T) Task[T] {
+	return Task[T]{
+		Run: func() (T, error) {
+			return val, nil
+		},
+	}
+}
+
+func map2Task[A any, B any, C any](a Task[A], b Task[B], f func(A, B) C) Task[C] {
+	return Task[C]{
+		Run: func() (C, error) {
+			var (
+				av A
+				bv B
+				ae error
+				be error
+				wg sync.WaitGroup
+			)
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				av, ae = a.Run()
+			}()
+			go func() {
+				defer wg.Done()
+				bv, be = b.Run()
+			}()
+			wg.Wait()
+			if ae != nil {
+				var zero C
+				return zero, ae
+			}
+			if be != nil {
+				var zero C
+				return zero, be
+			}
+			return f(av, bv), nil
+		},
+	}
+}
+
+func raceTask[T any](a, b Task[T]) Task[T] {
+	return Task[T]{
+		Run: func() (T, error) {
+			ch := make(chan TaskResult[T], 2)
+			go func() {
+				val, err := a.Run()
+				ch <- TaskResult[T]{Value: val, Err: err}
+			}()
+			go func() {
+				val, err := b.Run()
+				ch <- TaskResult[T]{Value: val, Err: err}
+			}()
+			result := <-ch
+			return result.Value, result.Err
+		},
+	}
+}
+
+func allTasks[T any](tasks []Task[T]) Task[[]T] {
+	return Task[[]T]{
+		Run: func() ([]T, error) {
+			results := make([]T, len(tasks))
+			errs := make([]error, len(tasks))
+			var wg sync.WaitGroup
+			for i, task := range tasks {
+				wg.Add(1)
+				go func(idx int, t Task[T]) {
+					defer wg.Done()
+					results[idx], errs[idx] = t.Run()
+				}(i, task)
+			}
+			wg.Wait()
+			for _, err := range errs {
+				if err != nil {
+					return nil, err
+				}
+			}
+			return results, nil
+		},
+	}
+}
+
+func runTaskValue[T any](task Task[T]) (T, error) {
+	return task.Run()
+}
+
+func zipCmd[A any, B any](a Cmd[A], b Cmd[B]) Cmd[Pair[A, B]] {
+	return Cmd[Pair[A, B]]{
+		Run: func() (Pair[A, B], error) {
+			var zero Pair[A, B]
+			av, err := a.Run()
+			if err != nil {
+				return zero, err
+			}
+			bv, err := b.Run()
+			if err != nil {
+				return zero, err
+			}
+			return Pair[A, B]{First: av, Second: bv}, nil
+		},
+	}
+}
+
+func PrintCmd(args ...any) Cmd[struct{}] {
+	return MakeCmd(func() (struct{}, error) {
+		fmt.Println(args...)
+		return struct{}{}, nil
+	})
+}
+
+func PrintfCmd(format string, args ...any) Cmd[struct{}] {
+	return MakeCmd(func() (struct{}, error) {
+		fmt.Printf(format, args...)
+		return struct{}{}, nil
+	})
+}
+
+type ExternFunc func(args ...any) any
+
+var externRegistry = map[string]ExternFunc{}
+
+func RegisterExtern(name string, fn ExternFunc) {
+	externRegistry[name] = fn
+}
+
+func CallExtern[T any](name string, args ...any) T {
+	fn, ok := externRegistry[name]
+	if !ok {
+		panic("missing extern bridge: " + name)
+	}
+	value := fn(args...)
+	typed, ok := value.(T)
+	if !ok {
+		panic("extern bridge type mismatch: " + name)
+	}
+	return typed
+}

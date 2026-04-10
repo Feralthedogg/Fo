@@ -1,0 +1,215 @@
+package hostplan
+
+import "github.com/Feralthedogg/Fo/internal/project"
+
+type HostEffect struct {
+    Kind string
+    Path string
+    Content string
+    Command string
+    Args []string
+}
+
+type HostProgram struct {
+    ExitCode int
+    Stdout string
+    Stderr string
+    Effects []HostEffect
+}
+
+func PackageMarker() string {
+    return "hostplan"
+}
+
+func NewHostEffect(kind string, path string, content string, command string, args []string) HostEffect {
+    return HostEffect{
+        Kind: kind,
+        Path: path,
+        Content: content,
+        Command: command,
+        Args: args,
+    }
+}
+
+func NewHostProgram(exitCode int, stdout string, stderr string, effects []HostEffect) HostProgram {
+    return HostProgram{
+        ExitCode: exitCode,
+        Stdout: stdout,
+        Stderr: stderr,
+        Effects: effects,
+    }
+}
+
+func EmptyProgram() HostProgram {
+    return NewHostProgram(0, "", "", []HostEffect{})
+}
+
+func WriteFileEffect(path string, content string) HostEffect {
+    return NewHostEffect("write_file", path, content, "", []string{})
+}
+
+func WriteGeneratedEffect(path string, content string) HostEffect {
+    return NewHostEffect("write_generated", path, content, "", []string{})
+}
+
+func ExecGoEffect(command string, args []string) HostEffect {
+    return NewHostEffect("exec_go", "", "", command, args)
+}
+
+func JoinTargetPath(target string, path string) string {
+    if target == "" {
+        return path
+    }
+    if target == "." {
+        return path
+    }
+    return target + "/" + path
+}
+
+func FileWriteEffects(target string, files []project.ProjectFile, idx int) []HostEffect {
+    if idx >= len(files) {
+        return []HostEffect{}
+    }
+    head := WriteFileEffect(
+        JoinTargetPath(target, project.ProjectFilePath(files[idx])),
+        project.ProjectFileContent(files[idx]),
+    )
+    tail := FileWriteEffects(target, files, idx + 1)
+    return AppendHostEffects([]HostEffect{head}, tail, 0)
+}
+
+func GeneratedFileWriteEffects(files []project.ProjectFile, idx int) []HostEffect {
+    if idx >= len(files) {
+        return []HostEffect{}
+    }
+    head := WriteGeneratedEffect(
+        project.ProjectFilePath(files[idx]),
+        project.ProjectFileContent(files[idx]),
+    )
+    tail := GeneratedFileWriteEffects(files, idx + 1)
+    return AppendHostEffects([]HostEffect{head}, tail, 0)
+}
+
+func AppendHostEffects(acc []HostEffect, tail []HostEffect, idx int) []HostEffect {
+    if idx >= len(tail) {
+        return acc
+    }
+    return AppendHostEffects(append(acc, tail[idx]), tail, idx + 1)
+}
+
+func NeedsImportScan(action project.ProjectAction) bool {
+    kind := project.ProjectActionKind(action)
+    return kind == "mod_tidy" || kind == "mod_graph"
+}
+
+func ProjectActionProgram(action project.ProjectAction, modulePath string, imports []project.LockedImport) HostProgram {
+    kind := project.ProjectActionKind(action)
+    if kind == "message" {
+        return NewHostProgram(0, project.ProjectActionOutput(action), "", []HostEffect{})
+    }
+    if kind == "write_files" {
+        return NewHostProgram(
+            0,
+            project.ProjectActionOutput(action),
+            "",
+            FileWriteEffects(project.ProjectActionTargetDir(action), project.ProjectActionFiles(action), 0),
+        )
+    }
+    if kind == "mod_tidy" {
+        lockAction := project.LockAction(modulePath, imports)
+        return NewHostProgram(
+            0,
+            project.ProjectActionOutput(lockAction),
+            "",
+            FileWriteEffects(project.ProjectActionTargetDir(lockAction), project.ProjectActionFiles(lockAction), 0),
+        )
+    }
+    if kind == "mod_graph" {
+        graphAction := project.GraphAction(modulePath, imports)
+        return NewHostProgram(0, project.ProjectActionOutput(graphAction), "", []HostEffect{})
+    }
+    return NewHostProgram(1, "", "unknown project action kind: " + kind, []HostEffect{})
+}
+
+func ExecActionProgram(action project.ExecAction) HostProgram {
+    kind := project.ExecActionKind(action)
+    if kind == "message" || kind == "check" {
+        return NewHostProgram(0, project.ExecActionOutput(action), "", []HostEffect{})
+    }
+    if kind == "write_generated" {
+        return NewHostProgram(
+            0,
+            "",
+            "",
+            []HostEffect{
+                WriteGeneratedEffect(project.ExecActionTargetPath(action), project.ExecActionGenerated(action)),
+            },
+        )
+    }
+    if kind == "write_and_exec" {
+        return NewHostProgram(
+            0,
+            "",
+            "",
+            []HostEffect{
+                WriteGeneratedEffect(project.ExecActionTargetPath(action), project.ExecActionGenerated(action)),
+                ExecGoEffect(project.ExecActionCommand(action), project.ExecActionArgs(action)),
+            },
+        )
+    }
+    if kind == "write_many_generated" {
+        return NewHostProgram(
+            0,
+            "",
+            "",
+            GeneratedFileWriteEffects(project.ExecActionFiles(action), 0),
+        )
+    }
+    if kind == "write_many_and_exec" {
+        effects := AppendHostEffects(
+            GeneratedFileWriteEffects(project.ExecActionFiles(action), 0),
+            []HostEffect{
+                ExecGoEffect(project.ExecActionCommand(action), project.ExecActionArgs(action)),
+            },
+            0,
+        )
+        return NewHostProgram(0, "", "", effects)
+    }
+    return NewHostProgram(1, "", "unknown exec action kind: " + kind, []HostEffect{})
+}
+
+func HostProgramExitCode(program HostProgram) int {
+    return program.ExitCode
+}
+
+func HostProgramStdout(program HostProgram) string {
+    return program.Stdout
+}
+
+func HostProgramStderr(program HostProgram) string {
+    return program.Stderr
+}
+
+func HostProgramEffects(program HostProgram) []HostEffect {
+    return program.Effects
+}
+
+func HostEffectKind(effect HostEffect) string {
+    return effect.Kind
+}
+
+func HostEffectPath(effect HostEffect) string {
+    return effect.Path
+}
+
+func HostEffectContent(effect HostEffect) string {
+    return effect.Content
+}
+
+func HostEffectCommand(effect HostEffect) string {
+    return effect.Command
+}
+
+func HostEffectArgs(effect HostEffect) []string {
+    return effect.Args
+}
