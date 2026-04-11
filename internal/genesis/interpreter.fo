@@ -47,14 +47,14 @@ type Expr enum {
     TextLit(string)
     TupleLit([]Expr)
     StructLit(string, []ExprField)
-    Select(Expr, string)
+    Select([]Expr, string)
     Call(string, []Expr)
-    Binary(string, Expr, Expr)
-    BaseName(Expr)
-    Head(Expr)
-    Tail(Expr)
-    IsEmpty(Expr)
-    If(Expr, Expr, Expr)
+    Binary(string, []Expr)
+    BaseName([]Expr)
+    Head([]Expr)
+    Tail([]Expr)
+    IsEmpty([]Expr)
+    If([]Expr, []Expr, []Expr)
 }
 
 type EvalResult enum {
@@ -171,8 +171,16 @@ func StructExpr(name string, fields []ExprField) Expr {
     return StructLit(name, fields)
 }
 
+func OneExpr(expr Expr) []Expr {
+    return []Expr{expr}
+}
+
+func TwoExprs(left Expr, right Expr) []Expr {
+    return []Expr{left, right}
+}
+
 func SelectExpr(target Expr, field string) Expr {
-    return Select(target, field)
+    return Select(OneExpr(target), field)
 }
 
 func CallExpr(name string, args []Expr) Expr {
@@ -180,27 +188,27 @@ func CallExpr(name string, args []Expr) Expr {
 }
 
 func BinaryExpr(op string, left Expr, right Expr) Expr {
-    return Binary(op, left, right)
+    return Binary(op, TwoExprs(left, right))
 }
 
 func BaseNameExpr(target Expr) Expr {
-    return BaseName(target)
+    return BaseName(OneExpr(target))
 }
 
 func HeadExpr(target Expr) Expr {
-    return Head(target)
+    return Head(OneExpr(target))
 }
 
 func TailExpr(target Expr) Expr {
-    return Tail(target)
+    return Tail(OneExpr(target))
 }
 
 func IsEmptyExpr(target Expr) Expr {
-    return IsEmpty(target)
+    return IsEmpty(OneExpr(target))
 }
 
 func IfExpr(cond Expr, yes Expr, no Expr) Expr {
-    return If(cond, yes, no)
+    return If(OneExpr(cond), OneExpr(yes), OneExpr(no))
 }
 
 func OkValue(v Value) EvalResult {
@@ -287,8 +295,11 @@ func EvalInProgram(program Program, env []EnvEntry, expr Expr) EvalResult {
         return EvalTuple(program, env, items, []Value{})
     case StructLit(name, fields):
         return EvalStructFields(program, env, name, fields, []ValueField{})
-    case Select(target, field):
-        current := EvalInProgram(program, env, target)
+    case Select(targets, field):
+        if len(targets) == 0 {
+            return EvalErr("select target missing")
+        }
+        current := EvalInProgram(program, env, targets[0])
         match current {
         case EvalOk(v):
             match v {
@@ -325,11 +336,14 @@ func EvalInProgram(program Program, env []EnvEntry, expr Expr) EvalResult {
         case FuncErr(msg):
             return EvalErr(msg)
         }
-    case Binary(op, left, right):
-        leftResult := EvalInProgram(program, env, left)
+    case Binary(op, items):
+        if !(len(items) == 2) {
+            return EvalErr("binary operand shape")
+        }
+        leftResult := EvalInProgram(program, env, items[0])
         match leftResult {
         case EvalOk(leftValue):
-            rightResult := EvalInProgram(program, env, right)
+            rightResult := EvalInProgram(program, env, items[1])
             match rightResult {
             case EvalOk(rightValue):
                 return ApplyBinary(op, leftValue, rightValue)
@@ -339,8 +353,11 @@ func EvalInProgram(program Program, env []EnvEntry, expr Expr) EvalResult {
         case EvalErr(msg):
             return EvalErr(msg)
         }
-    case BaseName(target):
-        current := EvalInProgram(program, env, target)
+    case BaseName(targets):
+        if len(targets) == 0 {
+            return EvalErr("basename target missing")
+        }
+        current := EvalInProgram(program, env, targets[0])
         match current {
         case EvalOk(v):
             match v {
@@ -352,8 +369,11 @@ func EvalInProgram(program Program, env []EnvEntry, expr Expr) EvalResult {
         case EvalErr(msg):
             return EvalErr(msg)
         }
-    case Head(target):
-        current := EvalInProgram(program, env, target)
+    case Head(targets):
+        if len(targets) == 0 {
+            return EvalErr("head target missing")
+        }
+        current := EvalInProgram(program, env, targets[0])
         match current {
         case EvalOk(v):
             match v {
@@ -365,8 +385,11 @@ func EvalInProgram(program Program, env []EnvEntry, expr Expr) EvalResult {
         case EvalErr(msg):
             return EvalErr(msg)
         }
-    case Tail(target):
-        current := EvalInProgram(program, env, target)
+    case Tail(targets):
+        if len(targets) == 0 {
+            return EvalErr("tail target missing")
+        }
+        current := EvalInProgram(program, env, targets[0])
         match current {
         case EvalOk(v):
             match v {
@@ -378,8 +401,11 @@ func EvalInProgram(program Program, env []EnvEntry, expr Expr) EvalResult {
         case EvalErr(msg):
             return EvalErr(msg)
         }
-    case IsEmpty(target):
-        current := EvalInProgram(program, env, target)
+    case IsEmpty(targets):
+        if len(targets) == 0 {
+            return EvalErr("isEmpty target missing")
+        }
+        current := EvalInProgram(program, env, targets[0])
         match current {
         case EvalOk(v):
             match v {
@@ -391,16 +417,19 @@ func EvalInProgram(program Program, env []EnvEntry, expr Expr) EvalResult {
         case EvalErr(msg):
             return EvalErr(msg)
         }
-    case If(cond, yes, no):
-        condResult := EvalInProgram(program, env, cond)
+    case If(conds, yeses, nos):
+        if len(conds) == 0 || len(yeses) == 0 || len(nos) == 0 {
+            return EvalErr("if branch shape")
+        }
+        condResult := EvalInProgram(program, env, conds[0])
         match condResult {
         case EvalOk(v):
             match v {
             case Bool(flag):
                 if flag {
-                    return EvalInProgram(program, env, yes)
+                    return EvalInProgram(program, env, yeses[0])
                 }
-                return EvalInProgram(program, env, no)
+                return EvalInProgram(program, env, nos[0])
             case _:
                 return EvalErr("if condition is not bool")
             }
