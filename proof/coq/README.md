@@ -6,6 +6,8 @@ Current status:
 
 - theorem targets are stated
 - environment and pattern-matching skeletons are stated
-- proofs are placeholders via `Admitted`
+- several local core lemmas are discharged
+- codegen optimization theorems are stated against abstract lowering interfaces
+- the full implementation-level proof story is still a skeleton
 
 The Coq track mirrors the Lean track so the proof program is not locked to one prover too early.

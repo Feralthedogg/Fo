@@ -1,246 +1,2535 @@
-DIGEST 977645946bfd040fed7006fa6a0209ba
+DIGEST cff7aebc7ea4e9055c005393db655399
 FFo.Semantics
 R24:27 Stdlib.Lists.List <> <> lib
 R29:34 Stdlib.Strings.String <> <> lib
 R36:41 Stdlib.ZArith.ZArith <> <> lib
 R51:63 Stdlib.Lists.List ListNotations <> mod
-R81:89 Fo.Syntax <> <> lib
-mod 100:110 <> FoSemantics
-R120:127 Fo.Syntax FoSyntax <> mod
-ind 141:145 FoSemantics value
-constr 152:156 FoSemantics VUnit
-constr 160:164 FoSemantics VBool
-constr 179:182 FoSemantics VInt
-constr 194:200 FoSemantics VString
-constr 217:222 FoSemantics VTuple
-constr 247:253 FoSemantics VStruct
-constr 306:310 FoSemantics VCtor
-R171:174 Corelib.Init.Datatypes <> bool ind
-binder 167:167 <> b:3
-R189:189 Corelib.Numbers.BinNums <> Z ind
-binder 185:185 <> n:4
-R207:212 Stdlib.Strings.String <> string ind
-binder 203:203 <> s:5
-R233:236 Corelib.Init.Datatypes <> list ind
-R238:242 Fo.Semantics <> value:1 ind
-binder 225:229 <> items:6
-R263:268 Stdlib.Strings.String <> string ind
-binder 256:259 <> name:7
-R281:284 Corelib.Init.Datatypes <> list ind
-R293:295 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
-R287:292 Stdlib.Strings.String <> string ind
-R296:300 Fo.Semantics <> value:1 ind
-binder 272:277 <> fields:8
-R320:325 Stdlib.Strings.String <> string ind
-binder 313:316 <> name:9
-R336:339 Corelib.Init.Datatypes <> list ind
-R341:345 Fo.Semantics <> value:1 ind
-binder 329:332 <> args:10
-scheme 141:145 FoSemantics value_rect
-scheme 141:145 FoSemantics value_ind
-scheme 141:145 FoSemantics value_rec
-scheme 141:145 FoSemantics value_sind
-def 361:363 FoSemantics env
-R368:371 Corelib.Init.Datatypes <> list ind
-R380:382 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
-R374:379 Stdlib.Strings.String <> string ind
-R383:387 Fo.Semantics FoSemantics value ind
-ind 402:407 FoSemantics result
-constr 414:422 FoSemantics RContinue
-constr 437:443 FoSemantics RReturn
-R430:432 Fo.Semantics FoSemantics env def
-binder 425:426 <> ρ:13
-R450:454 Fo.Semantics FoSemantics value ind
-binder 446:446 <> v:14
-scheme 402:407 FoSemantics result_rect
-scheme 402:407 FoSemantics result_ind
-scheme 402:407 FoSemantics result_rec
-scheme 402:407 FoSemantics result_sind
-def 468:478 FoSemantics interp_expr
-R485:488 Fo.Syntax FoSyntax expr ind
-binder 481:481 <> e:15
-R493:497 Fo.Semantics FoSemantics value ind
-R510:510 Fo.Semantics <> e:15 var
-R521:524 Fo.Syntax FoSyntax EVar constr
-R531:535 Fo.Semantics FoSemantics VUnit constr
-R541:545 Fo.Syntax FoSyntax EUnit constr
-R550:554 Fo.Semantics FoSemantics VUnit constr
-R560:564 Fo.Syntax FoSyntax EBool constr
-R571:575 Fo.Semantics FoSemantics VBool constr
-R583:586 Fo.Syntax FoSyntax EInt constr
-R593:596 Fo.Semantics FoSemantics VInt constr
-R604:610 Fo.Syntax FoSyntax EString constr
-R617:623 Fo.Semantics FoSemantics VString constr
-R631:636 Fo.Syntax FoSyntax ETuple constr
-R643:648 Fo.Semantics FoSemantics VTuple constr
-R650:651 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
-R657:661 Fo.Syntax FoSyntax ECtor constr
-R673:677 Fo.Semantics FoSemantics VCtor constr
-R684:685 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
-R691:700 Fo.Syntax FoSyntax EStructLit constr
-R712:718 Fo.Semantics FoSemantics VStruct constr
-R725:726 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
-R732:742 Fo.Syntax FoSyntax ECopyUpdate constr
-R756:766 Fo.Semantics <> interp_expr:16 def
-R777:782 Fo.Syntax FoSyntax EUnary constr
-R791:795 Fo.Semantics FoSemantics VUnit constr
-R801:807 Fo.Syntax FoSyntax EBinary constr
-R818:822 Fo.Semantics FoSemantics VUnit constr
-R828:832 Fo.Syntax FoSyntax ECall constr
-R841:845 Fo.Semantics FoSemantics VUnit constr
-R851:853 Fo.Syntax FoSyntax EIf constr
-R866:876 Fo.Semantics <> interp_expr:16 def
-R886:891 Fo.Syntax FoSyntax EMatch constr
-R900:904 Fo.Semantics FoSemantics VUnit constr
-def 925:935 FoSemantics interp_stmt
-R943:945 Fo.Semantics FoSemantics env def
-binder 938:939 <> ρ:18
-R953:956 Fo.Syntax FoSyntax stmt ind
-binder 949:949 <> s:19
-R961:966 Fo.Semantics FoSemantics result ind
-R979:979 Fo.Semantics <> s:19 var
-R990:994 Fo.Syntax FoSyntax SBind constr
-R1003:1011 Fo.Semantics FoSemantics RContinue constr
-R1013:1014 Fo.Semantics <> ρ:18 var
-R1020:1026 Fo.Syntax FoSyntax SReturn constr
-R1033:1039 Fo.Semantics FoSemantics RReturn constr
-R1042:1052 Fo.Semantics FoSemantics interp_expr def
-R1061:1063 Fo.Syntax FoSyntax SIf constr
-R1074:1082 Fo.Semantics FoSemantics RContinue constr
-R1084:1085 Fo.Semantics <> ρ:18 var
-R1091:1096 Fo.Syntax FoSyntax SMatch constr
-R1105:1113 Fo.Semantics FoSemantics RContinue constr
-R1115:1116 Fo.Semantics <> ρ:18 var
-def 1137:1148 FoSemantics interp_block
-R1156:1158 Fo.Semantics FoSemantics env def
-binder 1151:1152 <> ρ:21
-R1167:1170 Corelib.Init.Datatypes <> list ind
-R1172:1175 Fo.Syntax FoSyntax stmt ind
-binder 1162:1163 <> ss:22
-R1180:1185 Fo.Semantics FoSemantics result ind
-R1198:1199 Fo.Semantics <> ss:22 var
-R1210:1211 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
-R1216:1224 Fo.Semantics FoSemantics RContinue constr
-R1226:1227 Fo.Semantics <> ρ:21 var
-R1234:1237 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
-R1243:1253 Fo.Semantics FoSemantics interp_stmt def
-R1255:1256 Fo.Semantics <> ρ:21 var
-def 1279:1287 FoSemantics eval_expr
-R1295:1301 Fo.Syntax FoSyntax program rec
-binder 1290:1291 <> _p:24
-R1311:1313 Fo.Semantics FoSemantics env def
-binder 1305:1307 <> _ρ:25
-R1321:1324 Fo.Syntax FoSyntax expr ind
-binder 1317:1317 <> e:26
-R1332:1336 Fo.Semantics FoSemantics value ind
-binder 1328:1328 <> v:27
-R1364:1366 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R1351:1361 Fo.Semantics FoSemantics interp_expr def
-R1363:1363 Fo.Semantics <> e:26 var
-R1367:1367 Fo.Semantics <> v:27 var
-def 1382:1390 FoSemantics eval_stmt
-R1398:1404 Fo.Syntax FoSyntax program rec
-binder 1393:1394 <> _p:28
-R1413:1415 Fo.Semantics FoSemantics env def
-binder 1408:1409 <> ρ:29
-R1423:1426 Fo.Syntax FoSyntax stmt ind
-binder 1419:1419 <> s:30
-R1434:1439 Fo.Semantics FoSemantics result ind
-binder 1430:1430 <> r:31
-R1470:1472 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R1454:1464 Fo.Semantics FoSemantics interp_stmt def
-R1466:1467 Fo.Semantics <> ρ:29 var
-R1469:1469 Fo.Semantics <> s:30 var
-R1473:1473 Fo.Semantics <> r:31 var
-def 1488:1497 FoSemantics eval_block
-R1505:1511 Fo.Syntax FoSyntax program rec
-binder 1500:1501 <> _p:32
-R1520:1522 Fo.Semantics FoSemantics env def
-binder 1515:1516 <> ρ:33
-R1531:1534 Corelib.Init.Datatypes <> list ind
-R1536:1539 Fo.Syntax FoSyntax stmt ind
-binder 1526:1527 <> ss:34
-R1547:1552 Fo.Semantics FoSemantics result ind
-binder 1543:1543 <> r:35
-R1585:1587 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R1567:1578 Fo.Semantics FoSemantics interp_block def
-R1580:1581 Fo.Semantics <> ρ:33 var
-R1583:1584 Fo.Semantics <> ss:34 var
-R1588:1588 Fo.Semantics <> r:35 var
-prf 1598:1615 FoSemantics continue_injective
-binder 1628:1630 <> ρ1:36
-binder 1632:1634 <> ρ2:37
-R1670:1677 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R1654:1656 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R1641:1649 Fo.Semantics FoSemantics RContinue constr
-R1651:1653 Fo.Semantics <> ρ1:36 var
-R1657:1665 Fo.Semantics FoSemantics RContinue constr
-R1667:1669 Fo.Semantics <> ρ2:37 var
-R1681:1683 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R1678:1680 Fo.Semantics <> ρ1:36 var
-R1684:1686 Fo.Semantics <> ρ2:37 var
-prf 1744:1756 FoSemantics ret_injective
-binder 1769:1770 <> v1:38
-binder 1772:1773 <> v2:39
-R1803:1810 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R1790:1792 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R1780:1786 Fo.Semantics FoSemantics RReturn constr
-R1788:1789 Fo.Semantics <> v1:38 var
-R1793:1799 Fo.Semantics FoSemantics RReturn constr
-R1801:1802 Fo.Semantics <> v2:39 var
-R1813:1815 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R1811:1812 Fo.Semantics <> v1:38 var
-R1816:1817 Fo.Semantics <> v2:39 var
-prf 1875:1893 FoSemantics continue_not_return
-binder 1906:1907 <> ρ:40
-binder 1909:1909 <> v:41
-R1924:1927 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
-R1912:1920 Fo.Semantics FoSemantics RContinue constr
-R1922:1923 Fo.Semantics <> ρ:40 var
-R1928:1934 Fo.Semantics FoSemantics RReturn constr
-R1936:1936 Fo.Semantics <> v:41 var
-prf 1990:2012 FoSemantics eval_expr_deterministic
-binder 2025:2025 <> p:42
-binder 2027:2028 <> ρ:43
-binder 2030:2030 <> e:44
-binder 2032:2033 <> v1:45
-binder 2035:2036 <> v2:46
-R2062:2069 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R2043:2051 Fo.Semantics FoSemantics eval_expr def
-R2053:2053 Fo.Semantics <> p:42 var
-R2055:2056 Fo.Semantics <> ρ:43 var
-R2058:2058 Fo.Semantics <> e:44 var
-R2060:2061 Fo.Semantics <> v1:45 var
-R2089:2096 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R2070:2078 Fo.Semantics FoSemantics eval_expr def
-R2080:2080 Fo.Semantics <> p:42 var
-R2082:2083 Fo.Semantics <> ρ:43 var
-R2085:2085 Fo.Semantics <> e:44 var
-R2087:2088 Fo.Semantics <> v2:46 var
-R2099:2101 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R2097:2098 Fo.Semantics <> v1:45 var
-R2102:2103 Fo.Semantics <> v2:46 var
-R2151:2159 Fo.Semantics FoSemantics eval_expr def
-prf 2213:2236 FoSemantics eval_block_deterministic
-binder 2249:2249 <> p:47
-binder 2251:2252 <> ρ:48
-binder 2254:2255 <> ss:49
-binder 2257:2258 <> r1:50
-binder 2260:2261 <> r2:51
-R2289:2296 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R2268:2277 Fo.Semantics FoSemantics eval_block def
-R2279:2279 Fo.Semantics <> p:47 var
-R2281:2282 Fo.Semantics <> ρ:48 var
-R2284:2285 Fo.Semantics <> ss:49 var
-R2287:2288 Fo.Semantics <> r1:50 var
-R2318:2325 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
-R2297:2306 Fo.Semantics FoSemantics eval_block def
-R2308:2308 Fo.Semantics <> p:47 var
-R2310:2311 Fo.Semantics <> ρ:48 var
-R2313:2314 Fo.Semantics <> ss:49 var
-R2316:2317 Fo.Semantics <> r2:51 var
-R2328:2330 Corelib.Init.Logic <> ::type_scope:x_'='_x not
-R2326:2327 Fo.Semantics <> r1:50 var
-R2331:2332 Fo.Semantics <> r2:51 var
-R2381:2390 Fo.Semantics FoSemantics eval_block def
-R2440:2450 Fo.Semantics FoSemantics <> mod
+R106:114 Fo.Syntax <> <> lib
+mod 125:135 <> FoSemantics
+R145:152 Fo.Syntax FoSyntax <> mod
+ind 166:170 FoSemantics value
+constr 177:181 FoSemantics VUnit
+constr 185:189 FoSemantics VBool
+constr 204:207 FoSemantics VInt
+constr 219:225 FoSemantics VString
+constr 242:247 FoSemantics VTuple
+constr 272:278 FoSemantics VStruct
+constr 331:335 FoSemantics VCtor
+R196:199 Corelib.Init.Datatypes <> bool ind
+binder 192:192 <> b:3
+R214:214 Corelib.Numbers.BinNums <> Z ind
+binder 210:210 <> n:4
+R232:237 Stdlib.Strings.String <> string ind
+binder 228:228 <> s:5
+R258:261 Corelib.Init.Datatypes <> list ind
+R263:267 Fo.Semantics <> value:1 ind
+binder 250:254 <> items:6
+R288:293 Stdlib.Strings.String <> string ind
+binder 281:284 <> name:7
+R306:309 Corelib.Init.Datatypes <> list ind
+R318:320 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R312:317 Stdlib.Strings.String <> string ind
+R321:325 Fo.Semantics <> value:1 ind
+binder 297:302 <> fields:8
+R345:350 Stdlib.Strings.String <> string ind
+binder 338:341 <> name:9
+R361:364 Corelib.Init.Datatypes <> list ind
+R366:370 Fo.Semantics <> value:1 ind
+binder 354:357 <> args:10
+scheme 166:170 FoSemantics value_rect
+scheme 166:170 FoSemantics value_ind
+scheme 166:170 FoSemantics value_rec
+scheme 166:170 FoSemantics value_sind
+def 386:388 FoSemantics env
+R393:396 Corelib.Init.Datatypes <> list ind
+R405:407 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R399:404 Stdlib.Strings.String <> string ind
+R408:412 Fo.Semantics FoSemantics value ind
+ind 427:432 FoSemantics result
+constr 439:447 FoSemantics RContinue
+constr 462:468 FoSemantics RReturn
+R455:457 Fo.Semantics FoSemantics env def
+binder 450:451 <> ρ:13
+R475:479 Fo.Semantics FoSemantics value ind
+binder 471:471 <> v:14
+scheme 427:432 FoSemantics result_rect
+scheme 427:432 FoSemantics result_ind
+scheme 427:432 FoSemantics result_rec
+scheme 427:432 FoSemantics result_sind
+def 495:505 FoSemantics field_store
+R510:513 Corelib.Init.Datatypes <> list ind
+R522:524 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R516:521 Stdlib.Strings.String <> string ind
+R525:529 Fo.Semantics FoSemantics value ind
+def 543:554 FoSemantics lookup_field
+R562:572 Fo.Semantics FoSemantics field_store def
+binder 557:558 <> fs:15
+R583:588 Stdlib.Strings.String <> string ind
+binder 576:579 <> name:16
+R593:598 Corelib.Init.Datatypes <> option ind
+R600:604 Fo.Semantics FoSemantics value ind
+R617:618 Fo.Semantics <> fs:15 var
+R629:630 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R635:638 Corelib.Init.Datatypes <> None constr
+R656:659 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R644:644 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R648:649 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R655:655 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R677:686 Stdlib.Strings.String <> eqb def
+R692:695 Fo.Semantics <> name:16 var
+R718:729 Fo.Semantics <> lookup_field:17 def
+R736:739 Fo.Semantics <> name:16 var
+R702:705 Corelib.Init.Datatypes <> Some constr
+def 758:769 FoSemantics update_field
+R777:787 Fo.Semantics FoSemantics field_store def
+binder 772:773 <> fs:19
+R798:803 Stdlib.Strings.String <> string ind
+binder 791:794 <> name:20
+R814:818 Fo.Semantics FoSemantics value ind
+binder 807:810 <> newv:21
+R823:833 Fo.Semantics FoSemantics field_store def
+R846:847 Fo.Semantics <> fs:19 var
+R858:859 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R864:864 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R877:877 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R865:865 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R870:871 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R876:876 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R866:869 Fo.Semantics <> name:20 var
+R872:875 Fo.Semantics <> newv:21 var
+R895:898 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R883:883 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R887:888 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R894:894 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R916:925 Stdlib.Strings.String <> eqb def
+R931:934 Fo.Semantics <> name:20 var
+R990:993 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R978:978 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R982:983 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R989:989 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R994:1005 Fo.Semantics <> update_field:22 def
+R1017:1020 Fo.Semantics <> newv:21 var
+R1012:1015 Fo.Semantics <> name:20 var
+R958:961 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R947:947 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R951:952 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R957:957 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R953:956 Fo.Semantics <> newv:21 var
+def 1039:1055 FoSemantics lookup_value_path
+R1062:1066 Fo.Semantics FoSemantics value ind
+binder 1058:1058 <> v:24
+R1077:1080 Corelib.Init.Datatypes <> list ind
+R1082:1087 Stdlib.Strings.String <> string ind
+binder 1070:1073 <> path:25
+R1092:1097 Corelib.Init.Datatypes <> option ind
+R1099:1103 Fo.Semantics FoSemantics value ind
+R1116:1119 Fo.Semantics <> path:25 var
+R1130:1131 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1136:1139 Corelib.Init.Datatypes <> Some constr
+R1141:1141 Fo.Semantics <> v:24 var
+R1150:1153 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R1174:1174 Fo.Semantics <> v:24 var
+R1189:1195 Fo.Semantics FoSemantics VStruct constr
+R1228:1239 Fo.Semantics FoSemantics lookup_field def
+R1269:1272 Corelib.Init.Datatypes <> Some constr
+R1283:1299 Fo.Semantics <> lookup_value_path:26 def
+R1324:1327 Corelib.Init.Datatypes <> None constr
+R1332:1335 Corelib.Init.Datatypes <> None constr
+R1364:1367 Corelib.Init.Datatypes <> None constr
+def 1396:1412 FoSemantics update_value_path
+R1419:1423 Fo.Semantics FoSemantics value ind
+binder 1415:1415 <> v:29
+R1434:1437 Corelib.Init.Datatypes <> list ind
+R1439:1444 Stdlib.Strings.String <> string ind
+binder 1427:1430 <> path:30
+R1455:1459 Fo.Semantics FoSemantics value ind
+binder 1448:1451 <> newv:31
+R1464:1469 Corelib.Init.Datatypes <> option ind
+R1471:1475 Fo.Semantics FoSemantics value ind
+R1488:1491 Fo.Semantics <> path:30 var
+R1502:1503 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R1508:1511 Corelib.Init.Datatypes <> Some constr
+R1513:1516 Fo.Semantics <> newv:31 var
+R1525:1528 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R1549:1549 Fo.Semantics <> v:29 var
+R1564:1570 Fo.Semantics FoSemantics VStruct constr
+R1603:1614 Fo.Semantics FoSemantics lookup_field def
+R1644:1647 Corelib.Init.Datatypes <> Some constr
+R1678:1694 Fo.Semantics <> update_value_path:32 def
+R1707:1710 Fo.Semantics <> newv:31 var
+R1733:1736 Corelib.Init.Datatypes <> Some constr
+R1748:1751 Corelib.Init.Datatypes <> Some constr
+R1754:1760 Fo.Semantics FoSemantics VStruct constr
+R1768:1779 Fo.Semantics FoSemantics update_field def
+R1817:1820 Corelib.Init.Datatypes <> None constr
+R1825:1828 Corelib.Init.Datatypes <> None constr
+R1860:1863 Corelib.Init.Datatypes <> None constr
+R1868:1871 Corelib.Init.Datatypes <> None constr
+R1900:1903 Corelib.Init.Datatypes <> None constr
+def 1934:1944 FoSemantics enum_tag_of
+R1951:1955 Fo.Semantics FoSemantics value ind
+binder 1947:1947 <> v:35
+R1960:1965 Corelib.Init.Datatypes <> option ind
+R1967:1972 Stdlib.Strings.String <> string ind
+R1985:1985 Fo.Semantics <> v:35 var
+R1996:2000 Fo.Semantics FoSemantics VCtor constr
+R2012:2015 Corelib.Init.Datatypes <> Some constr
+R2026:2032 Fo.Semantics FoSemantics VStruct constr
+R2058:2069 Fo.Semantics FoSemantics lookup_field def
+R2097:2100 Corelib.Init.Datatypes <> Some constr
+R2103:2109 Fo.Semantics FoSemantics VString constr
+R2119:2122 Corelib.Init.Datatypes <> Some constr
+R2141:2144 Corelib.Init.Datatypes <> None constr
+R2165:2168 Corelib.Init.Datatypes <> None constr
+def 2189:2203 FoSemantics enum_payload_of
+R2210:2214 Fo.Semantics FoSemantics value ind
+binder 2206:2206 <> v:37
+R2219:2224 Corelib.Init.Datatypes <> option ind
+R2227:2230 Corelib.Init.Datatypes <> list ind
+R2232:2236 Fo.Semantics FoSemantics value ind
+R2250:2250 Fo.Semantics <> v:37 var
+R2261:2265 Fo.Semantics FoSemantics VCtor constr
+R2277:2280 Corelib.Init.Datatypes <> Some constr
+R2291:2297 Fo.Semantics FoSemantics VStruct constr
+R2323:2334 Fo.Semantics FoSemantics lookup_field def
+R2366:2369 Corelib.Init.Datatypes <> Some constr
+R2372:2377 Fo.Semantics FoSemantics VTuple constr
+R2389:2392 Corelib.Init.Datatypes <> Some constr
+R2413:2416 Corelib.Init.Datatypes <> None constr
+R2437:2440 Corelib.Init.Datatypes <> None constr
+def 2461:2471 FoSemantics pattern_tag
+R2478:2484 Fo.Syntax FoSyntax pattern ind
+binder 2474:2474 <> p:39
+R2489:2494 Stdlib.Strings.String <> string ind
+R2507:2507 Fo.Semantics <> p:39 var
+R2518:2522 Fo.Syntax FoSyntax PWild constr
+R2535:2541 Fo.Syntax FoSyntax PBinder constr
+R2558:2561 Stdlib.Strings.String <> ::string_scope:x_'++'_x not
+R2571:2576 Fo.Syntax FoSyntax PTuple constr
+R2595:2599 Fo.Syntax FoSyntax PCtor constr
+R2618:2621 Stdlib.Strings.String <> ::string_scope:x_'++'_x not
+R2631:2637 Fo.Syntax FoSyntax PStruct constr
+R2658:2661 Stdlib.Strings.String <> ::string_scope:x_'++'_x not
+def 2686:2705 FoSemantics is_catch_all_pattern
+R2712:2718 Fo.Syntax FoSyntax pattern ind
+binder 2708:2708 <> p:41
+R2723:2726 Corelib.Init.Datatypes <> bool ind
+R2739:2739 Fo.Semantics <> p:41 var
+R2750:2754 Fo.Syntax FoSyntax PWild constr
+R2759:2762 Corelib.Init.Datatypes <> true constr
+R2768:2774 Fo.Syntax FoSyntax PBinder constr
+R2781:2784 Corelib.Init.Datatypes <> true constr
+R2795:2799 Corelib.Init.Datatypes <> false constr
+def 2820:2839 FoSemantics head_pattern_matches
+R2846:2852 Fo.Syntax FoSyntax pattern ind
+binder 2842:2842 <> p:43
+R2860:2864 Fo.Semantics FoSemantics value ind
+binder 2856:2856 <> v:44
+R2869:2872 Corelib.Init.Datatypes <> bool ind
+R2888:2888 Fo.Semantics <> v:44 var
+R2885:2885 Fo.Semantics <> p:43 var
+R2899:2903 Fo.Syntax FoSyntax PWild constr
+R2911:2914 Corelib.Init.Datatypes <> true constr
+R2920:2926 Fo.Syntax FoSyntax PBinder constr
+R2936:2939 Corelib.Init.Datatypes <> true constr
+R2945:2950 Fo.Syntax FoSyntax PTuple constr
+R2955:2960 Fo.Semantics FoSemantics VTuple constr
+R2967:2970 Corelib.Init.Datatypes <> true constr
+R2976:2980 Fo.Syntax FoSyntax PCtor constr
+R2990:2994 Fo.Semantics FoSemantics VCtor constr
+R3007:3016 Stdlib.Strings.String <> eqb def
+R3033:3039 Fo.Syntax FoSyntax PStruct constr
+R3049:3055 Fo.Semantics FoSemantics VStruct constr
+R3068:3077 Stdlib.Strings.String <> eqb def
+R3102:3106 Corelib.Init.Datatypes <> false constr
+def 3125:3141 FoSemantics select_match_expr
+R3148:3152 Fo.Semantics FoSemantics value ind
+binder 3144:3144 <> v:47
+R3164:3167 Corelib.Init.Datatypes <> list ind
+R3177:3179 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R3170:3176 Fo.Syntax FoSyntax pattern ind
+R3180:3183 Fo.Syntax FoSyntax expr ind
+binder 3156:3160 <> cases:48
+R3189:3194 Corelib.Init.Datatypes <> option ind
+R3196:3199 Fo.Syntax FoSyntax expr ind
+R3212:3216 Fo.Semantics <> cases:48 var
+R3227:3228 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3233:3236 Corelib.Init.Datatypes <> None constr
+R3253:3256 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R3242:3242 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3246:3247 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3252:3252 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3274:3293 Fo.Semantics FoSemantics head_pattern_matches def
+R3299:3299 Fo.Semantics <> v:47 var
+R3321:3337 Fo.Semantics <> select_match_expr:49 def
+R3339:3339 Fo.Semantics <> v:47 var
+R3306:3309 Corelib.Init.Datatypes <> Some constr
+def 3363:3379 FoSemantics select_match_stmt
+R3386:3390 Fo.Semantics FoSemantics value ind
+binder 3382:3382 <> v:51
+R3402:3405 Corelib.Init.Datatypes <> list ind
+R3415:3417 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R3408:3414 Fo.Syntax FoSyntax pattern ind
+R3418:3421 Corelib.Init.Datatypes <> list ind
+R3423:3426 Fo.Syntax FoSyntax stmt ind
+binder 3394:3398 <> cases:52
+R3432:3437 Corelib.Init.Datatypes <> option ind
+R3440:3443 Corelib.Init.Datatypes <> list ind
+R3445:3448 Fo.Syntax FoSyntax stmt ind
+R3462:3466 Fo.Semantics <> cases:52 var
+R3477:3478 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3483:3486 Corelib.Init.Datatypes <> None constr
+R3503:3506 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R3492:3492 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3496:3497 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3502:3502 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R3524:3543 Fo.Semantics FoSemantics head_pattern_matches def
+R3549:3549 Fo.Semantics <> v:51 var
+R3571:3587 Fo.Semantics <> select_match_stmt:53 def
+R3589:3589 Fo.Semantics <> v:51 var
+R3556:3559 Corelib.Init.Datatypes <> Some constr
+ind 3614:3627 FoSemantics pipeline_stage
+constr 3634:3638 FoSemantics PSMap
+constr 3642:3649 FoSemantics PSFilter
+constr 3653:3658 FoSemantics PSFold
+scheme 3614:3627 FoSemantics pipeline_stage_rect
+scheme 3614:3627 FoSemantics pipeline_stage_ind
+scheme 3614:3627 FoSemantics pipeline_stage_rec
+scheme 3614:3627 FoSemantics pipeline_stage_sind
+rec 3669:3681 FoSemantics pipeline_plan
+proj 3690:3697 FoSemantics pp_input
+proj 3710:3718 FoSemantics pp_stages
+R3701:3705 Fo.Semantics FoSemantics value ind
+R3722:3725 Corelib.Init.Datatypes <> list ind
+R3727:3740 Fo.Semantics FoSemantics pipeline_stage ind
+def 3758:3775 FoSemantics run_pipeline_stage
+R3786:3790 Fo.Semantics FoSemantics value ind
+binder 3778:3782 <> input:60
+R3802:3815 Fo.Semantics FoSemantics pipeline_stage ind
+binder 3794:3798 <> stage:61
+R3820:3824 Fo.Semantics FoSemantics value ind
+R3844:3848 Fo.Semantics <> stage:61 var
+R3837:3841 Fo.Semantics <> input:60 var
+R3859:3864 Fo.Semantics FoSemantics VTuple constr
+R3873:3877 Fo.Semantics FoSemantics PSMap constr
+R3882:3887 Fo.Semantics FoSemantics VTuple constr
+R3899:3904 Fo.Semantics FoSemantics VTuple constr
+R3906:3907 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3910:3917 Fo.Semantics FoSemantics PSFilter constr
+R3922:3927 Fo.Semantics FoSemantics VTuple constr
+R3929:3930 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3936:3941 Fo.Semantics FoSemantics VTuple constr
+R3945:3948 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R3957:3964 Fo.Semantics FoSemantics PSFilter constr
+R3969:3974 Fo.Semantics FoSemantics VTuple constr
+R3986:3991 Fo.Semantics FoSemantics VTuple constr
+R3993:3994 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R3997:4002 Fo.Semantics FoSemantics PSFold constr
+R4007:4011 Fo.Semantics FoSemantics VUnit constr
+R4017:4022 Fo.Semantics FoSemantics VTuple constr
+R4029:4032 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R4037:4042 Fo.Semantics FoSemantics PSFold constr
+R4064:4068 Fo.Semantics <> input:60 var
+def 4087:4105 FoSemantics run_pipeline_stages
+R4116:4120 Fo.Semantics FoSemantics value ind
+binder 4108:4112 <> input:64
+R4133:4136 Corelib.Init.Datatypes <> list ind
+R4138:4151 Fo.Semantics FoSemantics pipeline_stage ind
+binder 4124:4129 <> stages:65
+R4156:4160 Fo.Semantics FoSemantics value ind
+R4173:4178 Fo.Semantics <> stages:65 var
+R4189:4190 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R4195:4199 Fo.Semantics <> input:64 var
+R4210:4213 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R4222:4240 Fo.Semantics <> run_pipeline_stages:66 def
+R4243:4260 Fo.Semantics FoSemantics run_pipeline_stage def
+R4262:4266 Fo.Semantics <> input:64 var
+ind 4298:4309 FoSemantics tail_outcome
+constr 4316:4323 FoSemantics TOReturn
+constr 4339:4345 FoSemantics TORecur
+R4330:4334 Fo.Semantics FoSemantics value ind
+binder 4326:4326 <> v:70
+R4353:4358 Stdlib.Strings.String <> string ind
+binder 4348:4349 <> fn:71
+R4369:4372 Corelib.Init.Datatypes <> list ind
+R4374:4378 Fo.Semantics FoSemantics value ind
+binder 4362:4365 <> args:72
+scheme 4298:4309 FoSemantics tail_outcome_rect
+scheme 4298:4309 FoSemantics tail_outcome_ind
+scheme 4298:4309 FoSemantics tail_outcome_rec
+scheme 4298:4309 FoSemantics tail_outcome_sind
+def 4392:4402 FoSemantics interp_expr
+R4409:4412 Fo.Syntax FoSyntax expr ind
+binder 4405:4405 <> e:73
+R4417:4421 Fo.Semantics FoSemantics value ind
+R4434:4434 Fo.Semantics <> e:73 var
+R4445:4448 Fo.Syntax FoSyntax EVar constr
+R4455:4459 Fo.Semantics FoSemantics VUnit constr
+R4465:4469 Fo.Syntax FoSyntax EUnit constr
+R4474:4478 Fo.Semantics FoSemantics VUnit constr
+R4484:4488 Fo.Syntax FoSyntax EBool constr
+R4495:4499 Fo.Semantics FoSemantics VBool constr
+R4507:4510 Fo.Syntax FoSyntax EInt constr
+R4517:4520 Fo.Semantics FoSemantics VInt constr
+R4528:4534 Fo.Syntax FoSyntax EString constr
+R4541:4547 Fo.Semantics FoSemantics VString constr
+R4555:4560 Fo.Syntax FoSyntax ETuple constr
+R4567:4572 Fo.Semantics FoSemantics VTuple constr
+R4574:4575 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R4581:4585 Fo.Syntax FoSyntax ECtor constr
+R4597:4601 Fo.Semantics FoSemantics VCtor constr
+R4608:4609 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R4615:4624 Fo.Syntax FoSyntax EStructLit constr
+R4636:4642 Fo.Semantics FoSemantics VStruct constr
+R4649:4650 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R4656:4666 Fo.Syntax FoSyntax ECopyUpdate constr
+R4680:4690 Fo.Semantics <> interp_expr:74 def
+R4701:4706 Fo.Syntax FoSyntax EUnary constr
+R4715:4719 Fo.Semantics FoSemantics VUnit constr
+R4725:4731 Fo.Syntax FoSyntax EBinary constr
+R4742:4746 Fo.Semantics FoSemantics VUnit constr
+R4752:4756 Fo.Syntax FoSyntax ECall constr
+R4765:4769 Fo.Semantics FoSemantics VUnit constr
+R4775:4777 Fo.Syntax FoSyntax EIf constr
+R4790:4800 Fo.Semantics <> interp_expr:74 def
+R4810:4815 Fo.Syntax FoSyntax EMatch constr
+R4824:4828 Fo.Semantics FoSemantics VUnit constr
+def 4849:4864 FoSemantics interp_tail_expr
+R4871:4874 Fo.Syntax FoSyntax expr ind
+binder 4867:4867 <> e:76
+R4879:4890 Fo.Semantics FoSemantics tail_outcome ind
+R4903:4903 Fo.Semantics <> e:76 var
+R4914:4918 Fo.Syntax FoSyntax ECall constr
+R4931:4937 Fo.Semantics FoSemantics TORecur constr
+R4943:4945 Corelib.Lists.ListDef <> map def
+R4947:4957 Fo.Semantics FoSemantics interp_expr def
+R4974:4981 Fo.Semantics FoSemantics TOReturn constr
+R4984:4994 Fo.Semantics FoSemantics interp_expr def
+R4996:4996 Fo.Semantics <> e:76 var
+def 5018:5028 FoSemantics interp_stmt
+R5036:5038 Fo.Semantics FoSemantics env def
+binder 5031:5032 <> ρ:78
+R5046:5049 Fo.Syntax FoSyntax stmt ind
+binder 5042:5042 <> s:79
+R5054:5059 Fo.Semantics FoSemantics result ind
+R5072:5072 Fo.Semantics <> s:79 var
+R5083:5087 Fo.Syntax FoSyntax SBind constr
+R5096:5104 Fo.Semantics FoSemantics RContinue constr
+R5106:5107 Fo.Semantics <> ρ:78 var
+R5113:5119 Fo.Syntax FoSyntax SReturn constr
+R5126:5132 Fo.Semantics FoSemantics RReturn constr
+R5135:5145 Fo.Semantics FoSemantics interp_expr def
+R5154:5156 Fo.Syntax FoSyntax SIf constr
+R5167:5175 Fo.Semantics FoSemantics RContinue constr
+R5177:5178 Fo.Semantics <> ρ:78 var
+R5184:5189 Fo.Syntax FoSyntax SMatch constr
+R5198:5206 Fo.Semantics FoSemantics RContinue constr
+R5208:5209 Fo.Semantics <> ρ:78 var
+def 5230:5241 FoSemantics interp_block
+R5249:5251 Fo.Semantics FoSemantics env def
+binder 5244:5245 <> ρ:81
+R5260:5263 Corelib.Init.Datatypes <> list ind
+R5265:5268 Fo.Syntax FoSyntax stmt ind
+binder 5255:5256 <> ss:82
+R5273:5278 Fo.Semantics FoSemantics result ind
+R5291:5292 Fo.Semantics <> ss:82 var
+R5303:5304 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R5309:5317 Fo.Semantics FoSemantics RContinue constr
+R5319:5320 Fo.Semantics <> ρ:81 var
+R5327:5330 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R5336:5346 Fo.Semantics FoSemantics interp_stmt def
+R5348:5349 Fo.Semantics <> ρ:81 var
+def 5372:5380 FoSemantics eval_expr
+R5388:5394 Fo.Syntax FoSyntax program rec
+binder 5383:5384 <> _p:84
+R5404:5406 Fo.Semantics FoSemantics env def
+binder 5398:5400 <> _ρ:85
+R5414:5417 Fo.Syntax FoSyntax expr ind
+binder 5410:5410 <> e:86
+R5425:5429 Fo.Semantics FoSemantics value ind
+binder 5421:5421 <> v:87
+R5457:5459 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5444:5454 Fo.Semantics FoSemantics interp_expr def
+R5456:5456 Fo.Semantics <> e:86 var
+R5460:5460 Fo.Semantics <> v:87 var
+def 5475:5483 FoSemantics eval_stmt
+R5491:5497 Fo.Syntax FoSyntax program rec
+binder 5486:5487 <> _p:88
+R5506:5508 Fo.Semantics FoSemantics env def
+binder 5501:5502 <> ρ:89
+R5516:5519 Fo.Syntax FoSyntax stmt ind
+binder 5512:5512 <> s:90
+R5527:5532 Fo.Semantics FoSemantics result ind
+binder 5523:5523 <> r:91
+R5563:5565 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5547:5557 Fo.Semantics FoSemantics interp_stmt def
+R5559:5560 Fo.Semantics <> ρ:89 var
+R5562:5562 Fo.Semantics <> s:90 var
+R5566:5566 Fo.Semantics <> r:91 var
+def 5581:5590 FoSemantics eval_block
+R5598:5604 Fo.Syntax FoSyntax program rec
+binder 5593:5594 <> _p:92
+R5613:5615 Fo.Semantics FoSemantics env def
+binder 5608:5609 <> ρ:93
+R5624:5627 Corelib.Init.Datatypes <> list ind
+R5629:5632 Fo.Syntax FoSyntax stmt ind
+binder 5619:5620 <> ss:94
+R5640:5645 Fo.Semantics FoSemantics result ind
+binder 5636:5636 <> r:95
+R5678:5680 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5660:5671 Fo.Semantics FoSemantics interp_block def
+R5673:5674 Fo.Semantics <> ρ:93 var
+R5676:5677 Fo.Semantics <> ss:94 var
+R5681:5681 Fo.Semantics <> r:95 var
+def 5696:5716 FoSemantics expr_observational_eq
+R5727:5730 Fo.Syntax FoSyntax expr ind
+binder 5719:5720 <> e1:96
+binder 5722:5723 <> e2:97
+R5759:5761 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5745:5755 Fo.Semantics FoSemantics interp_expr def
+R5757:5758 Fo.Semantics <> e1:96 var
+R5762:5772 Fo.Semantics FoSemantics interp_expr def
+R5774:5775 Fo.Semantics <> e2:97 var
+def 5790:5810 FoSemantics stmt_observational_eq
+R5818:5820 Fo.Semantics FoSemantics env def
+binder 5813:5814 <> ρ:98
+R5832:5835 Fo.Syntax FoSyntax stmt ind
+binder 5824:5825 <> s1:99
+binder 5827:5828 <> s2:100
+R5867:5869 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5850:5860 Fo.Semantics FoSemantics interp_stmt def
+R5862:5863 Fo.Semantics <> ρ:98 var
+R5865:5866 Fo.Semantics <> s1:99 var
+R5870:5880 Fo.Semantics FoSemantics interp_stmt def
+R5882:5883 Fo.Semantics <> ρ:98 var
+R5885:5886 Fo.Semantics <> s2:100 var
+def 5901:5922 FoSemantics block_observational_eq
+R5930:5932 Fo.Semantics FoSemantics env def
+binder 5925:5926 <> ρ:101
+R5946:5949 Corelib.Init.Datatypes <> list ind
+R5951:5954 Fo.Syntax FoSyntax stmt ind
+binder 5936:5938 <> ss1:102
+binder 5940:5942 <> ss2:103
+R5988:5990 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R5969:5980 Fo.Semantics FoSemantics interp_block def
+R5982:5983 Fo.Semantics <> ρ:101 var
+R5985:5987 Fo.Semantics <> ss1:102 var
+R5991:6002 Fo.Semantics FoSemantics interp_block def
+R6004:6005 Fo.Semantics <> ρ:101 var
+R6007:6009 Fo.Semantics <> ss2:103 var
+def 6024:6044 FoSemantics tail_observational_eq
+R6055:6058 Fo.Syntax FoSyntax expr ind
+binder 6047:6048 <> e1:104
+binder 6050:6051 <> e2:105
+R6092:6094 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6073:6088 Fo.Semantics FoSemantics interp_tail_expr def
+R6090:6091 Fo.Semantics <> e1:104 var
+R6095:6110 Fo.Semantics FoSemantics interp_tail_expr def
+R6112:6113 Fo.Semantics <> e2:105 var
+def 6128:6148 FoSemantics match_branch_observed
+R6155:6159 Fo.Semantics FoSemantics value ind
+binder 6151:6151 <> v:106
+R6171:6174 Corelib.Init.Datatypes <> list ind
+R6184:6186 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R6177:6183 Fo.Syntax FoSyntax pattern ind
+R6187:6190 Fo.Syntax FoSyntax expr ind
+binder 6163:6167 <> cases:107
+R6202:6205 Fo.Syntax FoSyntax expr ind
+binder 6195:6198 <> body:108
+R6245:6247 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6220:6236 Fo.Semantics FoSemantics select_match_expr def
+R6238:6238 Fo.Semantics <> v:106 var
+R6240:6244 Fo.Semantics <> cases:107 var
+R6248:6251 Corelib.Init.Datatypes <> Some constr
+R6253:6256 Fo.Semantics <> body:108 var
+def 6271:6296 FoSemantics match_stmt_branch_observed
+R6303:6307 Fo.Semantics FoSemantics value ind
+binder 6299:6299 <> v:109
+R6319:6322 Corelib.Init.Datatypes <> list ind
+R6332:6334 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R6325:6331 Fo.Syntax FoSyntax pattern ind
+R6335:6338 Corelib.Init.Datatypes <> list ind
+R6340:6343 Fo.Syntax FoSyntax stmt ind
+binder 6311:6315 <> cases:110
+R6355:6358 Corelib.Init.Datatypes <> list ind
+R6360:6363 Fo.Syntax FoSyntax stmt ind
+binder 6348:6351 <> body:111
+R6403:6405 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R6378:6394 Fo.Semantics FoSemantics select_match_stmt def
+R6396:6396 Fo.Semantics <> v:109 var
+R6398:6402 Fo.Semantics <> cases:110 var
+R6406:6409 Corelib.Init.Datatypes <> Some constr
+R6411:6414 Fo.Semantics <> body:111 var
+def 6427:6451 FoSemantics ctor_mismatch_expr_prefix
+R6461:6466 Stdlib.Strings.String <> string ind
+binder 6454:6457 <> ctor:112
+R6478:6481 Corelib.Init.Datatypes <> list ind
+R6491:6493 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R6484:6490 Fo.Syntax FoSyntax pattern ind
+R6494:6497 Fo.Syntax FoSyntax expr ind
+binder 6470:6474 <> cases:113
+R6519:6523 Fo.Semantics <> cases:113 var
+R6534:6535 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R6540:6543 Corelib.Init.Logic <> True ind
+R6567:6570 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R6549:6549 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R6563:6564 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R6566:6566 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R6550:6554 Fo.Syntax FoSyntax PCtor constr
+R6592:6595 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R6584:6587 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R6588:6591 Fo.Semantics <> ctor:112 var
+R6596:6620 Fo.Semantics <> ctor_mismatch_expr_prefix:114 def
+R6622:6625 Fo.Semantics <> ctor:112 var
+R6637:6640 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R6646:6650 Corelib.Init.Logic <> False ind
+def 6669:6693 FoSemantics ctor_mismatch_stmt_prefix
+R6703:6708 Stdlib.Strings.String <> string ind
+binder 6696:6699 <> ctor:116
+R6720:6723 Corelib.Init.Datatypes <> list ind
+R6733:6735 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R6726:6732 Fo.Syntax FoSyntax pattern ind
+R6736:6739 Corelib.Init.Datatypes <> list ind
+R6741:6744 Fo.Syntax FoSyntax stmt ind
+binder 6712:6716 <> cases:117
+R6766:6770 Fo.Semantics <> cases:117 var
+R6781:6782 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R6787:6790 Corelib.Init.Logic <> True ind
+R6814:6817 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R6796:6796 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R6810:6811 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R6813:6813 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R6797:6801 Fo.Syntax FoSyntax PCtor constr
+R6839:6842 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R6831:6834 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R6835:6838 Fo.Semantics <> ctor:116 var
+R6843:6867 Fo.Semantics <> ctor_mismatch_stmt_prefix:118 def
+R6869:6872 Fo.Semantics <> ctor:116 var
+R6884:6887 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R6893:6897 Corelib.Init.Logic <> False ind
+ind 6917:6937 FoSemantics ctor_expr_cases_cover
+constr 7000:7011 FoSemantics CECC_CtorHit
+constr 7116:7127 FoSemantics CECC_WildHit
+constr 7217:7230 FoSemantics CECC_BinderHit
+constr 7332:7344 FoSemantics CECC_SkipCtor
+R6947:6952 Stdlib.Strings.String <> string ind
+binder 6940:6943 <> ctor:120
+R6978:6981 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6957:6960 Corelib.Init.Datatypes <> list ind
+R6970:6972 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R6963:6969 Fo.Syntax FoSyntax pattern ind
+R6973:6976 Fo.Syntax FoSyntax expr ind
+R6986:6989 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R6982:6985 Fo.Syntax FoSyntax expr ind
+binder 7026:7029 <> pats:123
+binder 7031:7034 <> body:124
+binder 7036:7039 <> rest:125
+R7048:7068 Fo.Semantics <> ctor_expr_cases_cover:121 ind
+R7109:7112 Fo.Semantics <> body:124 var
+R7099:7102 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R7076:7076 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7092:7093 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7098:7098 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7077:7081 Fo.Syntax FoSyntax PCtor constr
+R7083:7086 Fo.Semantics <> ctor:120 var
+R7088:7091 Fo.Semantics <> pats:123 var
+R7094:7097 Fo.Semantics <> body:124 var
+R7103:7106 Fo.Semantics <> rest:125 var
+R7070:7073 Fo.Semantics <> ctor:120 var
+binder 7142:7145 <> body:126
+binder 7147:7150 <> rest:127
+R7159:7179 Fo.Semantics <> ctor_expr_cases_cover:121 ind
+R7210:7213 Fo.Semantics <> body:126 var
+R7200:7203 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R7187:7187 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7193:7194 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7199:7199 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7188:7192 Fo.Syntax FoSyntax PWild constr
+R7195:7198 Fo.Semantics <> body:126 var
+R7204:7207 Fo.Semantics <> rest:127 var
+R7181:7184 Fo.Semantics <> ctor:120 var
+binder 7245:7248 <> name:128
+binder 7250:7253 <> body:129
+binder 7255:7258 <> rest:130
+R7267:7287 Fo.Semantics <> ctor_expr_cases_cover:121 ind
+R7325:7328 Fo.Semantics <> body:129 var
+R7315:7318 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R7295:7295 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7308:7309 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7314:7314 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7296:7302 Fo.Syntax FoSyntax PBinder constr
+R7304:7307 Fo.Semantics <> name:128 var
+R7310:7313 Fo.Semantics <> body:129 var
+R7319:7322 Fo.Semantics <> rest:130 var
+R7289:7292 Fo.Semantics <> ctor:120 var
+binder 7359:7363 <> other:131
+binder 7365:7368 <> pats:132
+binder 7370:7377 <> skipBody:133
+binder 7379:7382 <> rest:134
+binder 7384:7387 <> body:135
+R7409:7418 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R7401:7404 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R7396:7400 Fo.Semantics <> other:131 var
+R7405:7408 Fo.Semantics <> ctor:120 var
+R7455:7464 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R7419:7439 Fo.Semantics <> ctor_expr_cases_cover:121 ind
+R7451:7454 Fo.Semantics <> body:135 var
+R7446:7449 Fo.Semantics <> rest:134 var
+R7441:7444 Fo.Semantics <> ctor:120 var
+R7465:7485 Fo.Semantics <> ctor_expr_cases_cover:121 ind
+R7531:7534 Fo.Semantics <> body:135 var
+R7521:7524 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R7493:7493 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7510:7511 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7520:7520 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7494:7498 Fo.Syntax FoSyntax PCtor constr
+R7500:7504 Fo.Semantics <> other:131 var
+R7506:7509 Fo.Semantics <> pats:132 var
+R7512:7519 Fo.Semantics <> skipBody:133 var
+R7525:7528 Fo.Semantics <> rest:134 var
+R7487:7490 Fo.Semantics <> ctor:120 var
+scheme 6917:6937 FoSemantics ctor_expr_cases_cover_ind
+scheme 6917:6937 FoSemantics ctor_expr_cases_cover_sind
+ind 7548:7568 FoSemantics ctor_stmt_cases_cover
+constr 7641:7652 FoSemantics CSCC_CtorHit
+constr 7757:7768 FoSemantics CSCC_WildHit
+constr 7858:7871 FoSemantics CSCC_BinderHit
+constr 7973:7985 FoSemantics CSCC_SkipCtor
+R7578:7583 Stdlib.Strings.String <> string ind
+binder 7571:7574 <> ctor:136
+R7614:7617 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R7588:7591 Corelib.Init.Datatypes <> list ind
+R7601:7603 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R7594:7600 Fo.Syntax FoSyntax pattern ind
+R7604:7607 Corelib.Init.Datatypes <> list ind
+R7609:7612 Fo.Syntax FoSyntax stmt ind
+R7627:7630 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R7618:7621 Corelib.Init.Datatypes <> list ind
+R7623:7626 Fo.Syntax FoSyntax stmt ind
+binder 7667:7670 <> pats:139
+binder 7672:7675 <> body:140
+binder 7677:7680 <> rest:141
+R7689:7709 Fo.Semantics <> ctor_stmt_cases_cover:137 ind
+R7750:7753 Fo.Semantics <> body:140 var
+R7740:7743 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R7717:7717 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7733:7734 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7739:7739 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7718:7722 Fo.Syntax FoSyntax PCtor constr
+R7724:7727 Fo.Semantics <> ctor:136 var
+R7729:7732 Fo.Semantics <> pats:139 var
+R7735:7738 Fo.Semantics <> body:140 var
+R7744:7747 Fo.Semantics <> rest:141 var
+R7711:7714 Fo.Semantics <> ctor:136 var
+binder 7783:7786 <> body:142
+binder 7788:7791 <> rest:143
+R7800:7820 Fo.Semantics <> ctor_stmt_cases_cover:137 ind
+R7851:7854 Fo.Semantics <> body:142 var
+R7841:7844 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R7828:7828 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7834:7835 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7840:7840 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7829:7833 Fo.Syntax FoSyntax PWild constr
+R7836:7839 Fo.Semantics <> body:142 var
+R7845:7848 Fo.Semantics <> rest:143 var
+R7822:7825 Fo.Semantics <> ctor:136 var
+binder 7886:7889 <> name:144
+binder 7891:7894 <> body:145
+binder 7896:7899 <> rest:146
+R7908:7928 Fo.Semantics <> ctor_stmt_cases_cover:137 ind
+R7966:7969 Fo.Semantics <> body:145 var
+R7956:7959 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R7936:7936 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7949:7950 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7955:7955 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R7937:7943 Fo.Syntax FoSyntax PBinder constr
+R7945:7948 Fo.Semantics <> name:144 var
+R7951:7954 Fo.Semantics <> body:145 var
+R7960:7963 Fo.Semantics <> rest:146 var
+R7930:7933 Fo.Semantics <> ctor:136 var
+binder 8000:8004 <> other:147
+binder 8006:8009 <> pats:148
+binder 8011:8018 <> skipBody:149
+binder 8020:8023 <> rest:150
+binder 8025:8028 <> body:151
+R8050:8059 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8042:8045 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R8037:8041 Fo.Semantics <> other:147 var
+R8046:8049 Fo.Semantics <> ctor:136 var
+R8096:8105 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R8060:8080 Fo.Semantics <> ctor_stmt_cases_cover:137 ind
+R8092:8095 Fo.Semantics <> body:151 var
+R8087:8090 Fo.Semantics <> rest:150 var
+R8082:8085 Fo.Semantics <> ctor:136 var
+R8106:8126 Fo.Semantics <> ctor_stmt_cases_cover:137 ind
+R8172:8175 Fo.Semantics <> body:151 var
+R8162:8165 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R8134:8134 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R8151:8152 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R8161:8161 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R8135:8139 Fo.Syntax FoSyntax PCtor constr
+R8141:8145 Fo.Semantics <> other:147 var
+R8147:8150 Fo.Semantics <> pats:148 var
+R8153:8160 Fo.Semantics <> skipBody:149 var
+R8166:8169 Fo.Semantics <> rest:150 var
+R8128:8131 Fo.Semantics <> ctor:136 var
+scheme 7548:7568 FoSemantics ctor_stmt_cases_cover_ind
+scheme 7548:7568 FoSemantics ctor_stmt_cases_cover_sind
+def 8190:8215 FoSemantics ctor_expr_cases_exhaustive
+R8225:8230 Stdlib.Strings.String <> string ind
+binder 8218:8221 <> ctor:152
+R8242:8245 Corelib.Init.Datatypes <> list ind
+R8255:8257 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R8248:8254 Fo.Syntax FoSyntax pattern ind
+R8258:8261 Fo.Syntax FoSyntax expr ind
+binder 8234:8238 <> cases:153
+R8277:8283 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R8288:8289 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 8284:8287 <> body:154
+R8290:8310 Fo.Semantics FoSemantics ctor_expr_cases_cover ind
+R8312:8315 Fo.Semantics <> ctor:152 var
+R8317:8321 Fo.Semantics <> cases:153 var
+R8323:8326 Fo.Semantics <> body:154 var
+def 8341:8366 FoSemantics ctor_stmt_cases_exhaustive
+R8376:8381 Stdlib.Strings.String <> string ind
+binder 8369:8372 <> ctor:155
+R8393:8396 Corelib.Init.Datatypes <> list ind
+R8406:8408 Corelib.Init.Datatypes <> ::type_scope:x_'*'_x not
+R8399:8405 Fo.Syntax FoSyntax pattern ind
+R8409:8412 Corelib.Init.Datatypes <> list ind
+R8414:8417 Fo.Syntax FoSyntax stmt ind
+binder 8385:8389 <> cases:156
+R8433:8439 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R8444:8445 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 8440:8443 <> body:157
+R8446:8466 Fo.Semantics FoSemantics ctor_stmt_cases_cover ind
+R8468:8471 Fo.Semantics <> ctor:155 var
+R8473:8477 Fo.Semantics <> cases:156 var
+R8479:8482 Fo.Semantics <> body:157 var
+def 8497:8518 FoSemantics enum_encoding_observed
+R8525:8529 Fo.Semantics FoSemantics value ind
+binder 8521:8521 <> v:158
+R8539:8544 Stdlib.Strings.String <> string ind
+binder 8533:8535 <> tag:159
+R8558:8561 Corelib.Init.Datatypes <> list ind
+R8563:8567 Fo.Semantics FoSemantics value ind
+binder 8548:8554 <> payload:160
+R8606:8609 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R8595:8597 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R8582:8592 Fo.Semantics FoSemantics enum_tag_of def
+R8594:8594 Fo.Semantics <> v:158 var
+R8598:8601 Corelib.Init.Datatypes <> Some constr
+R8603:8605 Fo.Semantics <> tag:159 var
+R8627:8629 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R8610:8624 Fo.Semantics FoSemantics enum_payload_of def
+R8626:8626 Fo.Semantics <> v:158 var
+R8630:8633 Corelib.Init.Datatypes <> Some constr
+R8635:8641 Fo.Semantics <> payload:160 var
+def 8656:8680 FoSemantics copy_update_path_observed
+R8690:8694 Fo.Semantics FoSemantics value ind
+binder 8683:8686 <> base:161
+R8705:8708 Corelib.Init.Datatypes <> list ind
+R8710:8715 Stdlib.Strings.String <> string ind
+binder 8698:8701 <> path:162
+R8730:8734 Fo.Semantics FoSemantics value ind
+binder 8719:8722 <> newv:163
+binder 8724:8726 <> out:164
+R8792:8797 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R8781:8783 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R8749:8765 Fo.Semantics FoSemantics update_value_path def
+R8767:8770 Fo.Semantics <> base:161 var
+R8772:8775 Fo.Semantics <> path:162 var
+R8777:8780 Fo.Semantics <> newv:163 var
+R8784:8787 Corelib.Init.Datatypes <> Some constr
+R8789:8791 Fo.Semantics <> out:164 var
+R8824:8826 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R8798:8814 Fo.Semantics FoSemantics lookup_value_path def
+R8816:8818 Fo.Semantics <> out:164 var
+R8820:8823 Fo.Semantics <> path:162 var
+R8827:8830 Corelib.Init.Datatypes <> Some constr
+R8832:8835 Fo.Semantics <> newv:163 var
+def 8850:8874 FoSemantics copy_update_head_observed
+R8884:8888 Fo.Semantics FoSemantics value ind
+binder 8877:8880 <> base:165
+R8899:8902 Corelib.Init.Datatypes <> list ind
+R8904:8909 Stdlib.Strings.String <> string ind
+binder 8892:8895 <> path:166
+R8924:8928 Fo.Semantics FoSemantics value ind
+binder 8913:8916 <> newv:167
+binder 8918:8920 <> out:168
+R8949:8952 Fo.Semantics <> path:166 var
+R8963:8964 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R8972:8974 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R8969:8971 Fo.Semantics <> out:168 var
+R8975:8978 Fo.Semantics <> newv:167 var
+R8987:8990 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R9005:9011 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R9036:9045 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 9012:9015 <> name:170
+binder 9017:9022 <> fields:171
+binder 9024:9028 <> child:172
+binder 9030:9035 <> child':173
+R9072:9083 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R9050:9052 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9046:9049 Fo.Semantics <> base:165 var
+R9053:9059 Fo.Semantics FoSemantics VStruct constr
+R9061:9064 Fo.Semantics <> name:170 var
+R9066:9071 Fo.Semantics <> fields:171 var
+R9120:9131 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R9107:9109 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9084:9095 Fo.Semantics FoSemantics lookup_field def
+R9097:9102 Fo.Semantics <> fields:171 var
+R9110:9113 Corelib.Init.Datatypes <> Some constr
+R9115:9119 Fo.Semantics <> child:172 var
+R9179:9190 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R9165:9167 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9132:9148 Fo.Semantics FoSemantics update_value_path def
+R9150:9154 Fo.Semantics <> child:172 var
+R9161:9164 Fo.Semantics <> newv:167 var
+R9168:9171 Corelib.Init.Datatypes <> Some constr
+R9173:9178 Fo.Semantics <> child':173 var
+R9194:9196 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9191:9193 Fo.Semantics <> out:168 var
+R9197:9203 Fo.Semantics FoSemantics VStruct constr
+R9205:9208 Fo.Semantics <> name:170 var
+R9211:9222 Fo.Semantics FoSemantics update_field def
+R9224:9229 Fo.Semantics <> fields:171 var
+R9235:9240 Fo.Semantics <> child':173 var
+def 9262:9288 FoSemantics copy_update_prefix_observed
+R9298:9302 Fo.Semantics FoSemantics value ind
+binder 9291:9294 <> base:174
+R9313:9316 Corelib.Init.Datatypes <> list ind
+R9318:9323 Stdlib.Strings.String <> string ind
+binder 9306:9309 <> path:175
+R9338:9342 Fo.Semantics FoSemantics value ind
+binder 9327:9330 <> newv:176
+binder 9332:9334 <> out:177
+R9363:9366 Fo.Semantics <> path:175 var
+R9377:9378 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R9386:9388 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9383:9385 Fo.Semantics <> out:177 var
+R9389:9392 Fo.Semantics <> newv:176 var
+R9401:9404 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R9419:9425 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R9450:9459 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 9426:9429 <> name:179
+binder 9431:9436 <> fields:180
+binder 9438:9442 <> child:181
+binder 9444:9449 <> child':182
+R9486:9497 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R9464:9466 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9460:9463 Fo.Semantics <> base:174 var
+R9467:9473 Fo.Semantics FoSemantics VStruct constr
+R9475:9478 Fo.Semantics <> name:179 var
+R9480:9485 Fo.Semantics <> fields:180 var
+R9534:9545 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R9521:9523 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9498:9509 Fo.Semantics FoSemantics lookup_field def
+R9511:9516 Fo.Semantics <> fields:180 var
+R9524:9527 Corelib.Init.Datatypes <> Some constr
+R9529:9533 Fo.Semantics <> child:181 var
+R9593:9604 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R9579:9581 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9546:9562 Fo.Semantics FoSemantics update_value_path def
+R9564:9568 Fo.Semantics <> child:181 var
+R9575:9578 Fo.Semantics <> newv:176 var
+R9582:9585 Corelib.Init.Datatypes <> Some constr
+R9587:9592 Fo.Semantics <> child':182 var
+R9656:9667 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R9608:9610 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9605:9607 Fo.Semantics <> out:177 var
+R9611:9617 Fo.Semantics FoSemantics VStruct constr
+R9619:9622 Fo.Semantics <> name:179 var
+R9625:9636 Fo.Semantics FoSemantics update_field def
+R9638:9643 Fo.Semantics <> fields:180 var
+R9649:9654 Fo.Semantics <> child':182 var
+R9668:9692 Fo.Semantics FoSemantics copy_update_path_observed def
+R9694:9698 Fo.Semantics <> child:181 var
+R9705:9708 Fo.Semantics <> newv:176 var
+R9710:9715 Fo.Semantics <> child':182 var
+def 9736:9765 FoSemantics pipeline_stage_result_observed
+R9776:9780 Fo.Semantics FoSemantics value ind
+binder 9768:9772 <> input:183
+R9792:9805 Fo.Semantics FoSemantics pipeline_stage ind
+binder 9784:9788 <> stage:184
+R9833:9837 Fo.Semantics <> stage:184 var
+R9826:9830 Fo.Semantics <> input:183 var
+R9848:9853 Fo.Semantics FoSemantics VTuple constr
+R9862:9866 Fo.Semantics FoSemantics PSMap constr
+R9901:9903 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9871:9888 Fo.Semantics FoSemantics run_pipeline_stage def
+R9890:9894 Fo.Semantics <> input:183 var
+R9896:9900 Fo.Semantics <> stage:184 var
+R9904:9909 Fo.Semantics FoSemantics VTuple constr
+R9921:9926 Fo.Semantics FoSemantics VTuple constr
+R9928:9929 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R9932:9939 Fo.Semantics FoSemantics PSFilter constr
+R9974:9976 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R9944:9961 Fo.Semantics FoSemantics run_pipeline_stage def
+R9963:9967 Fo.Semantics <> input:183 var
+R9969:9973 Fo.Semantics <> stage:184 var
+R9977:9982 Fo.Semantics FoSemantics VTuple constr
+R9984:9985 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R9991:9996 Fo.Semantics FoSemantics VTuple constr
+R10000:10003 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R10012:10019 Fo.Semantics FoSemantics PSFilter constr
+R10054:10056 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R10024:10041 Fo.Semantics FoSemantics run_pipeline_stage def
+R10043:10047 Fo.Semantics <> input:183 var
+R10049:10053 Fo.Semantics <> stage:184 var
+R10057:10062 Fo.Semantics FoSemantics VTuple constr
+R10074:10079 Fo.Semantics FoSemantics VTuple constr
+R10081:10082 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R10085:10090 Fo.Semantics FoSemantics PSFold constr
+R10125:10127 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R10095:10112 Fo.Semantics FoSemantics run_pipeline_stage def
+R10114:10118 Fo.Semantics <> input:183 var
+R10120:10124 Fo.Semantics <> stage:184 var
+R10128:10132 Fo.Semantics FoSemantics VUnit constr
+R10138:10143 Fo.Semantics FoSemantics VTuple constr
+R10150:10153 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R10158:10163 Fo.Semantics FoSemantics PSFold constr
+R10198:10200 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R10168:10185 Fo.Semantics FoSemantics run_pipeline_stage def
+R10187:10191 Fo.Semantics <> input:183 var
+R10193:10197 Fo.Semantics <> stage:184 var
+R10248:10250 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R10218:10235 Fo.Semantics FoSemantics run_pipeline_stage def
+R10237:10241 Fo.Semantics <> input:183 var
+R10243:10247 Fo.Semantics <> stage:184 var
+R10251:10255 Fo.Semantics <> input:183 var
+def 10276:10305 FoSemantics pipeline_single_stage_observed
+R10316:10320 Fo.Semantics FoSemantics value ind
+binder 10308:10312 <> input:187
+R10332:10345 Fo.Semantics FoSemantics pipeline_stage ind
+binder 10324:10328 <> stage:188
+R10426:10431 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R10393:10395 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R10360:10378 Fo.Semantics FoSemantics run_pipeline_stages def
+R10380:10384 Fo.Semantics <> input:187 var
+R10386:10386 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R10392:10392 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R10387:10391 Fo.Semantics <> stage:188 var
+R10396:10413 Fo.Semantics FoSemantics run_pipeline_stage def
+R10415:10419 Fo.Semantics <> input:187 var
+R10421:10425 Fo.Semantics <> stage:188 var
+R10432:10461 Fo.Semantics FoSemantics pipeline_stage_result_observed def
+R10463:10467 Fo.Semantics <> input:187 var
+R10469:10473 Fo.Semantics <> stage:188 var
+def 10486:10514 FoSemantics pipeline_stage_trace_observed
+R10525:10529 Fo.Semantics FoSemantics value ind
+binder 10517:10521 <> input:189
+R10542:10545 Corelib.Init.Datatypes <> list ind
+R10547:10560 Fo.Semantics FoSemantics pipeline_stage ind
+binder 10533:10538 <> stages:190
+R10581:10586 Fo.Semantics <> stages:190 var
+R10597:10598 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R10603:10606 Corelib.Init.Logic <> True ind
+R10617:10620 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R10677:10686 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R10635:10664 Fo.Semantics FoSemantics pipeline_single_stage_observed def
+R10666:10670 Fo.Semantics <> input:189 var
+R10687:10715 Fo.Semantics <> pipeline_stage_trace_observed:191 def
+R10718:10735 Fo.Semantics FoSemantics run_pipeline_stage def
+R10737:10741 Fo.Semantics <> input:189 var
+def 10774:10797 FoSemantics pipeline_stages_observed
+R10808:10812 Fo.Semantics FoSemantics value ind
+binder 10800:10804 <> input:193
+R10825:10828 Corelib.Init.Datatypes <> list ind
+R10830:10843 Fo.Semantics FoSemantics pipeline_stage ind
+binder 10816:10821 <> stages:194
+R10934:10939 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R10890:10892 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R10858:10876 Fo.Semantics FoSemantics run_pipeline_stages def
+R10878:10882 Fo.Semantics <> input:193 var
+R10884:10889 Fo.Semantics <> stages:194 var
+R10893:10901 Stdlib.Lists.List <> fold_left def
+R10929:10933 Fo.Semantics <> input:193 var
+R10922:10927 Fo.Semantics <> stages:194 var
+R10903:10920 Fo.Semantics FoSemantics run_pipeline_stage def
+R10940:10968 Fo.Semantics FoSemantics pipeline_stage_trace_observed def
+R10970:10974 Fo.Semantics <> input:193 var
+R10976:10981 Fo.Semantics <> stages:194 var
+def 10996:11014 FoSemantics tail_recur_observed
+R11021:11024 Fo.Syntax FoSyntax expr ind
+binder 11017:11017 <> e:195
+R11033:11038 Stdlib.Strings.String <> string ind
+binder 11028:11029 <> fn:196
+R11049:11052 Corelib.Init.Datatypes <> list ind
+R11054:11058 Fo.Semantics FoSemantics value ind
+binder 11042:11045 <> args:197
+R11091:11093 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11073:11088 Fo.Semantics FoSemantics interp_tail_expr def
+R11090:11090 Fo.Semantics <> e:195 var
+R11094:11100 Fo.Semantics FoSemantics TORecur constr
+R11102:11103 Fo.Semantics <> fn:196 var
+R11105:11108 Fo.Semantics <> args:197 var
+def 11123:11146 FoSemantics tail_call_shape_observed
+R11153:11156 Fo.Syntax FoSyntax expr ind
+binder 11149:11149 <> e:198
+R11165:11170 Stdlib.Strings.String <> string ind
+binder 11160:11161 <> fn:199
+R11181:11184 Corelib.Init.Datatypes <> list ind
+R11186:11190 Fo.Semantics FoSemantics value ind
+binder 11174:11177 <> args:200
+R11205:11211 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R11220:11221 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 11212:11219 <> exprArgs:201
+R11243:11246 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R11223:11225 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11222:11222 Fo.Semantics <> e:198 var
+R11226:11230 Fo.Syntax FoSyntax ECall constr
+R11232:11233 Fo.Semantics <> fn:199 var
+R11235:11242 Fo.Semantics <> exprArgs:201 var
+R11251:11253 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11247:11250 Fo.Semantics <> args:200 var
+R11254:11256 Corelib.Lists.ListDef <> map def
+R11270:11277 Fo.Semantics <> exprArgs:201 var
+R11258:11268 Fo.Semantics FoSemantics interp_expr def
+prf 11287:11305 FoSemantics lookup_field_shadow
+binder 11318:11321 <> name:202
+binder 11323:11323 <> v:203
+binder 11325:11328 <> rest:204
+R11372:11374 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11335:11346 Fo.Semantics FoSemantics lookup_field def
+R11358:11361 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R11349:11349 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R11354:11355 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R11357:11357 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R11350:11353 Fo.Semantics <> name:202 var
+R11356:11356 Fo.Semantics <> v:203 var
+R11362:11365 Fo.Semantics <> rest:204 var
+R11368:11371 Fo.Semantics <> name:202 var
+R11375:11378 Corelib.Init.Datatypes <> Some constr
+R11380:11380 Fo.Semantics <> v:203 var
+R11415:11429 Stdlib.Strings.String <> eqb_refl thm
+R11415:11429 Stdlib.Strings.String <> eqb_refl thm
+R11415:11429 Stdlib.Strings.String <> eqb_refl thm
+prf 11457:11476 FoSemantics lookup_field_updated
+binder 11489:11494 <> fields:205
+binder 11496:11499 <> name:206
+binder 11501:11504 <> newv:207
+R11560:11562 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R11511:11522 Fo.Semantics FoSemantics lookup_field def
+R11525:11536 Fo.Semantics FoSemantics update_field def
+R11538:11543 Fo.Semantics <> fields:205 var
+R11545:11548 Fo.Semantics <> name:206 var
+R11550:11553 Fo.Semantics <> newv:207 var
+R11556:11559 Fo.Semantics <> name:206 var
+R11563:11566 Corelib.Init.Datatypes <> Some constr
+R11568:11571 Fo.Semantics <> newv:207 var
+R11665:11679 Stdlib.Strings.String <> eqb_refl thm
+R11665:11679 Stdlib.Strings.String <> eqb_refl thm
+R11665:11679 Stdlib.Strings.String <> eqb_refl thm
+R11716:11725 Stdlib.Strings.String <> eqb def
+R11716:11725 Stdlib.Strings.String <> eqb def
+R11758:11770 Stdlib.Strings.String <> eqb_eq thm
+R11758:11770 Stdlib.Strings.String <> eqb_eq thm
+R11812:11826 Stdlib.Strings.String <> eqb_refl thm
+R11812:11826 Stdlib.Strings.String <> eqb_refl thm
+R11812:11826 Stdlib.Strings.String <> eqb_refl thm
+prf 11890:11915 FoSemantics expr_observational_eq_refl
+binder 11928:11928 <> e:208
+R11931:11951 Fo.Semantics FoSemantics expr_observational_eq def
+R11953:11953 Fo.Semantics <> e:208 var
+R11955:11955 Fo.Semantics <> e:208 var
+prf 11992:12017 FoSemantics expr_observational_eq_symm
+binder 12030:12031 <> e1:209
+binder 12033:12034 <> e2:210
+R12068:12075 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R12041:12061 Fo.Semantics FoSemantics expr_observational_eq def
+R12063:12064 Fo.Semantics <> e1:209 var
+R12066:12067 Fo.Semantics <> e2:210 var
+R12076:12096 Fo.Semantics FoSemantics expr_observational_eq def
+R12098:12099 Fo.Semantics <> e2:210 var
+R12101:12102 Fo.Semantics <> e1:209 var
+R12137:12157 Fo.Semantics FoSemantics expr_observational_eq def
+prf 12196:12222 FoSemantics expr_observational_eq_trans
+binder 12235:12236 <> e1:211
+binder 12238:12239 <> e2:212
+binder 12241:12242 <> e3:213
+R12276:12283 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R12249:12269 Fo.Semantics FoSemantics expr_observational_eq def
+R12271:12272 Fo.Semantics <> e1:211 var
+R12274:12275 Fo.Semantics <> e2:212 var
+R12311:12318 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R12284:12304 Fo.Semantics FoSemantics expr_observational_eq def
+R12306:12307 Fo.Semantics <> e2:212 var
+R12309:12310 Fo.Semantics <> e3:213 var
+R12319:12339 Fo.Semantics FoSemantics expr_observational_eq def
+R12341:12342 Fo.Semantics <> e1:211 var
+R12344:12345 Fo.Semantics <> e3:213 var
+R12389:12409 Fo.Semantics FoSemantics expr_observational_eq def
+prf 12441:12466 FoSemantics stmt_observational_eq_refl
+binder 12479:12480 <> ρ:214
+binder 12482:12482 <> s:215
+R12485:12505 Fo.Semantics FoSemantics stmt_observational_eq def
+R12507:12508 Fo.Semantics <> ρ:214 var
+R12510:12510 Fo.Semantics <> s:215 var
+R12512:12512 Fo.Semantics <> s:215 var
+prf 12549:12575 FoSemantics block_observational_eq_refl
+binder 12588:12589 <> ρ:216
+binder 12591:12592 <> ss:217
+R12595:12616 Fo.Semantics FoSemantics block_observational_eq def
+R12618:12619 Fo.Semantics <> ρ:216 var
+R12621:12622 Fo.Semantics <> ss:217 var
+R12624:12625 Fo.Semantics <> ss:217 var
+prf 12662:12687 FoSemantics tail_observational_eq_refl
+binder 12700:12700 <> e:218
+R12703:12723 Fo.Semantics FoSemantics tail_observational_eq def
+R12725:12725 Fo.Semantics <> e:218 var
+R12727:12727 Fo.Semantics <> e:218 var
+prf 12764:12802 FoSemantics copy_update_projects_base_observational
+binder 12815:12818 <> base:219
+binder 12820:12823 <> path:220
+binder 12825:12829 <> value:221
+R12836:12856 Fo.Semantics FoSemantics expr_observational_eq def
+R12859:12869 Fo.Syntax FoSyntax ECopyUpdate constr
+R12871:12874 Fo.Semantics <> base:219 var
+R12876:12879 Fo.Semantics <> path:220 var
+R12881:12885 Fo.Semantics <> value:221 var
+R12888:12891 Fo.Semantics <> base:219 var
+prf 12928:12957 FoSemantics if_projects_then_observational
+binder 12970:12973 <> cond:222
+binder 12975:12977 <> yes:223
+binder 12979:12980 <> no:224
+R12987:13007 Fo.Semantics FoSemantics expr_observational_eq def
+R13010:13012 Fo.Syntax FoSyntax EIf constr
+R13014:13017 Fo.Semantics <> cond:222 var
+R13019:13021 Fo.Semantics <> yes:223 var
+R13023:13024 Fo.Semantics <> no:224 var
+R13027:13029 Fo.Semantics <> yes:223 var
+prf 13066:13087 FoSemantics lookup_value_path_root
+binder 13100:13100 <> v:225
+R13125:13127 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13103:13119 Fo.Semantics FoSemantics lookup_value_path def
+R13121:13121 Fo.Semantics <> v:225 var
+R13123:13124 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R13128:13131 Corelib.Init.Datatypes <> Some constr
+R13133:13133 Fo.Semantics <> v:225 var
+prf 13170:13191 FoSemantics update_value_path_root
+binder 13204:13204 <> v:226
+binder 13206:13209 <> newv:227
+R13239:13241 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13212:13228 Fo.Semantics FoSemantics update_value_path def
+R13230:13230 Fo.Semantics <> v:226 var
+R13232:13233 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R13235:13238 Fo.Semantics <> newv:227 var
+R13242:13245 Corelib.Init.Datatypes <> Some constr
+R13247:13250 Fo.Semantics <> newv:227 var
+prf 13287:13302 FoSemantics enum_tag_of_ctor
+binder 13315:13318 <> name:228
+binder 13320:13323 <> args:229
+R13355:13357 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13326:13336 Fo.Semantics FoSemantics enum_tag_of def
+R13339:13343 Fo.Semantics FoSemantics VCtor constr
+R13345:13348 Fo.Semantics <> name:228 var
+R13350:13353 Fo.Semantics <> args:229 var
+R13358:13361 Corelib.Init.Datatypes <> Some constr
+R13363:13366 Fo.Semantics <> name:228 var
+prf 13403:13422 FoSemantics enum_payload_of_ctor
+binder 13435:13438 <> name:230
+binder 13440:13443 <> args:231
+R13479:13481 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13446:13460 Fo.Semantics FoSemantics enum_payload_of def
+R13463:13467 Fo.Semantics FoSemantics VCtor constr
+R13469:13472 Fo.Semantics <> name:230 var
+R13474:13477 Fo.Semantics <> args:231 var
+R13482:13485 Corelib.Init.Datatypes <> Some constr
+R13487:13490 Fo.Semantics <> args:231 var
+prf 13527:13553 FoSemantics enum_encoding_observed_ctor
+binder 13566:13569 <> name:232
+binder 13571:13574 <> args:233
+R13581:13602 Fo.Semantics FoSemantics enum_encoding_observed def
+R13605:13609 Fo.Semantics FoSemantics VCtor constr
+R13611:13614 Fo.Semantics <> name:232 var
+R13616:13619 Fo.Semantics <> args:233 var
+R13622:13625 Fo.Semantics <> name:232 var
+R13627:13630 Fo.Semantics <> args:233 var
+R13667:13682 Fo.Semantics FoSemantics enum_tag_of_ctor thm
+R13667:13682 Fo.Semantics FoSemantics enum_tag_of_ctor thm
+R13695:13714 Fo.Semantics FoSemantics enum_payload_of_ctor thm
+R13695:13714 Fo.Semantics FoSemantics enum_payload_of_ctor thm
+prf 13729:13743 FoSemantics ctor_tag_eq_inv
+binder 13756:13760 <> other:234
+binder 13762:13765 <> ctor:235
+R13806:13813 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R13788:13790 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13779:13782 Stdlib.Strings.String <> ::string_scope:x_'++'_x not
+R13783:13787 Fo.Semantics <> other:234 var
+R13798:13801 Stdlib.Strings.String <> ::string_scope:x_'++'_x not
+R13802:13805 Fo.Semantics <> ctor:235 var
+R13819:13821 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13814:13818 Fo.Semantics <> other:234 var
+R13822:13825 Fo.Semantics <> ctor:235 var
+R13921:13923 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13904:13916 Stdlib.Strings.String <> String constr
+R13924:13936 Stdlib.Strings.String <> String constr
+R13921:13923 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R13904:13916 Stdlib.Strings.String <> String constr
+R13924:13936 Stdlib.Strings.String <> String constr
+prf 14007:14022 FoSemantics ctor_tag_eqb_neq
+binder 14035:14039 <> other:236
+binder 14041:14044 <> ctor:237
+R14064:14071 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R14056:14059 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R14051:14055 Fo.Semantics <> other:236 var
+R14060:14063 Fo.Semantics <> ctor:237 var
+R14119:14121 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R14072:14081 Stdlib.Strings.String <> eqb def
+R14091:14094 Stdlib.Strings.String <> ::string_scope:x_'++'_x not
+R14095:14099 Fo.Semantics <> other:236 var
+R14110:14113 Stdlib.Strings.String <> ::string_scope:x_'++'_x not
+R14114:14117 Fo.Semantics <> ctor:237 var
+R14122:14126 Corelib.Init.Datatypes <> false constr
+R14170:14183 Stdlib.Strings.String <> eqb_neq thm
+R14170:14183 Stdlib.Strings.String <> eqb_neq thm
+R14222:14236 Fo.Semantics FoSemantics ctor_tag_eq_inv thm
+R14222:14236 Fo.Semantics FoSemantics ctor_tag_eq_inv thm
+prf 14267:14288 FoSemantics select_match_expr_wild
+binder 14301:14301 <> v:238
+binder 14303:14306 <> body:239
+binder 14308:14311 <> rest:240
+R14361:14363 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R14318:14334 Fo.Semantics FoSemantics select_match_expr def
+R14336:14336 Fo.Semantics <> v:238 var
+R14352:14355 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R14339:14339 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14345:14346 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14351:14351 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14340:14344 Fo.Syntax FoSyntax PWild constr
+R14347:14350 Fo.Semantics <> body:239 var
+R14356:14359 Fo.Semantics <> rest:240 var
+R14364:14367 Corelib.Init.Datatypes <> Some constr
+R14369:14372 Fo.Semantics <> body:239 var
+prf 14424:14447 FoSemantics select_match_expr_binder
+binder 14460:14460 <> v:241
+binder 14462:14465 <> name:242
+binder 14467:14470 <> body:243
+binder 14472:14475 <> rest:244
+R14532:14534 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R14482:14498 Fo.Semantics FoSemantics select_match_expr def
+R14500:14500 Fo.Semantics <> v:241 var
+R14523:14526 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R14503:14503 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14516:14517 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14522:14522 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14504:14510 Fo.Syntax FoSyntax PBinder constr
+R14512:14515 Fo.Semantics <> name:242 var
+R14518:14521 Fo.Semantics <> body:243 var
+R14527:14530 Fo.Semantics <> rest:244 var
+R14535:14538 Corelib.Init.Datatypes <> Some constr
+R14540:14543 Fo.Semantics <> body:243 var
+prf 14595:14617 FoSemantics select_match_expr_tuple
+binder 14630:14631 <> ps:245
+binder 14633:14634 <> vs:246
+binder 14636:14639 <> body:247
+binder 14641:14644 <> rest:248
+R14651:14671 Fo.Semantics FoSemantics match_branch_observed def
+R14674:14679 Fo.Semantics FoSemantics VTuple constr
+R14681:14682 Fo.Semantics <> vs:246 var
+R14703:14706 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R14686:14686 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14696:14697 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14702:14702 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14687:14692 Fo.Syntax FoSyntax PTuple constr
+R14694:14695 Fo.Semantics <> ps:245 var
+R14698:14701 Fo.Semantics <> body:247 var
+R14707:14710 Fo.Semantics <> rest:248 var
+R14713:14716 Fo.Semantics <> body:247 var
+R14743:14763 Fo.Semantics FoSemantics match_branch_observed def
+prf 14798:14819 FoSemantics select_match_expr_ctor
+binder 14832:14835 <> ctor:249
+binder 14837:14840 <> pats:250
+binder 14842:14845 <> args:251
+binder 14847:14850 <> body:252
+binder 14852:14855 <> rest:253
+R14862:14882 Fo.Semantics FoSemantics match_branch_observed def
+R14885:14889 Fo.Semantics FoSemantics VCtor constr
+R14891:14894 Fo.Semantics <> ctor:249 var
+R14896:14899 Fo.Semantics <> args:251 var
+R14926:14929 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R14903:14903 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14919:14920 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14925:14925 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R14904:14908 Fo.Syntax FoSyntax PCtor constr
+R14910:14913 Fo.Semantics <> ctor:249 var
+R14915:14918 Fo.Semantics <> pats:250 var
+R14921:14924 Fo.Semantics <> body:252 var
+R14930:14933 Fo.Semantics <> rest:253 var
+R14936:14939 Fo.Semantics <> body:252 var
+R14993:15013 Fo.Semantics FoSemantics match_branch_observed def
+R15033:15047 Stdlib.Strings.String <> eqb_refl thm
+R15033:15047 Stdlib.Strings.String <> eqb_refl thm
+R15033:15047 Stdlib.Strings.String <> eqb_refl thm
+prf 15075:15110 FoSemantics select_match_expr_skip_ctor_mismatch
+binder 15123:15126 <> ctor:254
+binder 15128:15132 <> other:255
+binder 15134:15137 <> pats:256
+binder 15139:15142 <> args:257
+binder 15144:15147 <> body:258
+binder 15149:15152 <> rest:259
+R15172:15179 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R15164:15167 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R15159:15163 Fo.Semantics <> other:255 var
+R15168:15171 Fo.Semantics <> ctor:254 var
+R15250:15258 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R15180:15196 Fo.Semantics FoSemantics select_match_expr def
+R15199:15203 Fo.Semantics FoSemantics VCtor constr
+R15205:15208 Fo.Semantics <> ctor:254 var
+R15210:15213 Fo.Semantics <> args:257 var
+R15241:15244 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R15217:15217 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15234:15235 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15240:15240 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15218:15222 Fo.Syntax FoSyntax PCtor constr
+R15224:15228 Fo.Semantics <> other:255 var
+R15230:15233 Fo.Semantics <> pats:256 var
+R15236:15239 Fo.Semantics <> body:258 var
+R15245:15248 Fo.Semantics <> rest:259 var
+R15259:15275 Fo.Semantics FoSemantics select_match_expr def
+R15278:15282 Fo.Semantics FoSemantics VCtor constr
+R15284:15287 Fo.Semantics <> ctor:254 var
+R15289:15292 Fo.Semantics <> args:257 var
+R15295:15298 Fo.Semantics <> rest:259 var
+R15361:15377 Fo.Semantics FoSemantics select_match_expr def
+R15379:15398 Fo.Semantics FoSemantics head_pattern_matches def
+R15413:15422 Stdlib.Strings.String <> eqb def
+R15441:15445 Corelib.Init.Datatypes <> false constr
+R15413:15422 Stdlib.Strings.String <> eqb def
+R15441:15445 Corelib.Init.Datatypes <> false constr
+R15474:15487 Stdlib.Strings.String <> eqb_neq thm
+R15474:15487 Stdlib.Strings.String <> eqb_neq thm
+prf 15533:15554 FoSemantics select_match_stmt_wild
+binder 15567:15567 <> v:260
+binder 15569:15572 <> body:261
+binder 15574:15577 <> rest:262
+R15627:15629 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R15584:15600 Fo.Semantics FoSemantics select_match_stmt def
+R15602:15602 Fo.Semantics <> v:260 var
+R15618:15621 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R15605:15605 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15611:15612 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15617:15617 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15606:15610 Fo.Syntax FoSyntax PWild constr
+R15613:15616 Fo.Semantics <> body:261 var
+R15622:15625 Fo.Semantics <> rest:262 var
+R15630:15633 Corelib.Init.Datatypes <> Some constr
+R15635:15638 Fo.Semantics <> body:261 var
+prf 15690:15713 FoSemantics select_match_stmt_binder
+binder 15726:15726 <> v:263
+binder 15728:15731 <> name:264
+binder 15733:15736 <> body:265
+binder 15738:15741 <> rest:266
+R15798:15800 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R15748:15764 Fo.Semantics FoSemantics select_match_stmt def
+R15766:15766 Fo.Semantics <> v:263 var
+R15789:15792 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R15769:15769 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15782:15783 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15788:15788 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15770:15776 Fo.Syntax FoSyntax PBinder constr
+R15778:15781 Fo.Semantics <> name:264 var
+R15784:15787 Fo.Semantics <> body:265 var
+R15793:15796 Fo.Semantics <> rest:266 var
+R15801:15804 Corelib.Init.Datatypes <> Some constr
+R15806:15809 Fo.Semantics <> body:265 var
+prf 15861:15883 FoSemantics select_match_stmt_tuple
+binder 15896:15897 <> ps:267
+binder 15899:15900 <> vs:268
+binder 15902:15905 <> body:269
+binder 15907:15910 <> rest:270
+R15917:15942 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R15945:15950 Fo.Semantics FoSemantics VTuple constr
+R15952:15953 Fo.Semantics <> vs:268 var
+R15974:15977 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R15957:15957 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15967:15968 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15973:15973 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R15958:15963 Fo.Syntax FoSyntax PTuple constr
+R15965:15966 Fo.Semantics <> ps:267 var
+R15969:15972 Fo.Semantics <> body:269 var
+R15978:15981 Fo.Semantics <> rest:270 var
+R15984:15987 Fo.Semantics <> body:269 var
+R16014:16039 Fo.Semantics FoSemantics match_stmt_branch_observed def
+prf 16074:16095 FoSemantics select_match_stmt_ctor
+binder 16108:16111 <> ctor:271
+binder 16113:16116 <> pats:272
+binder 16118:16121 <> args:273
+binder 16123:16126 <> body:274
+binder 16128:16131 <> rest:275
+R16138:16163 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R16166:16170 Fo.Semantics FoSemantics VCtor constr
+R16172:16175 Fo.Semantics <> ctor:271 var
+R16177:16180 Fo.Semantics <> args:273 var
+R16207:16210 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R16184:16184 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R16200:16201 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R16206:16206 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R16185:16189 Fo.Syntax FoSyntax PCtor constr
+R16191:16194 Fo.Semantics <> ctor:271 var
+R16196:16199 Fo.Semantics <> pats:272 var
+R16202:16205 Fo.Semantics <> body:274 var
+R16211:16214 Fo.Semantics <> rest:275 var
+R16217:16220 Fo.Semantics <> body:274 var
+R16274:16299 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R16319:16333 Stdlib.Strings.String <> eqb_refl thm
+R16319:16333 Stdlib.Strings.String <> eqb_refl thm
+R16319:16333 Stdlib.Strings.String <> eqb_refl thm
+prf 16361:16384 FoSemantics select_match_expr_struct
+binder 16397:16400 <> name:276
+binder 16402:16403 <> fs:277
+binder 16405:16410 <> fields:278
+binder 16412:16415 <> body:279
+binder 16417:16420 <> rest:280
+R16427:16447 Fo.Semantics FoSemantics match_branch_observed def
+R16450:16456 Fo.Semantics FoSemantics VStruct constr
+R16458:16461 Fo.Semantics <> name:276 var
+R16463:16468 Fo.Semantics <> fields:278 var
+R16495:16498 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R16472:16472 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R16488:16489 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R16494:16494 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R16473:16479 Fo.Syntax FoSyntax PStruct constr
+R16481:16484 Fo.Semantics <> name:276 var
+R16486:16487 Fo.Semantics <> fs:277 var
+R16490:16493 Fo.Semantics <> body:279 var
+R16499:16502 Fo.Semantics <> rest:280 var
+R16505:16508 Fo.Semantics <> body:279 var
+R16535:16555 Fo.Semantics FoSemantics match_branch_observed def
+R16573:16587 Stdlib.Strings.String <> eqb_refl thm
+R16573:16587 Stdlib.Strings.String <> eqb_refl thm
+R16573:16587 Stdlib.Strings.String <> eqb_refl thm
+prf 16615:16638 FoSemantics select_match_stmt_struct
+binder 16651:16654 <> name:281
+binder 16656:16657 <> fs:282
+binder 16659:16664 <> fields:283
+binder 16666:16669 <> body:284
+binder 16671:16674 <> rest:285
+R16681:16706 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R16709:16715 Fo.Semantics FoSemantics VStruct constr
+R16717:16720 Fo.Semantics <> name:281 var
+R16722:16727 Fo.Semantics <> fields:283 var
+R16754:16757 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R16731:16731 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R16747:16748 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R16753:16753 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R16732:16738 Fo.Syntax FoSyntax PStruct constr
+R16740:16743 Fo.Semantics <> name:281 var
+R16745:16746 Fo.Semantics <> fs:282 var
+R16749:16752 Fo.Semantics <> body:284 var
+R16758:16761 Fo.Semantics <> rest:285 var
+R16764:16767 Fo.Semantics <> body:284 var
+R16794:16819 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R16837:16851 Stdlib.Strings.String <> eqb_refl thm
+R16837:16851 Stdlib.Strings.String <> eqb_refl thm
+R16837:16851 Stdlib.Strings.String <> eqb_refl thm
+prf 16879:16914 FoSemantics select_match_stmt_skip_ctor_mismatch
+binder 16927:16930 <> ctor:286
+binder 16932:16936 <> other:287
+binder 16938:16941 <> pats:288
+binder 16943:16946 <> args:289
+binder 16948:16951 <> body:290
+binder 16953:16956 <> rest:291
+R16976:16983 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R16968:16971 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R16963:16967 Fo.Semantics <> other:287 var
+R16972:16975 Fo.Semantics <> ctor:286 var
+R17054:17062 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R16984:17000 Fo.Semantics FoSemantics select_match_stmt def
+R17003:17007 Fo.Semantics FoSemantics VCtor constr
+R17009:17012 Fo.Semantics <> ctor:286 var
+R17014:17017 Fo.Semantics <> args:289 var
+R17045:17048 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R17021:17021 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R17038:17039 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R17044:17044 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R17022:17026 Fo.Syntax FoSyntax PCtor constr
+R17028:17032 Fo.Semantics <> other:287 var
+R17034:17037 Fo.Semantics <> pats:288 var
+R17040:17043 Fo.Semantics <> body:290 var
+R17049:17052 Fo.Semantics <> rest:291 var
+R17063:17079 Fo.Semantics FoSemantics select_match_stmt def
+R17082:17086 Fo.Semantics FoSemantics VCtor constr
+R17088:17091 Fo.Semantics <> ctor:286 var
+R17093:17096 Fo.Semantics <> args:289 var
+R17099:17102 Fo.Semantics <> rest:291 var
+R17165:17181 Fo.Semantics FoSemantics select_match_stmt def
+R17183:17202 Fo.Semantics FoSemantics head_pattern_matches def
+R17217:17226 Stdlib.Strings.String <> eqb def
+R17245:17249 Corelib.Init.Datatypes <> false constr
+R17217:17226 Stdlib.Strings.String <> eqb def
+R17245:17249 Corelib.Init.Datatypes <> false constr
+R17278:17291 Stdlib.Strings.String <> eqb_neq thm
+R17278:17291 Stdlib.Strings.String <> eqb_neq thm
+prf 17337:17374 FoSemantics select_match_expr_skip_ctor_mismatches
+binder 17387:17390 <> ctor:292
+binder 17392:17395 <> args:293
+binder 17397:17402 <> prefix:294
+binder 17404:17407 <> rest:295
+R17451:17458 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R17414:17438 Fo.Semantics FoSemantics ctor_mismatch_expr_prefix def
+R17440:17443 Fo.Semantics <> ctor:292 var
+R17445:17450 Fo.Semantics <> prefix:294 var
+R17511:17519 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R17459:17475 Fo.Semantics FoSemantics select_match_expr def
+R17478:17482 Fo.Semantics FoSemantics VCtor constr
+R17484:17487 Fo.Semantics <> ctor:292 var
+R17489:17492 Fo.Semantics <> args:293 var
+R17502:17505 Corelib.Init.Datatypes <> ::list_scope:x_'++'_x not
+R17496:17501 Fo.Semantics <> prefix:294 var
+R17506:17509 Fo.Semantics <> rest:295 var
+R17520:17536 Fo.Semantics FoSemantics select_match_expr def
+R17539:17543 Fo.Semantics FoSemantics VCtor constr
+R17545:17548 Fo.Semantics <> ctor:292 var
+R17550:17553 Fo.Semantics <> args:293 var
+R17556:17559 Fo.Semantics <> rest:295 var
+R17841:17853 Stdlib.Lists.List <> app_comm_cons thm
+R17841:17853 Stdlib.Lists.List <> app_comm_cons thm
+R17841:17853 Stdlib.Lists.List <> app_comm_cons thm
+R17868:17903 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatch thm
+R17868:17903 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatch thm
+R17868:17903 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatch thm
+prf 17959:17996 FoSemantics select_match_stmt_skip_ctor_mismatches
+binder 18009:18012 <> ctor:296
+binder 18014:18017 <> args:297
+binder 18019:18024 <> prefix:298
+binder 18026:18029 <> rest:299
+R18073:18080 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R18036:18060 Fo.Semantics FoSemantics ctor_mismatch_stmt_prefix def
+R18062:18065 Fo.Semantics <> ctor:296 var
+R18067:18072 Fo.Semantics <> prefix:298 var
+R18133:18141 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R18081:18097 Fo.Semantics FoSemantics select_match_stmt def
+R18100:18104 Fo.Semantics FoSemantics VCtor constr
+R18106:18109 Fo.Semantics <> ctor:296 var
+R18111:18114 Fo.Semantics <> args:297 var
+R18124:18127 Corelib.Init.Datatypes <> ::list_scope:x_'++'_x not
+R18118:18123 Fo.Semantics <> prefix:298 var
+R18128:18131 Fo.Semantics <> rest:299 var
+R18142:18158 Fo.Semantics FoSemantics select_match_stmt def
+R18161:18165 Fo.Semantics FoSemantics VCtor constr
+R18167:18170 Fo.Semantics <> ctor:296 var
+R18172:18175 Fo.Semantics <> args:297 var
+R18178:18181 Fo.Semantics <> rest:299 var
+R18463:18475 Stdlib.Lists.List <> app_comm_cons thm
+R18463:18475 Stdlib.Lists.List <> app_comm_cons thm
+R18463:18475 Stdlib.Lists.List <> app_comm_cons thm
+R18490:18525 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatch thm
+R18490:18525 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatch thm
+R18490:18525 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatch thm
+prf 18581:18624 FoSemantics select_match_expr_ctor_after_ctor_mismatches
+binder 18637:18640 <> ctor:300
+binder 18642:18645 <> pats:301
+binder 18647:18650 <> args:302
+binder 18652:18657 <> prefix:303
+binder 18659:18662 <> body:304
+binder 18664:18667 <> rest:305
+R18711:18718 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R18674:18698 Fo.Semantics FoSemantics ctor_mismatch_expr_prefix def
+R18700:18703 Fo.Semantics <> ctor:300 var
+R18705:18710 Fo.Semantics <> prefix:303 var
+R18719:18739 Fo.Semantics FoSemantics match_branch_observed def
+R18742:18746 Fo.Semantics FoSemantics VCtor constr
+R18748:18751 Fo.Semantics <> ctor:300 var
+R18753:18756 Fo.Semantics <> args:302 var
+R18766:18769 Corelib.Init.Datatypes <> ::list_scope:x_'++'_x not
+R18760:18765 Fo.Semantics <> prefix:303 var
+R18793:18796 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R18770:18770 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R18786:18787 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R18792:18792 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R18771:18775 Fo.Syntax FoSyntax PCtor constr
+R18777:18780 Fo.Semantics <> ctor:300 var
+R18782:18785 Fo.Semantics <> pats:301 var
+R18788:18791 Fo.Semantics <> body:304 var
+R18797:18800 Fo.Semantics <> rest:305 var
+R18803:18806 Fo.Semantics <> body:304 var
+R18875:18895 Fo.Semantics FoSemantics match_branch_observed def
+R18908:18945 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatches thm
+R18908:18945 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatches thm
+R18908:18945 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatches thm
+R18973:18994 Fo.Semantics FoSemantics select_match_expr_ctor thm
+R18973:18994 Fo.Semantics FoSemantics select_match_expr_ctor thm
+prf 19009:19052 FoSemantics select_match_expr_wild_after_ctor_mismatches
+binder 19065:19068 <> ctor:306
+binder 19070:19073 <> args:307
+binder 19075:19080 <> prefix:308
+binder 19082:19085 <> body:309
+binder 19087:19090 <> rest:310
+R19134:19141 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R19097:19121 Fo.Semantics FoSemantics ctor_mismatch_expr_prefix def
+R19123:19126 Fo.Semantics <> ctor:306 var
+R19128:19133 Fo.Semantics <> prefix:308 var
+R19142:19162 Fo.Semantics FoSemantics match_branch_observed def
+R19165:19169 Fo.Semantics FoSemantics VCtor constr
+R19171:19174 Fo.Semantics <> ctor:306 var
+R19176:19179 Fo.Semantics <> args:307 var
+R19189:19192 Corelib.Init.Datatypes <> ::list_scope:x_'++'_x not
+R19183:19188 Fo.Semantics <> prefix:308 var
+R19206:19209 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R19193:19193 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R19199:19200 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R19205:19205 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R19194:19198 Fo.Syntax FoSyntax PWild constr
+R19201:19204 Fo.Semantics <> body:309 var
+R19210:19213 Fo.Semantics <> rest:310 var
+R19216:19219 Fo.Semantics <> body:309 var
+R19283:19303 Fo.Semantics FoSemantics match_branch_observed def
+R19316:19353 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatches thm
+R19316:19353 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatches thm
+R19316:19353 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatches thm
+R19381:19402 Fo.Semantics FoSemantics select_match_expr_wild thm
+R19381:19402 Fo.Semantics FoSemantics select_match_expr_wild thm
+prf 19417:19460 FoSemantics select_match_stmt_ctor_after_ctor_mismatches
+binder 19473:19476 <> ctor:311
+binder 19478:19481 <> pats:312
+binder 19483:19486 <> args:313
+binder 19488:19493 <> prefix:314
+binder 19495:19498 <> body:315
+binder 19500:19503 <> rest:316
+R19547:19554 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R19510:19534 Fo.Semantics FoSemantics ctor_mismatch_stmt_prefix def
+R19536:19539 Fo.Semantics <> ctor:311 var
+R19541:19546 Fo.Semantics <> prefix:314 var
+R19555:19580 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R19583:19587 Fo.Semantics FoSemantics VCtor constr
+R19589:19592 Fo.Semantics <> ctor:311 var
+R19594:19597 Fo.Semantics <> args:313 var
+R19607:19610 Corelib.Init.Datatypes <> ::list_scope:x_'++'_x not
+R19601:19606 Fo.Semantics <> prefix:314 var
+R19634:19637 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R19611:19611 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R19627:19628 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R19633:19633 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R19612:19616 Fo.Syntax FoSyntax PCtor constr
+R19618:19621 Fo.Semantics <> ctor:311 var
+R19623:19626 Fo.Semantics <> pats:312 var
+R19629:19632 Fo.Semantics <> body:315 var
+R19638:19641 Fo.Semantics <> rest:316 var
+R19644:19647 Fo.Semantics <> body:315 var
+R19716:19741 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R19754:19791 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatches thm
+R19754:19791 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatches thm
+R19754:19791 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatches thm
+R19819:19840 Fo.Semantics FoSemantics select_match_stmt_ctor thm
+R19819:19840 Fo.Semantics FoSemantics select_match_stmt_ctor thm
+prf 19855:19898 FoSemantics select_match_stmt_wild_after_ctor_mismatches
+binder 19911:19914 <> ctor:317
+binder 19916:19919 <> args:318
+binder 19921:19926 <> prefix:319
+binder 19928:19931 <> body:320
+binder 19933:19936 <> rest:321
+R19980:19987 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R19943:19967 Fo.Semantics FoSemantics ctor_mismatch_stmt_prefix def
+R19969:19972 Fo.Semantics <> ctor:317 var
+R19974:19979 Fo.Semantics <> prefix:319 var
+R19988:20013 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R20016:20020 Fo.Semantics FoSemantics VCtor constr
+R20022:20025 Fo.Semantics <> ctor:317 var
+R20027:20030 Fo.Semantics <> args:318 var
+R20040:20043 Corelib.Init.Datatypes <> ::list_scope:x_'++'_x not
+R20034:20039 Fo.Semantics <> prefix:319 var
+R20057:20060 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R20044:20044 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R20050:20051 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R20056:20056 Corelib.Init.Datatypes <> ::core_scope:'('_x_','_x_','_'..'_','_x_')' not
+R20045:20049 Fo.Syntax FoSyntax PWild constr
+R20052:20055 Fo.Semantics <> body:320 var
+R20061:20064 Fo.Semantics <> rest:321 var
+R20067:20070 Fo.Semantics <> body:320 var
+R20134:20159 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R20172:20209 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatches thm
+R20172:20209 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatches thm
+R20172:20209 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatches thm
+R20237:20258 Fo.Semantics FoSemantics select_match_stmt_wild thm
+R20237:20258 Fo.Semantics FoSemantics select_match_stmt_wild thm
+prf 20273:20303 FoSemantics select_match_expr_of_ctor_cover
+binder 20316:20319 <> ctor:322
+binder 20321:20324 <> args:323
+binder 20326:20330 <> cases:324
+binder 20332:20335 <> body:325
+R20379:20386 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R20342:20362 Fo.Semantics FoSemantics ctor_expr_cases_cover ind
+R20364:20367 Fo.Semantics <> ctor:322 var
+R20369:20373 Fo.Semantics <> cases:324 var
+R20375:20378 Fo.Semantics <> body:325 var
+R20387:20407 Fo.Semantics FoSemantics match_branch_observed def
+R20410:20414 Fo.Semantics FoSemantics VCtor constr
+R20416:20419 Fo.Semantics <> ctor:322 var
+R20421:20424 Fo.Semantics <> args:323 var
+R20427:20431 Fo.Semantics <> cases:324 var
+R20433:20436 Fo.Semantics <> body:325 var
+R20514:20535 Fo.Semantics FoSemantics select_match_expr_ctor thm
+R20514:20535 Fo.Semantics FoSemantics select_match_expr_ctor thm
+R20548:20569 Fo.Semantics FoSemantics select_match_expr_wild thm
+R20548:20569 Fo.Semantics FoSemantics select_match_expr_wild thm
+R20582:20605 Fo.Semantics FoSemantics select_match_expr_binder thm
+R20582:20605 Fo.Semantics FoSemantics select_match_expr_binder thm
+R20619:20639 Fo.Semantics FoSemantics match_branch_observed def
+R20655:20690 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatch thm
+R20655:20690 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatch thm
+R20655:20690 Fo.Semantics FoSemantics select_match_expr_skip_ctor_mismatch thm
+prf 20732:20762 FoSemantics select_match_stmt_of_ctor_cover
+binder 20775:20778 <> ctor:326
+binder 20780:20783 <> args:327
+binder 20785:20789 <> cases:328
+binder 20791:20794 <> body:329
+R20838:20845 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R20801:20821 Fo.Semantics FoSemantics ctor_stmt_cases_cover ind
+R20823:20826 Fo.Semantics <> ctor:326 var
+R20828:20832 Fo.Semantics <> cases:328 var
+R20834:20837 Fo.Semantics <> body:329 var
+R20846:20871 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R20874:20878 Fo.Semantics FoSemantics VCtor constr
+R20880:20883 Fo.Semantics <> ctor:326 var
+R20885:20888 Fo.Semantics <> args:327 var
+R20891:20895 Fo.Semantics <> cases:328 var
+R20897:20900 Fo.Semantics <> body:329 var
+R20978:20999 Fo.Semantics FoSemantics select_match_stmt_ctor thm
+R20978:20999 Fo.Semantics FoSemantics select_match_stmt_ctor thm
+R21012:21033 Fo.Semantics FoSemantics select_match_stmt_wild thm
+R21012:21033 Fo.Semantics FoSemantics select_match_stmt_wild thm
+R21046:21069 Fo.Semantics FoSemantics select_match_stmt_binder thm
+R21046:21069 Fo.Semantics FoSemantics select_match_stmt_binder thm
+R21083:21108 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R21124:21159 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatch thm
+R21124:21159 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatch thm
+R21124:21159 Fo.Semantics FoSemantics select_match_stmt_skip_ctor_mismatch thm
+prf 21201:21238 FoSemantics select_match_expr_exists_of_exhaustive
+binder 21251:21254 <> ctor:330
+binder 21256:21259 <> args:331
+binder 21261:21265 <> cases:332
+R21309:21316 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R21272:21297 Fo.Semantics FoSemantics ctor_expr_cases_exhaustive def
+R21299:21302 Fo.Semantics <> ctor:330 var
+R21304:21308 Fo.Semantics <> cases:332 var
+R21317:21323 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R21328:21329 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 21324:21327 <> body:333
+R21330:21350 Fo.Semantics FoSemantics match_branch_observed def
+R21353:21357 Fo.Semantics FoSemantics VCtor constr
+R21359:21362 Fo.Semantics <> ctor:330 var
+R21364:21367 Fo.Semantics <> args:331 var
+R21370:21374 Fo.Semantics <> cases:332 var
+R21376:21379 Fo.Semantics <> body:333 var
+R21451:21481 Fo.Semantics FoSemantics select_match_expr_of_ctor_cover thm
+R21451:21481 Fo.Semantics FoSemantics select_match_expr_of_ctor_cover thm
+prf 21525:21562 FoSemantics select_match_stmt_exists_of_exhaustive
+binder 21575:21578 <> ctor:334
+binder 21580:21583 <> args:335
+binder 21585:21589 <> cases:336
+R21633:21640 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R21596:21621 Fo.Semantics FoSemantics ctor_stmt_cases_exhaustive def
+R21623:21626 Fo.Semantics <> ctor:334 var
+R21628:21632 Fo.Semantics <> cases:336 var
+R21641:21647 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R21652:21653 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 21648:21651 <> body:337
+R21654:21679 Fo.Semantics FoSemantics match_stmt_branch_observed def
+R21682:21686 Fo.Semantics FoSemantics VCtor constr
+R21688:21691 Fo.Semantics <> ctor:334 var
+R21693:21696 Fo.Semantics <> args:335 var
+R21699:21703 Fo.Semantics <> cases:336 var
+R21705:21708 Fo.Semantics <> body:337 var
+R21780:21810 Fo.Semantics FoSemantics select_match_stmt_of_ctor_cover thm
+R21780:21810 Fo.Semantics FoSemantics select_match_stmt_of_ctor_cover thm
+prf 21854:21876 FoSemantics run_pipeline_stages_nil
+binder 21889:21893 <> input:338
+R21924:21926 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R21896:21914 Fo.Semantics FoSemantics run_pipeline_stages def
+R21916:21920 Fo.Semantics <> input:338 var
+R21922:21923 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R21927:21931 Fo.Semantics <> input:338 var
+prf 21968:21997 FoSemantics copy_update_path_observed_root
+binder 22010:22013 <> base:339
+binder 22015:22018 <> newv:340
+R22025:22049 Fo.Semantics FoSemantics copy_update_path_observed def
+R22051:22054 Fo.Semantics <> base:339 var
+R22056:22057 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R22059:22062 Fo.Semantics <> newv:340 var
+R22064:22067 Fo.Semantics <> newv:340 var
+prf 22119:22148 FoSemantics copy_update_head_observed_root
+binder 22161:22164 <> base:341
+binder 22166:22169 <> newv:342
+R22176:22200 Fo.Semantics FoSemantics copy_update_head_observed def
+R22202:22205 Fo.Semantics <> base:341 var
+R22207:22208 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R22210:22213 Fo.Semantics <> newv:342 var
+R22215:22218 Fo.Semantics <> newv:342 var
+prf 22255:22286 FoSemantics copy_update_prefix_observed_root
+binder 22299:22302 <> base:343
+binder 22304:22307 <> newv:344
+R22314:22340 Fo.Semantics FoSemantics copy_update_prefix_observed def
+R22342:22345 Fo.Semantics <> base:343 var
+R22347:22348 Stdlib.Lists.List ListNotations ::list_scope:'['_']' not
+R22350:22353 Fo.Semantics <> newv:344 var
+R22355:22358 Fo.Semantics <> newv:344 var
+prf 22395:22426 FoSemantics lookup_value_path_update_success
+binder 22439:22442 <> base:345
+binder 22444:22447 <> path:346
+binder 22449:22452 <> newv:347
+binder 22454:22456 <> out:348
+R22506:22513 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R22495:22497 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R22463:22479 Fo.Semantics FoSemantics update_value_path def
+R22481:22484 Fo.Semantics <> base:345 var
+R22486:22489 Fo.Semantics <> path:346 var
+R22491:22494 Fo.Semantics <> newv:347 var
+R22498:22501 Corelib.Init.Datatypes <> Some constr
+R22503:22505 Fo.Semantics <> out:348 var
+R22540:22542 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R22514:22530 Fo.Semantics FoSemantics lookup_value_path def
+R22532:22534 Fo.Semantics <> out:348 var
+R22536:22539 Fo.Semantics <> path:346 var
+R22543:22546 Corelib.Init.Datatypes <> Some constr
+R22548:22551 Fo.Semantics <> newv:347 var
+R22823:22834 Fo.Semantics FoSemantics lookup_field def
+R22823:22834 Fo.Semantics FoSemantics lookup_field def
+R22891:22907 Fo.Semantics FoSemantics update_value_path def
+R22891:22907 Fo.Semantics FoSemantics update_value_path def
+R23002:23021 Fo.Semantics FoSemantics lookup_field_updated thm
+R23002:23021 Fo.Semantics FoSemantics lookup_field_updated thm
+R23002:23021 Fo.Semantics FoSemantics lookup_field_updated thm
+prf 23065:23100 FoSemantics copy_update_path_observed_of_success
+binder 23113:23116 <> base:349
+binder 23118:23121 <> path:350
+binder 23123:23126 <> newv:351
+binder 23128:23130 <> out:352
+R23180:23187 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R23169:23171 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R23137:23153 Fo.Semantics FoSemantics update_value_path def
+R23155:23158 Fo.Semantics <> base:349 var
+R23160:23163 Fo.Semantics <> path:350 var
+R23165:23168 Fo.Semantics <> newv:351 var
+R23172:23175 Corelib.Init.Datatypes <> Some constr
+R23177:23179 Fo.Semantics <> out:352 var
+R23188:23212 Fo.Semantics FoSemantics copy_update_path_observed def
+R23214:23217 Fo.Semantics <> base:349 var
+R23219:23222 Fo.Semantics <> path:350 var
+R23224:23227 Fo.Semantics <> newv:351 var
+R23229:23231 Fo.Semantics <> out:352 var
+R23309:23340 Fo.Semantics FoSemantics lookup_value_path_update_success thm
+R23309:23340 Fo.Semantics FoSemantics lookup_value_path_update_success thm
+prf 23380:23415 FoSemantics copy_update_head_observed_of_success
+binder 23428:23431 <> base:353
+binder 23433:23436 <> path:354
+binder 23438:23441 <> newv:355
+binder 23443:23445 <> out:356
+R23495:23502 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R23484:23486 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R23452:23468 Fo.Semantics FoSemantics update_value_path def
+R23470:23473 Fo.Semantics <> base:353 var
+R23475:23478 Fo.Semantics <> path:354 var
+R23480:23483 Fo.Semantics <> newv:355 var
+R23487:23490 Corelib.Init.Datatypes <> Some constr
+R23492:23494 Fo.Semantics <> out:356 var
+R23503:23527 Fo.Semantics FoSemantics copy_update_head_observed def
+R23529:23532 Fo.Semantics <> base:353 var
+R23534:23537 Fo.Semantics <> path:354 var
+R23539:23542 Fo.Semantics <> newv:355 var
+R23544:23546 Fo.Semantics <> out:356 var
+R23788:23799 Fo.Semantics FoSemantics lookup_field def
+R23788:23799 Fo.Semantics FoSemantics lookup_field def
+R23856:23872 Fo.Semantics FoSemantics update_value_path def
+R23856:23872 Fo.Semantics FoSemantics update_value_path def
+prf 24012:24049 FoSemantics copy_update_prefix_observed_of_success
+binder 24062:24065 <> base:357
+binder 24067:24070 <> path:358
+binder 24072:24075 <> newv:359
+binder 24077:24079 <> out:360
+R24129:24136 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R24118:24120 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R24086:24102 Fo.Semantics FoSemantics update_value_path def
+R24104:24107 Fo.Semantics <> base:357 var
+R24109:24112 Fo.Semantics <> path:358 var
+R24114:24117 Fo.Semantics <> newv:359 var
+R24121:24124 Corelib.Init.Datatypes <> Some constr
+R24126:24128 Fo.Semantics <> out:360 var
+R24137:24163 Fo.Semantics FoSemantics copy_update_prefix_observed def
+R24165:24168 Fo.Semantics <> base:357 var
+R24170:24173 Fo.Semantics <> path:358 var
+R24175:24178 Fo.Semantics <> newv:359 var
+R24180:24182 Fo.Semantics <> out:360 var
+R24424:24435 Fo.Semantics FoSemantics lookup_field def
+R24424:24435 Fo.Semantics FoSemantics lookup_field def
+R24492:24508 Fo.Semantics FoSemantics update_value_path def
+R24492:24508 Fo.Semantics FoSemantics update_value_path def
+R24736:24771 Fo.Semantics FoSemantics copy_update_path_observed_of_success thm
+R24736:24771 Fo.Semantics FoSemantics copy_update_path_observed_of_success thm
+prf 24809:24845 FoSemantics copy_update_path_observed_one_segment
+binder 24858:24861 <> name:361
+binder 24863:24867 <> field:362
+binder 24869:24874 <> fields:363
+binder 24876:24879 <> oldv:364
+binder 24881:24884 <> newv:365
+R24928:24935 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R24916:24918 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R24891:24902 Fo.Semantics FoSemantics lookup_field def
+R24904:24909 Fo.Semantics <> fields:363 var
+R24911:24915 Fo.Semantics <> field:362 var
+R24919:24922 Corelib.Init.Datatypes <> Some constr
+R24924:24927 Fo.Semantics <> oldv:364 var
+R24936:24960 Fo.Semantics FoSemantics copy_update_path_observed def
+R24969:24975 Fo.Semantics FoSemantics VStruct constr
+R24977:24980 Fo.Semantics <> name:361 var
+R24982:24987 Fo.Semantics <> fields:363 var
+R24996:24996 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R25002:25002 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R24997:25001 Fo.Semantics <> field:362 var
+R25010:25013 Fo.Semantics <> newv:365 var
+R25022:25028 Fo.Semantics FoSemantics VStruct constr
+R25030:25033 Fo.Semantics <> name:361 var
+R25036:25047 Fo.Semantics FoSemantics update_field def
+R25049:25054 Fo.Semantics <> fields:363 var
+R25056:25060 Fo.Semantics <> field:362 var
+R25062:25065 Fo.Semantics <> newv:365 var
+R25195:25214 Fo.Semantics FoSemantics lookup_field_updated thm
+R25195:25214 Fo.Semantics FoSemantics lookup_field_updated thm
+R25195:25214 Fo.Semantics FoSemantics lookup_field_updated thm
+prf 25242:25278 FoSemantics copy_update_head_observed_one_segment
+binder 25291:25294 <> name:366
+binder 25296:25300 <> field:367
+binder 25302:25307 <> fields:368
+binder 25309:25312 <> oldv:369
+binder 25314:25317 <> newv:370
+R25361:25368 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R25349:25351 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R25324:25335 Fo.Semantics FoSemantics lookup_field def
+R25337:25342 Fo.Semantics <> fields:368 var
+R25344:25348 Fo.Semantics <> field:367 var
+R25352:25355 Corelib.Init.Datatypes <> Some constr
+R25357:25360 Fo.Semantics <> oldv:369 var
+R25369:25393 Fo.Semantics FoSemantics copy_update_head_observed def
+R25402:25408 Fo.Semantics FoSemantics VStruct constr
+R25410:25413 Fo.Semantics <> name:366 var
+R25415:25420 Fo.Semantics <> fields:368 var
+R25429:25429 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R25435:25435 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R25430:25434 Fo.Semantics <> field:367 var
+R25443:25446 Fo.Semantics <> newv:370 var
+R25455:25461 Fo.Semantics FoSemantics VStruct constr
+R25463:25466 Fo.Semantics <> name:366 var
+R25469:25480 Fo.Semantics FoSemantics update_field def
+R25482:25487 Fo.Semantics <> fields:368 var
+R25489:25493 Fo.Semantics <> field:367 var
+R25495:25498 Fo.Semantics <> newv:370 var
+prf 25621:25659 FoSemantics copy_update_prefix_observed_one_segment
+binder 25672:25675 <> name:371
+binder 25677:25681 <> field:372
+binder 25683:25688 <> fields:373
+binder 25690:25693 <> oldv:374
+binder 25695:25698 <> newv:375
+R25742:25749 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R25730:25732 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R25705:25716 Fo.Semantics FoSemantics lookup_field def
+R25718:25723 Fo.Semantics <> fields:373 var
+R25725:25729 Fo.Semantics <> field:372 var
+R25733:25736 Corelib.Init.Datatypes <> Some constr
+R25738:25741 Fo.Semantics <> oldv:374 var
+R25750:25776 Fo.Semantics FoSemantics copy_update_prefix_observed def
+R25785:25791 Fo.Semantics FoSemantics VStruct constr
+R25793:25796 Fo.Semantics <> name:371 var
+R25798:25803 Fo.Semantics <> fields:373 var
+R25812:25812 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R25818:25818 Stdlib.Lists.List ListNotations ::list_scope:'['_x_']' not
+R25813:25817 Fo.Semantics <> field:372 var
+R25826:25829 Fo.Semantics <> newv:375 var
+R25838:25844 Fo.Semantics FoSemantics VStruct constr
+R25846:25849 Fo.Semantics <> name:371 var
+R25852:25863 Fo.Semantics FoSemantics update_field def
+R25865:25870 Fo.Semantics <> fields:373 var
+R25872:25876 Fo.Semantics <> field:372 var
+R25878:25881 Fo.Semantics <> newv:375 var
+R26093:26122 Fo.Semantics FoSemantics copy_update_path_observed_root thm
+R26093:26122 Fo.Semantics FoSemantics copy_update_path_observed_root thm
+prf 26148:26180 FoSemantics copy_update_prefix_observed_child
+binder 26193:26196 <> base:376
+binder 26198:26200 <> key:377
+binder 26202:26205 <> rest:378
+binder 26207:26210 <> newv:379
+binder 26212:26214 <> out:380
+R26276:26283 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R26221:26247 Fo.Semantics FoSemantics copy_update_prefix_observed def
+R26249:26252 Fo.Semantics <> base:376 var
+R26258:26261 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R26255:26257 Fo.Semantics <> key:377 var
+R26262:26265 Fo.Semantics <> rest:378 var
+R26268:26271 Fo.Semantics <> newv:379 var
+R26273:26275 Fo.Semantics <> out:380 var
+R26284:26290 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R26315:26322 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 26291:26294 <> name:381
+binder 26296:26301 <> fields:382
+binder 26303:26307 <> child:383
+binder 26309:26314 <> child':384
+R26349:26358 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R26327:26329 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R26323:26326 Fo.Semantics <> base:376 var
+R26330:26336 Fo.Semantics FoSemantics VStruct constr
+R26338:26341 Fo.Semantics <> name:381 var
+R26343:26348 Fo.Semantics <> fields:382 var
+R26395:26404 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R26382:26384 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R26359:26370 Fo.Semantics FoSemantics lookup_field def
+R26372:26377 Fo.Semantics <> fields:382 var
+R26379:26381 Fo.Semantics <> key:377 var
+R26385:26388 Corelib.Init.Datatypes <> Some constr
+R26390:26394 Fo.Semantics <> child:383 var
+R26452:26461 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R26438:26440 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R26405:26421 Fo.Semantics FoSemantics update_value_path def
+R26423:26427 Fo.Semantics <> child:383 var
+R26429:26432 Fo.Semantics <> rest:378 var
+R26434:26437 Fo.Semantics <> newv:379 var
+R26441:26444 Corelib.Init.Datatypes <> Some constr
+R26446:26451 Fo.Semantics <> child':384 var
+R26513:26522 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R26465:26467 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R26462:26464 Fo.Semantics <> out:380 var
+R26468:26474 Fo.Semantics FoSemantics VStruct constr
+R26476:26479 Fo.Semantics <> name:381 var
+R26482:26493 Fo.Semantics FoSemantics update_field def
+R26495:26500 Fo.Semantics <> fields:382 var
+R26502:26504 Fo.Semantics <> key:377 var
+R26506:26511 Fo.Semantics <> child':384 var
+R26523:26547 Fo.Semantics FoSemantics copy_update_path_observed def
+R26549:26553 Fo.Semantics <> child:383 var
+R26555:26558 Fo.Semantics <> rest:378 var
+R26560:26563 Fo.Semantics <> newv:379 var
+R26565:26570 Fo.Semantics <> child':384 var
+prf 26644:26682 FoSemantics copy_update_prefix_observed_child_chain
+binder 26695:26698 <> base:385
+binder 26700:26702 <> key:386
+binder 26704:26710 <> nextKey:387
+binder 26712:26715 <> rest:388
+binder 26717:26720 <> newv:389
+binder 26722:26724 <> out:390
+R26797:26804 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R26731:26757 Fo.Semantics FoSemantics copy_update_prefix_observed def
+R26759:26762 Fo.Semantics <> base:385 var
+R26768:26771 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R26765:26767 Fo.Semantics <> key:386 var
+R26779:26782 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R26772:26778 Fo.Semantics <> nextKey:387 var
+R26783:26786 Fo.Semantics <> rest:388 var
+R26789:26792 Fo.Semantics <> newv:389 var
+R26794:26796 Fo.Semantics <> out:390 var
+R26805:26811 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R26836:26843 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 26812:26815 <> name:391
+binder 26817:26822 <> fields:392
+binder 26824:26828 <> child:393
+binder 26830:26835 <> child':394
+R26870:26879 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R26848:26850 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R26844:26847 Fo.Semantics <> base:385 var
+R26851:26857 Fo.Semantics FoSemantics VStruct constr
+R26859:26862 Fo.Semantics <> name:391 var
+R26864:26869 Fo.Semantics <> fields:392 var
+R26916:26925 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R26903:26905 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R26880:26891 Fo.Semantics FoSemantics lookup_field def
+R26893:26898 Fo.Semantics <> fields:392 var
+R26900:26902 Fo.Semantics <> key:386 var
+R26906:26909 Corelib.Init.Datatypes <> Some constr
+R26911:26915 Fo.Semantics <> child:393 var
+R26986:26995 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R26972:26974 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R26926:26942 Fo.Semantics FoSemantics update_value_path def
+R26944:26948 Fo.Semantics <> child:393 var
+R26958:26961 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R26951:26957 Fo.Semantics <> nextKey:387 var
+R26962:26965 Fo.Semantics <> rest:388 var
+R26968:26971 Fo.Semantics <> newv:389 var
+R26975:26978 Corelib.Init.Datatypes <> Some constr
+R26980:26985 Fo.Semantics <> child':394 var
+R27047:27056 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R26999:27001 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R26996:26998 Fo.Semantics <> out:390 var
+R27002:27008 Fo.Semantics FoSemantics VStruct constr
+R27010:27013 Fo.Semantics <> name:391 var
+R27016:27027 Fo.Semantics FoSemantics update_field def
+R27029:27034 Fo.Semantics <> fields:392 var
+R27036:27038 Fo.Semantics <> key:386 var
+R27040:27045 Fo.Semantics <> child':394 var
+R27057:27083 Fo.Semantics FoSemantics copy_update_prefix_observed def
+R27085:27089 Fo.Semantics <> child:393 var
+R27099:27102 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R27092:27098 Fo.Semantics <> nextKey:387 var
+R27103:27106 Fo.Semantics <> rest:388 var
+R27109:27112 Fo.Semantics <> newv:389 var
+R27114:27119 Fo.Semantics <> child':394 var
+R27187:27219 Fo.Semantics FoSemantics copy_update_prefix_observed_child thm
+R27238:27241 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R27187:27219 Fo.Semantics FoSemantics copy_update_prefix_observed_child thm
+R27238:27241 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R27405:27442 Fo.Semantics FoSemantics copy_update_prefix_observed_of_success thm
+R27458:27461 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R27405:27442 Fo.Semantics FoSemantics copy_update_prefix_observed_of_success thm
+R27458:27461 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+prf 27501:27538 FoSemantics copy_update_prefix_observed_grandchild
+binder 27551:27554 <> base:395
+binder 27556:27558 <> key:396
+binder 27560:27566 <> nextKey:397
+binder 27568:27571 <> rest:398
+binder 27573:27576 <> newv:399
+binder 27578:27580 <> out:400
+R27653:27660 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R27587:27613 Fo.Semantics FoSemantics copy_update_prefix_observed def
+R27615:27618 Fo.Semantics <> base:395 var
+R27624:27627 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R27621:27623 Fo.Semantics <> key:396 var
+R27635:27638 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R27628:27634 Fo.Semantics <> nextKey:397 var
+R27639:27642 Fo.Semantics <> rest:398 var
+R27645:27648 Fo.Semantics <> newv:399 var
+R27650:27652 Fo.Semantics <> out:400 var
+R27661:27667 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R27737:27744 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 27668:27671 <> name:401
+binder 27673:27678 <> fields:402
+binder 27680:27684 <> child:403
+binder 27686:27691 <> child':404
+binder 27693:27701 <> childName:405
+binder 27703:27713 <> childFields:406
+binder 27715:27724 <> grandchild:407
+binder 27726:27736 <> grandchild':408
+R27771:27780 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R27749:27751 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R27745:27748 Fo.Semantics <> base:395 var
+R27752:27758 Fo.Semantics FoSemantics VStruct constr
+R27760:27763 Fo.Semantics <> name:401 var
+R27765:27770 Fo.Semantics <> fields:402 var
+R27817:27826 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R27804:27806 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R27781:27792 Fo.Semantics FoSemantics lookup_field def
+R27794:27799 Fo.Semantics <> fields:402 var
+R27801:27803 Fo.Semantics <> key:396 var
+R27807:27810 Corelib.Init.Datatypes <> Some constr
+R27812:27816 Fo.Semantics <> child:403 var
+R27887:27896 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R27873:27875 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R27827:27843 Fo.Semantics FoSemantics update_value_path def
+R27845:27849 Fo.Semantics <> child:403 var
+R27859:27862 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R27852:27858 Fo.Semantics <> nextKey:397 var
+R27863:27866 Fo.Semantics <> rest:398 var
+R27869:27872 Fo.Semantics <> newv:399 var
+R27876:27879 Corelib.Init.Datatypes <> Some constr
+R27881:27886 Fo.Semantics <> child':404 var
+R27948:27957 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R27900:27902 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R27897:27899 Fo.Semantics <> out:400 var
+R27903:27909 Fo.Semantics FoSemantics VStruct constr
+R27911:27914 Fo.Semantics <> name:401 var
+R27917:27928 Fo.Semantics FoSemantics update_field def
+R27930:27935 Fo.Semantics <> fields:402 var
+R27937:27939 Fo.Semantics <> key:396 var
+R27941:27946 Fo.Semantics <> child':404 var
+R27995:28004 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R27963:27965 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R27958:27962 Fo.Semantics <> child:403 var
+R27966:27972 Fo.Semantics FoSemantics VStruct constr
+R27974:27982 Fo.Semantics <> childName:405 var
+R27984:27994 Fo.Semantics <> childFields:406 var
+R28055:28064 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R28037:28039 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R28005:28016 Fo.Semantics FoSemantics lookup_field def
+R28018:28028 Fo.Semantics <> childFields:406 var
+R28030:28036 Fo.Semantics <> nextKey:397 var
+R28040:28043 Corelib.Init.Datatypes <> Some constr
+R28045:28054 Fo.Semantics <> grandchild:407 var
+R28122:28131 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R28103:28105 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R28065:28081 Fo.Semantics FoSemantics update_value_path def
+R28083:28092 Fo.Semantics <> grandchild:407 var
+R28094:28097 Fo.Semantics <> rest:398 var
+R28099:28102 Fo.Semantics <> newv:399 var
+R28106:28109 Corelib.Init.Datatypes <> Some constr
+R28111:28121 Fo.Semantics <> grandchild':408 var
+R28205:28214 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R28138:28140 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R28132:28137 Fo.Semantics <> child':404 var
+R28141:28147 Fo.Semantics FoSemantics VStruct constr
+R28149:28157 Fo.Semantics <> childName:405 var
+R28160:28171 Fo.Semantics FoSemantics update_field def
+R28173:28183 Fo.Semantics <> childFields:406 var
+R28185:28191 Fo.Semantics <> nextKey:397 var
+R28193:28203 Fo.Semantics <> grandchild':408 var
+R28215:28239 Fo.Semantics FoSemantics copy_update_path_observed def
+R28241:28250 Fo.Semantics <> grandchild:407 var
+R28252:28255 Fo.Semantics <> rest:398 var
+R28257:28260 Fo.Semantics <> newv:399 var
+R28262:28272 Fo.Semantics <> grandchild':408 var
+R28340:28378 Fo.Semantics FoSemantics copy_update_prefix_observed_child_chain thm
+R28340:28378 Fo.Semantics FoSemantics copy_update_prefix_observed_child_chain thm
+R28515:28547 Fo.Semantics FoSemantics copy_update_prefix_observed_child thm
+R28515:28547 Fo.Semantics FoSemantics copy_update_prefix_observed_child thm
+prf 29051:29094 FoSemantics copy_update_prefix_observed_grandchild_chain
+binder 29107:29110 <> base:409
+binder 29112:29114 <> key:410
+binder 29116:29122 <> nextKey:411
+binder 29124:29131 <> thirdKey:412
+binder 29133:29136 <> rest:413
+binder 29138:29141 <> newv:414
+binder 29143:29145 <> out:415
+R29230:29237 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R29152:29178 Fo.Semantics FoSemantics copy_update_prefix_observed def
+R29180:29183 Fo.Semantics <> base:409 var
+R29189:29192 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R29186:29188 Fo.Semantics <> key:410 var
+R29200:29203 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R29193:29199 Fo.Semantics <> nextKey:411 var
+R29212:29215 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R29204:29211 Fo.Semantics <> thirdKey:412 var
+R29216:29219 Fo.Semantics <> rest:413 var
+R29222:29225 Fo.Semantics <> newv:414 var
+R29227:29229 Fo.Semantics <> out:415 var
+R29238:29244 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R29314:29321 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 29245:29248 <> name:416
+binder 29250:29255 <> fields:417
+binder 29257:29261 <> child:418
+binder 29263:29268 <> child':419
+binder 29270:29278 <> childName:420
+binder 29280:29290 <> childFields:421
+binder 29292:29301 <> grandchild:422
+binder 29303:29313 <> grandchild':423
+R29348:29357 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R29326:29328 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R29322:29325 Fo.Semantics <> base:409 var
+R29329:29335 Fo.Semantics FoSemantics VStruct constr
+R29337:29340 Fo.Semantics <> name:416 var
+R29342:29347 Fo.Semantics <> fields:417 var
+R29394:29403 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R29381:29383 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R29358:29369 Fo.Semantics FoSemantics lookup_field def
+R29371:29376 Fo.Semantics <> fields:417 var
+R29378:29380 Fo.Semantics <> key:410 var
+R29384:29387 Corelib.Init.Datatypes <> Some constr
+R29389:29393 Fo.Semantics <> child:418 var
+R29476:29485 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R29462:29464 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R29404:29420 Fo.Semantics FoSemantics update_value_path def
+R29422:29426 Fo.Semantics <> child:418 var
+R29436:29439 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R29429:29435 Fo.Semantics <> nextKey:411 var
+R29448:29451 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R29440:29447 Fo.Semantics <> thirdKey:412 var
+R29452:29455 Fo.Semantics <> rest:413 var
+R29458:29461 Fo.Semantics <> newv:414 var
+R29465:29468 Corelib.Init.Datatypes <> Some constr
+R29470:29475 Fo.Semantics <> child':419 var
+R29537:29546 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R29489:29491 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R29486:29488 Fo.Semantics <> out:415 var
+R29492:29498 Fo.Semantics FoSemantics VStruct constr
+R29500:29503 Fo.Semantics <> name:416 var
+R29506:29517 Fo.Semantics FoSemantics update_field def
+R29519:29524 Fo.Semantics <> fields:417 var
+R29526:29528 Fo.Semantics <> key:410 var
+R29530:29535 Fo.Semantics <> child':419 var
+R29584:29593 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R29552:29554 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R29547:29551 Fo.Semantics <> child:418 var
+R29555:29561 Fo.Semantics FoSemantics VStruct constr
+R29563:29571 Fo.Semantics <> childName:420 var
+R29573:29583 Fo.Semantics <> childFields:421 var
+R29644:29653 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R29626:29628 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R29594:29605 Fo.Semantics FoSemantics lookup_field def
+R29607:29617 Fo.Semantics <> childFields:421 var
+R29619:29625 Fo.Semantics <> nextKey:411 var
+R29629:29632 Corelib.Init.Datatypes <> Some constr
+R29634:29643 Fo.Semantics <> grandchild:422 var
+R29725:29734 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R29706:29708 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R29654:29670 Fo.Semantics FoSemantics update_value_path def
+R29672:29681 Fo.Semantics <> grandchild:422 var
+R29692:29695 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R29684:29691 Fo.Semantics <> thirdKey:412 var
+R29696:29699 Fo.Semantics <> rest:413 var
+R29702:29705 Fo.Semantics <> newv:414 var
+R29709:29712 Corelib.Init.Datatypes <> Some constr
+R29714:29724 Fo.Semantics <> grandchild':423 var
+R29808:29817 Corelib.Init.Logic <> ::type_scope:x_'/\'_x not
+R29741:29743 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R29735:29740 Fo.Semantics <> child':419 var
+R29744:29750 Fo.Semantics FoSemantics VStruct constr
+R29752:29760 Fo.Semantics <> childName:420 var
+R29763:29774 Fo.Semantics FoSemantics update_field def
+R29776:29786 Fo.Semantics <> childFields:421 var
+R29788:29794 Fo.Semantics <> nextKey:411 var
+R29796:29806 Fo.Semantics <> grandchild':423 var
+R29818:29844 Fo.Semantics FoSemantics copy_update_prefix_observed def
+R29846:29855 Fo.Semantics <> grandchild:422 var
+R29866:29869 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R29858:29865 Fo.Semantics <> thirdKey:412 var
+R29870:29873 Fo.Semantics <> rest:413 var
+R29876:29879 Fo.Semantics <> newv:414 var
+R29881:29891 Fo.Semantics <> grandchild':423 var
+R29968:30005 Fo.Semantics FoSemantics copy_update_prefix_observed_grandchild thm
+R30033:30036 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R29968:30005 Fo.Semantics FoSemantics copy_update_prefix_observed_grandchild thm
+R30033:30036 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R30360:30397 Fo.Semantics FoSemantics copy_update_prefix_observed_of_success thm
+R30419:30422 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+R30360:30397 Fo.Semantics FoSemantics copy_update_prefix_observed_of_success thm
+R30419:30422 Corelib.Init.Datatypes <> ::list_scope:x_'::'_x not
+prf 30470:30495 FoSemantics run_pipeline_stages_single
+binder 30508:30512 <> input:424
+binder 30514:30518 <> stage:425
+R30525:30554 Fo.Semantics FoSemantics pipeline_single_stage_observed def
+R30556:30560 Fo.Semantics <> input:424 var
+R30562:30566 Fo.Semantics <> stage:425 var
+R30616:30645 Fo.Semantics FoSemantics pipeline_single_stage_observed def
+R30679:30708 Fo.Semantics FoSemantics pipeline_stage_result_observed def
+prf 30872:30894 FoSemantics run_pipeline_stages_all
+binder 30907:30911 <> input:426
+binder 30913:30918 <> stages:427
+R30925:30948 Fo.Semantics FoSemantics pipeline_stages_observed def
+R30950:30954 Fo.Semantics <> input:426 var
+R30956:30961 Fo.Semantics <> stages:427 var
+R31107:31107 Corelib.Init.Logic <> I constr
+R31107:31107 Corelib.Init.Logic <> I constr
+R31139:31156 Fo.Semantics FoSemantics run_pipeline_stage def
+R31139:31156 Fo.Semantics FoSemantics run_pipeline_stage def
+R31248:31273 Fo.Semantics FoSemantics run_pipeline_stages_single thm
+R31248:31273 Fo.Semantics FoSemantics run_pipeline_stages_single thm
+prf 31310:31330 FoSemantics interp_tail_expr_call
+binder 31343:31344 <> fn:428
+binder 31346:31349 <> args:429
+R31388:31390 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R31356:31371 Fo.Semantics FoSemantics interp_tail_expr def
+R31374:31378 Fo.Syntax FoSyntax ECall constr
+R31380:31381 Fo.Semantics <> fn:428 var
+R31383:31386 Fo.Semantics <> args:429 var
+R31391:31397 Fo.Semantics FoSemantics TORecur constr
+R31399:31400 Fo.Semantics <> fn:428 var
+R31403:31405 Corelib.Lists.ListDef <> map def
+R31419:31422 Fo.Semantics <> args:429 var
+R31407:31417 Fo.Semantics FoSemantics interp_expr def
+prf 31460:31483 FoSemantics tail_recur_observed_call
+binder 31496:31497 <> fn:430
+binder 31499:31502 <> args:431
+R31509:31527 Fo.Semantics FoSemantics tail_recur_observed def
+R31530:31534 Fo.Syntax FoSyntax ECall constr
+R31536:31537 Fo.Semantics <> fn:430 var
+R31539:31542 Fo.Semantics <> args:431 var
+R31545:31546 Fo.Semantics <> fn:430 var
+R31549:31551 Corelib.Lists.ListDef <> map def
+R31565:31568 Fo.Semantics <> args:431 var
+R31553:31563 Fo.Semantics FoSemantics interp_expr def
+R31596:31614 Fo.Semantics FoSemantics tail_recur_observed def
+R31623:31643 Fo.Semantics FoSemantics interp_tail_expr_call thm
+R31623:31643 Fo.Semantics FoSemantics interp_tail_expr_call thm
+prf 31658:31686 FoSemantics tail_call_shape_observed_call
+binder 31699:31700 <> fn:432
+binder 31702:31705 <> args:433
+R31712:31735 Fo.Semantics FoSemantics tail_call_shape_observed def
+R31738:31742 Fo.Syntax FoSyntax ECall constr
+R31744:31745 Fo.Semantics <> fn:432 var
+R31747:31750 Fo.Semantics <> args:433 var
+R31753:31754 Fo.Semantics <> fn:432 var
+R31757:31759 Corelib.Lists.ListDef <> map def
+R31773:31776 Fo.Semantics <> args:433 var
+R31761:31771 Fo.Semantics FoSemantics interp_expr def
+prf 31852:31875 FoSemantics interp_tail_expr_noncall
+binder 31888:31888 <> e:434
+R31895:31895 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R31930:31938 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+binder 31903:31904 <> fn:435
+binder 31906:31909 <> args:436
+R31913:31916 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R31912:31912 Fo.Semantics <> e:434 var
+R31917:31921 Fo.Syntax FoSyntax ECall constr
+R31923:31924 Fo.Semantics <> fn:435 var
+R31926:31929 Fo.Semantics <> args:436 var
+R31939:31945 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+R31947:31948 Corelib.Init.Logic <> ::type_scope:'exists'_x_'..'_x_','_x not
+binder 31946:31946 <> v:437
+R31967:31969 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R31949:31964 Fo.Semantics FoSemantics interp_tail_expr def
+R31966:31966 Fo.Semantics <> e:434 var
+R31970:31977 Fo.Semantics FoSemantics TOReturn constr
+R31979:31979 Fo.Semantics <> v:437 var
+R32013:32023 Fo.Semantics FoSemantics interp_expr def
+R32013:32023 Fo.Semantics FoSemantics interp_expr def
+prf 32113:32130 FoSemantics continue_injective
+binder 32143:32145 <> ρ1:438
+binder 32147:32149 <> ρ2:439
+R32185:32192 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R32169:32171 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R32156:32164 Fo.Semantics FoSemantics RContinue constr
+R32166:32168 Fo.Semantics <> ρ1:438 var
+R32172:32180 Fo.Semantics FoSemantics RContinue constr
+R32182:32184 Fo.Semantics <> ρ2:439 var
+R32196:32198 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R32193:32195 Fo.Semantics <> ρ1:438 var
+R32199:32201 Fo.Semantics <> ρ2:439 var
+prf 32259:32271 FoSemantics ret_injective
+binder 32284:32285 <> v1:440
+binder 32287:32288 <> v2:441
+R32318:32325 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R32305:32307 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R32295:32301 Fo.Semantics FoSemantics RReturn constr
+R32303:32304 Fo.Semantics <> v1:440 var
+R32308:32314 Fo.Semantics FoSemantics RReturn constr
+R32316:32317 Fo.Semantics <> v2:441 var
+R32328:32330 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R32326:32327 Fo.Semantics <> v1:440 var
+R32331:32332 Fo.Semantics <> v2:441 var
+prf 32390:32408 FoSemantics continue_not_return
+binder 32421:32422 <> ρ:442
+binder 32424:32424 <> v:443
+R32439:32442 Corelib.Init.Logic <> ::type_scope:x_'<>'_x not
+R32427:32435 Fo.Semantics FoSemantics RContinue constr
+R32437:32438 Fo.Semantics <> ρ:442 var
+R32443:32449 Fo.Semantics FoSemantics RReturn constr
+R32451:32451 Fo.Semantics <> v:443 var
+prf 32505:32527 FoSemantics eval_expr_deterministic
+binder 32540:32540 <> p:444
+binder 32542:32543 <> ρ:445
+binder 32545:32545 <> e:446
+binder 32547:32548 <> v1:447
+binder 32550:32551 <> v2:448
+R32577:32584 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R32558:32566 Fo.Semantics FoSemantics eval_expr def
+R32568:32568 Fo.Semantics <> p:444 var
+R32570:32571 Fo.Semantics <> ρ:445 var
+R32573:32573 Fo.Semantics <> e:446 var
+R32575:32576 Fo.Semantics <> v1:447 var
+R32604:32611 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R32585:32593 Fo.Semantics FoSemantics eval_expr def
+R32595:32595 Fo.Semantics <> p:444 var
+R32597:32598 Fo.Semantics <> ρ:445 var
+R32600:32600 Fo.Semantics <> e:446 var
+R32602:32603 Fo.Semantics <> v2:448 var
+R32614:32616 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R32612:32613 Fo.Semantics <> v1:447 var
+R32617:32618 Fo.Semantics <> v2:448 var
+R32666:32674 Fo.Semantics FoSemantics eval_expr def
+prf 32728:32751 FoSemantics eval_block_deterministic
+binder 32764:32764 <> p:449
+binder 32766:32767 <> ρ:450
+binder 32769:32770 <> ss:451
+binder 32772:32773 <> r1:452
+binder 32775:32776 <> r2:453
+R32804:32811 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R32783:32792 Fo.Semantics FoSemantics eval_block def
+R32794:32794 Fo.Semantics <> p:449 var
+R32796:32797 Fo.Semantics <> ρ:450 var
+R32799:32800 Fo.Semantics <> ss:451 var
+R32802:32803 Fo.Semantics <> r1:452 var
+R32833:32840 Corelib.Init.Logic <> ::type_scope:x_'->'_x not
+R32812:32821 Fo.Semantics FoSemantics eval_block def
+R32823:32823 Fo.Semantics <> p:449 var
+R32825:32826 Fo.Semantics <> ρ:450 var
+R32828:32829 Fo.Semantics <> ss:451 var
+R32831:32832 Fo.Semantics <> r2:453 var
+R32843:32845 Corelib.Init.Logic <> ::type_scope:x_'='_x not
+R32841:32842 Fo.Semantics <> r1:452 var
+R32846:32847 Fo.Semantics <> r2:453 var
+R32896:32905 Fo.Semantics FoSemantics eval_block def
+R32955:32965 Fo.Semantics FoSemantics <> mod

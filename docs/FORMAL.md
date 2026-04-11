@@ -36,10 +36,24 @@ Current practical status:
   - core literals / `if`
   - pattern selection subset
   - immutable copy-update subset
+- abstract codegen-lowering theorem surfaces now exist for:
+  - tailcall lowering
+  - match lowering
+  - copy-update lowering
+  - enum lowering
+  - pipeline fusion
+- those lowering surfaces are now split into explicit phase artifacts/invariants plus phase-chain preservation lemmas
 - large-core boundary files also exist for:
   - semantics
   - typing
   - codegen
+- codegen files now also include a direct source-to-target interpretation/refinement layer for compiled expressions
+- semantics files now also expose explicit helper layers for field/path update, enum tag/payload observation, branch selection, pipeline staging, and tail outcomes
+- typing/codegen files also include helper-facing bridge lemmas for those semantic layers and code-shape emission lemmas for compiled forms
+- codegen artifacts now also carry reflection/correspondence predicates that relate extracted plans/trees/layouts/shapes back to source expressions or programs
+- codegen now also exposes separate lowered-target models and canonical upper-surface theorem names for `copy-update`, `pipeline`, and `tailcall`
+- older root/path/single/recur observation theorem names still exist, but they now serve as compatibility wrappers over the target-aware surface
+- those optimization theorems are not yet refined to the current full implementation details
 - repository scripts still treat the formal track as an auxiliary verification layer, not the primary release gate
 
 Operationally:

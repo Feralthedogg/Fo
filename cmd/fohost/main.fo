@@ -230,7 +230,7 @@ func runInternalEmitGo(args []string) int {
         fmt.Fprintln(os.Stderr, compiled.Output)
         return 1
     }
-    fmt.Fprint(os.Stdout, compiled.GoSource)
+    fmt.Fprint(os.Stdout, normalizeGeneratedGoSource(compiled.GoSource))
     return 0
 }
 
@@ -1840,7 +1840,74 @@ func generatedGoUsesLocalModuleImports(src string, modulePath string) bool {
 }
 
 func normalizeGeneratedGoSource(src string) string {
-    return joinLines(dedupeImportLines(strings.Split(src, "\n"), 0, false, []string{}, []string{}), 0, "")
+    return normalizeEnumTagConsts(joinLines(dedupeImportLines(strings.Split(src, "\n"), 0, false, []string{}, []string{}), 0, ""))
+}
+
+func normalizeEnumTagConsts(src string) string {
+    lines := strings.Split(src, "\n")
+    return joinLines(normalizeEnumTagConstLines(lines, 0, false, []string{}), 0, "")
+}
+
+func normalizeEnumTagConstLines(lines []string, idx int, inConst bool, acc []string) []string {
+    if idx >= len(lines) {
+        return acc
+    }
+    line := lines[idx]
+    trimmed := strings.TrimSpace(line)
+    if !inConst {
+        if line == "const (" {
+            return normalizeEnumTagConstLines(lines, idx + 1, true, append(acc, line))
+        }
+        return normalizeEnumTagConstLines(lines, idx + 1, false, append(acc, line))
+    }
+    if line == ")" {
+        return normalizeEnumTagConstLines(lines, idx + 1, false, append(acc, line))
+    }
+    if isEnumTagConstLine(trimmed) {
+        return normalizeEnumTagConstLines(lines, idx + 1, true, append(acc, normalizeEnumTagConstLine(line)))
+    }
+    return normalizeEnumTagConstLines(lines, idx + 1, true, append(acc, line))
+}
+
+func isEnumTagConstLine(line string) bool {
+    fields := strings.Fields(line)
+    if len(fields) < 2 || len(fields) > 4 {
+        return false
+    }
+    if !strings.HasSuffix(fields[0], "Tag") {
+        return false
+    }
+    if !strings.HasSuffix(fields[1], "Tag") {
+        return false
+    }
+    if len(fields) == 2 {
+        return true
+    }
+    if len(fields) == 4 {
+        if fields[2] == "=" {
+            return fields[3] == "iota"
+        }
+    }
+    return false
+}
+
+func normalizeEnumTagConstLine(line string) string {
+    fields := strings.Fields(line)
+    if len(fields) < 2 {
+        return line
+    }
+    indent := leadingWhitespace(line, 0, "")
+    return indent + fields[0] + " " + fields[1] + " = iota"
+}
+
+func leadingWhitespace(line string, idx int, acc string) string {
+    if idx >= len(line) {
+        return acc
+    }
+    if !(line[idx] == " "[0] || line[idx] == "\t"[0]) {
+        return acc
+    }
+    return leadingWhitespace(line, idx + 1, acc + string(line[idx]))
 }
 
 func dedupeImportLines(lines []string, idx int, inImports bool, seen []string, acc []string) []string {
@@ -1944,7 +2011,7 @@ func checkerFingerprint() string {
 }
 
 func codegenFingerprint() string {
-    return hashString(checkerFingerprint() + "\n" + fingerprintFromSourceFiles([]string{
+    return hashString("codegen-v2-tail-loop\n" + checkerFingerprint() + "\n" + fingerprintFromSourceFiles([]string{
         "internal/codegen/codegen.fo",
         "internal/driver/driver.fo",
     }))

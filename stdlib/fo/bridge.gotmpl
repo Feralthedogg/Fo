@@ -82,9 +82,9 @@ func mapEntries[K comparable, V any, U any](m map[K]V, f func(K, V) U) map[K]U {
 
 func lookupMap[K comparable, V any](m map[K]V, key K) Option[V] {
 	if v, ok := m[key]; ok {
-		return Some[V]{Value: v}
+		return Some[V](v)
 	}
-	return None[V]{}
+	return None[V]()
 }
 
 func freezeMap[K comparable, V any](m map[K]V) map[K]V {

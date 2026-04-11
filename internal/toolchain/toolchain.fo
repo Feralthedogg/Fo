@@ -25,7 +25,7 @@ type ToolResult struct {
 }
 
 func VersionString() string {
-    return "fo-selfhost-dev"
+    return "v0.2.0"
 }
 
 func UsageString() string {

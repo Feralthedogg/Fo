@@ -125,6 +125,8 @@ Pipeline:
 return x |> Double |> Inc |> Negate
 ```
 
+Slice pipelines that end in `Map`/`Filter`/`Fold`-style collection combinators are candidates for single-loop lowering in the Go backend.
+
 Struct literal:
 
 ```fo
@@ -168,6 +170,7 @@ Working examples in this repository:
 - [hello.fo](../examples/hello.fo)
 - [struct.fo](../examples/struct.fo)
 - [pipeline.fo](../examples/pipeline.fo)
+- [pipeline_fusion.fo](../examples/pipeline_fusion.fo)
 - [copyupdate.fo](../examples/copyupdate.fo)
 - [enum.fo](../examples/enum.fo)
 

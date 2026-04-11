@@ -178,7 +178,7 @@ sub build_cli_core_key {
   my ($root, $kind, $path, $bin) = @_;
   return sha256_hex(join(
     "\0",
-    "build-cli-core-v1",
+    "build-cli-core-v2",
     $kind,
     $path,
     cached_file_hash("$root/$path"),
@@ -325,7 +325,7 @@ sub build_cli_core {
           my $msg = $stderr ne '' ? $stderr : $stdout;
           die ($msg ne '' ? $msg : "emit-go failed for $path\n");
         }
-        write_file("$stage_root/$go_path", $stdout);
+        write_file("$stage_root/$go_path", normalize_generated_go_text($stdout));
         run_cmd('gofmt', '-w', "$stage_root/$go_path");
         copy_file("$stage_root/$go_path", $cached_go);
         return;
@@ -519,7 +519,7 @@ sub check_bootstrapless_rebuild {
 
     print "[3/4] Smoke-checking seed-built host bridge\n";
     my (undef, $version_out, $version_err) = run_cmd_capture("$workdir/bin/fo-seeded", 'version');
-    assert_regex($version_out . $version_err, qr/fo-selfhost-dev/, "missing fo-selfhost-dev in version output\n");
+    assert_regex($version_out . $version_err, qr/v0\.2\.0/, "missing v0.2.0 in version output\n");
     my (undef, $help_out, $help_err) = run_cmd_capture("$workdir/bin/fo-seeded", 'help');
     assert_regex($help_out . $help_err, qr/fo build/, "missing fo build in help output\n");
 
@@ -980,7 +980,7 @@ sub check_cold_seed_cli {
   quiet_stdout(sub { build_cold_seed_cli($root, $seed_dir, $cold_bin) });
   print "[3/5] Version/help smoke\n";
   my (undef, $version_out, $version_err) = run_cmd_capture($cold_bin, 'version');
-  assert_regex($version_out . $version_err, qr/fo-selfhost-dev/, "missing fo-selfhost-dev in coldseed version\n");
+  assert_regex($version_out . $version_err, qr/v0\.2\.0/, "missing v0.2.0 in coldseed version\n");
   my (undef, $help_out, $help_err) = run_cmd_capture($cold_bin, 'help');
   assert_regex($help_out . $help_err, qr/fo build/, "missing fo build in coldseed help\n");
 
@@ -1503,7 +1503,7 @@ sub generate_base_stdlib_to {
   $fo_bin //= resolve_generation_bin($root);
   my $cache_dir = stdlib_cache_root($root);
   ensure_dir($cache_dir);
-  my $cache_key = sha256_hex(join("\0", "base-go-v1", cached_file_hash("$root/stdlib/fo/base.fo"), cached_file_hash($fo_bin)));
+  my $cache_key = sha256_hex(join("\0", "base-go-v3", cached_file_hash("$root/stdlib/fo/base.fo"), cached_file_hash($fo_bin)));
   my $cached = "$cache_dir/$cache_key.runtime.go";
   if (-f $cached) {
     copy_file($cached, $target);
@@ -1514,20 +1514,24 @@ sub generate_base_stdlib_to {
   my @lines = slurp_lines($source);
   my $start = -1;
   for my $i (0 .. $#lines) {
-    if ($lines[$i] =~ /^type Option\[/) {
+    if ($lines[$i] =~ /^type OptionTag /) {
       $start = $i;
       last;
+    }
+  }
+  if ($start < 0) {
+    for my $i (0 .. $#lines) {
+      if ($lines[$i] =~ /^type Option\[/) {
+        $start = $i;
+        last;
+      }
     }
   }
   die "missing type section in generated stdlib base\n" if $start < 0;
   my $raw = read_file($source);
   my $body = join("\n", @lines[$start .. $#lines]) . "\n";
+  $body = normalize_generated_go_text($body);
   $body =~ s/base\.//g;
-  $body =~ s/Value0 T/Value T/g;
-  $body =~ s/Value0 E/Error E/g;
-  $body =~ s/\{ Value0:/\{ Value:/g;
-  $body =~ s/\{ Error:/\{ Error:/g;
-  $body =~ s/Err(\[[^\]]+\])\{ Value:/Err$1\{ Error:/g;
   $body =~ s/return UnwrapOr\(/return unwrapOr(/g;
   $body =~ s/return MapOption\(/return mapOption(/g;
   $body =~ s/return FlatMapOption\(/return flatMapOption(/g;
@@ -1557,6 +1561,28 @@ sub generate_base_stdlib_to {
   copy_file($tmp, $target);
   run_cmd('gofmt', '-w', $target);
   copy_file($target, $cached);
+}
+
+sub normalize_generated_go_text {
+  my ($text) = @_;
+  return $text if !defined $text || $text eq '';
+  $text =~ s{const \(\n((?:\s+\w+Tag \w+Tag(?: = iota)?\n)+)\)}{"const (\n" . normalize_tag_const_lines($1) . ")"}ge;
+  return $text;
+}
+
+sub normalize_tag_const_lines {
+  my ($block) = @_;
+  my @lines = split /\n/, $block, -1;
+  my @out;
+  for my $line (@lines) {
+    next if $line eq '';
+    if ($line =~ /^(\s+\w+Tag \w+Tag)(?: = iota)?$/) {
+      push @out, "$1 = iota";
+      next;
+    }
+    push @out, $line;
+  }
+  return join("\n", @out) . "\n";
 }
 
 sub generate_base_stdlib_runtime {

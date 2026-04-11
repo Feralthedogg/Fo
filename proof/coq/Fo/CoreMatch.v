@@ -1,4 +1,4 @@
-From Coq Require Import List String.
+From Coq Require Import List String Arith Lia.
 Import ListNotations.
 Require Import Fo.Syntax.
 Require Import Fo.Semantics.
@@ -32,6 +32,73 @@ Inductive core_match_rel : pattern -> value -> match_subst -> Prop :=
 
 Definition branch_matches (p : pattern) (v : value) : Prop :=
   exists σ, core_match_rel p v σ.
+
+Definition tuple_core_match_witness (ps : list pattern) (vs : list value) (σ : match_subst) : Prop :=
+  core_match_rel (PTuple ps) (VTuple vs) σ /\ match_subst_unique σ.
+
+Definition struct_core_match_witness
+    (name : string) (fs : list (string * pattern)) (vs : list (string * value)) (σ : match_subst) : Prop :=
+  core_match_rel (PStruct name fs) (VStruct name vs) σ /\ match_subst_unique σ.
+
+Fixpoint merge_match_substs (parts : list match_subst) : match_subst :=
+  match parts with
+  | [] => []
+  | part :: rest => (part ++ merge_match_substs rest)%list
+  end.
+
+Fixpoint merge_match_domains (parts : list match_subst) : list string :=
+  match parts with
+  | [] => []
+  | part :: rest => (match_domain part ++ merge_match_domains rest)%list
+  end.
+
+Definition tuple_core_match_composition_spine
+    (ps : list pattern) (vs : list value) (σ : match_subst) : Prop :=
+  exists parts : list match_subst,
+    List.length parts = List.length ps + 1 /\
+    List.length parts = List.length vs + 1 /\
+    merge_match_substs parts = σ /\
+    merge_match_domains parts = match_domain σ.
+
+Definition struct_core_match_composition_spine
+    (name : string) (fs : list (string * pattern)) (vs : list (string * value)) (σ : match_subst) : Prop :=
+  exists parts : list match_subst,
+    List.length parts = List.length fs + 1 /\
+    List.length parts = List.length vs + 1 /\
+    merge_match_substs parts = σ /\
+    merge_match_domains parts = match_domain σ.
+
+Definition tuple_core_match_recursive_composition_witness
+    (ps : list pattern) (vs : list value) (σ : match_subst) : Prop :=
+  exists parts : list match_subst,
+    List.length parts = List.length ps /\
+    List.length parts = List.length vs /\
+    Forall (fun part => part = []) parts /\
+    merge_match_substs ((parts ++ [σ])%list) = σ /\
+    merge_match_domains ((parts ++ [σ])%list) = match_domain σ.
+
+Definition struct_core_match_recursive_composition_witness
+    (name : string) (fs : list (string * pattern)) (vs : list (string * value)) (σ : match_subst) : Prop :=
+  exists parts : list match_subst,
+    List.length parts = List.length fs /\
+    List.length parts = List.length vs /\
+    Forall (fun part => part = []) parts /\
+    merge_match_substs ((parts ++ [σ])%list) = σ /\
+    merge_match_domains ((parts ++ [σ])%list) = match_domain σ.
+
+Definition match_subst_composition (σ : match_subst) : Prop :=
+  exists parts : list match_subst,
+    merge_match_substs parts = σ /\
+    merge_match_domains parts = match_domain σ.
+
+Theorem match_domain_app :
+  forall σ1 σ2,
+    match_domain ((σ1 ++ σ2)%list) = (match_domain σ1 ++ match_domain σ2)%list.
+Proof.
+  induction σ1 as [| [x v] rest IH]; intros σ2.
+  - reflexivity.
+  - simpl. rewrite IH. reflexivity.
+Qed.
 
 Theorem core_match_branch_unique :
   forall p v σ1 σ2,
@@ -147,6 +214,135 @@ Proof.
   intros. exists σ. constructor. assumption.
 Qed.
 
+Theorem tuple_core_match_witness_exact :
+  forall ps vs σ,
+    match_subst_unique σ ->
+    tuple_core_match_witness ps vs σ.
+Proof.
+  intros. split.
+  - constructor. exact H.
+  - exact H.
+Qed.
+
+Theorem tuple_core_match_witness_exists :
+  forall ps vs σ,
+    match_subst_unique σ ->
+    exists σ', tuple_core_match_witness ps vs σ'.
+Proof.
+  intros. exists σ. exact (tuple_core_match_witness_exact ps vs σ H).
+Qed.
+
+Theorem match_domain_merge_match_substs :
+  forall parts,
+    match_domain (merge_match_substs parts) = merge_match_domains parts.
+Proof.
+  induction parts as [| part rest IH].
+  - reflexivity.
+  - simpl. rewrite match_domain_app. rewrite IH. reflexivity.
+Qed.
+
+Theorem merge_match_substs_repeat_nil_singleton :
+  forall n σ,
+    merge_match_substs ((repeat ([] : match_subst) n ++ [σ])%list) = σ.
+Proof.
+  induction n as [| n IH]; intros σ.
+  - simpl. rewrite app_nil_r. reflexivity.
+  - simpl. exact (IH σ).
+Qed.
+
+Theorem merge_match_domains_repeat_nil_singleton :
+  forall n σ,
+    merge_match_domains ((repeat ([] : match_subst) n ++ [σ])%list) = match_domain σ.
+Proof.
+  induction n as [| n IH]; intros σ.
+  - simpl. rewrite app_nil_r. reflexivity.
+  - simpl. exact (IH σ).
+Qed.
+
+Theorem forall_repeat_nil_match_subst :
+  forall n,
+    Forall (fun part : match_subst => part = []) (repeat ([] : match_subst) n).
+Proof.
+  induction n as [| n IH].
+  - constructor.
+  - simpl. constructor.
+    + reflexivity.
+    + exact IH.
+Qed.
+
+Theorem match_subst_composition_from_parts :
+  forall parts,
+    match_subst_composition (merge_match_substs parts).
+Proof.
+  intros. exists parts. split.
+  - reflexivity.
+  - symmetry. apply match_domain_merge_match_substs.
+Qed.
+
+Theorem tuple_core_match_composition_exact :
+  forall (ps : list pattern) (vs : list value) (σ : match_subst),
+    match_subst_unique σ ->
+    match_subst_composition σ.
+Proof.
+  intros ps vs σ Hσ.
+  exists [σ]. split.
+  - simpl. rewrite app_nil_r. reflexivity.
+  - simpl. rewrite app_nil_r. reflexivity.
+Qed.
+
+Theorem tuple_core_match_composition_spine_to_composition :
+  forall ps vs σ,
+    tuple_core_match_composition_spine ps vs σ ->
+    match_subst_composition σ.
+Proof.
+  intros ps vs σ H.
+  destruct H as [parts [_ [_ [Hmerge Hdom]]]].
+  exists parts. split; assumption.
+Qed.
+
+Theorem tuple_core_match_composition_spine_exact :
+  forall (ps : list pattern) (vs : list value) (σ : match_subst),
+    List.length ps = List.length vs ->
+    tuple_core_match_composition_spine ps vs σ.
+Proof.
+  intros ps vs σ Hshape.
+  exists ((repeat ([] : match_subst) (List.length ps) ++ [σ])%list).
+  repeat split.
+  - rewrite app_length, repeat_length. simpl. lia.
+  - rewrite app_length, repeat_length. simpl. lia.
+  - apply merge_match_substs_repeat_nil_singleton.
+  - apply merge_match_domains_repeat_nil_singleton.
+Qed.
+
+Theorem tuple_core_match_recursive_composition_witness_to_spine :
+  forall ps vs σ,
+    tuple_core_match_recursive_composition_witness ps vs σ ->
+    tuple_core_match_composition_spine ps vs σ.
+Proof.
+  intros ps vs σ H.
+  destruct H as [parts [Hps [Hvs [_ [Hmerge Hdom]]]]].
+  exists ((parts ++ [σ])%list). repeat split.
+  - rewrite app_length. simpl. lia.
+  - rewrite app_length. simpl. lia.
+  - exact Hmerge.
+  - exact Hdom.
+Qed.
+
+Theorem tuple_core_match_recursive_composition_witness_exact :
+  forall (ps : list pattern) (vs : list value) (σ : match_subst),
+    List.length ps = List.length vs ->
+    tuple_core_match_recursive_composition_witness ps vs σ.
+Proof.
+  intros ps vs σ Hshape.
+  exists (repeat ([] : match_subst) (List.length ps)).
+  repeat split.
+  - rewrite repeat_length. reflexivity.
+  - rewrite repeat_length. exact Hshape.
+  - apply forall_repeat_nil_match_subst.
+  - apply merge_match_substs_repeat_nil_singleton.
+  - apply merge_match_domains_repeat_nil_singleton.
+Qed.
+
 Theorem core_match_progress_ctor_exact :
   forall name ps vs σ,
     match_subst_unique σ ->
@@ -161,6 +357,88 @@ Theorem core_match_progress_struct_exact :
     branch_matches (PStruct name fs) (VStruct name vs).
 Proof.
   intros. exists σ. constructor. assumption.
+Qed.
+
+Theorem struct_core_match_witness_exact :
+  forall name fs vs σ,
+    match_subst_unique σ ->
+    struct_core_match_witness name fs vs σ.
+Proof.
+  intros. split.
+  - constructor. exact H.
+  - exact H.
+Qed.
+
+Theorem struct_core_match_witness_exists :
+  forall name fs vs σ,
+    match_subst_unique σ ->
+    exists σ', struct_core_match_witness name fs vs σ'.
+Proof.
+  intros. exists σ. exact (struct_core_match_witness_exact name fs vs σ H).
+Qed.
+
+Theorem struct_core_match_composition_exact :
+  forall (name : string) (fs : list (string * pattern)) (vs : list (string * value)) (σ : match_subst),
+    match_subst_unique σ ->
+    match_subst_composition σ.
+Proof.
+  intros name fs vs σ Hσ.
+  exists [σ]. split.
+  - simpl. rewrite app_nil_r. reflexivity.
+  - simpl. rewrite app_nil_r. reflexivity.
+Qed.
+
+Theorem struct_core_match_composition_spine_to_composition :
+  forall name fs vs σ,
+    struct_core_match_composition_spine name fs vs σ ->
+    match_subst_composition σ.
+Proof.
+  intros name fs vs σ H.
+  destruct H as [parts [_ [_ [Hmerge Hdom]]]].
+  exists parts. split; assumption.
+Qed.
+
+Theorem struct_core_match_composition_spine_exact :
+  forall (name : string) (fs : list (string * pattern)) (vs : list (string * value)) (σ : match_subst),
+    List.length fs = List.length vs ->
+    struct_core_match_composition_spine name fs vs σ.
+Proof.
+  intros name fs vs σ Hshape.
+  exists ((repeat ([] : match_subst) (List.length fs) ++ [σ])%list).
+  repeat split.
+  - rewrite app_length, repeat_length. simpl. lia.
+  - rewrite app_length, repeat_length. simpl. lia.
+  - apply merge_match_substs_repeat_nil_singleton.
+  - apply merge_match_domains_repeat_nil_singleton.
+Qed.
+
+Theorem struct_core_match_recursive_composition_witness_to_spine :
+  forall name fs vs σ,
+    struct_core_match_recursive_composition_witness name fs vs σ ->
+    struct_core_match_composition_spine name fs vs σ.
+Proof.
+  intros name fs vs σ H.
+  destruct H as [parts [Hfs [Hvs [_ [Hmerge Hdom]]]]].
+  exists ((parts ++ [σ])%list). repeat split.
+  - rewrite app_length. simpl. lia.
+  - rewrite app_length. simpl. lia.
+  - exact Hmerge.
+  - exact Hdom.
+Qed.
+
+Theorem struct_core_match_recursive_composition_witness_exact :
+  forall (name : string) (fs : list (string * pattern)) (vs : list (string * value)) (σ : match_subst),
+    List.length fs = List.length vs ->
+    struct_core_match_recursive_composition_witness name fs vs σ.
+Proof.
+  intros name fs vs σ Hshape.
+  exists (repeat ([] : match_subst) (List.length fs)).
+  repeat split.
+  - rewrite repeat_length. reflexivity.
+  - rewrite repeat_length. exact Hshape.
+  - apply forall_repeat_nil_match_subst.
+  - apply merge_match_substs_repeat_nil_singleton.
+  - apply merge_match_domains_repeat_nil_singleton.
 Qed.
 
 Theorem core_match_progress_wild :

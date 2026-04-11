@@ -1,0 +1,20 @@
+package main
+
+import "github.com/Feralthedogg/Fo/stdlib/fo"
+
+func Double(x int) int {
+    return x * 2
+}
+
+func Even(x int) bool {
+    return x % 2 == 0
+}
+
+func Add(acc int, x int) int {
+    return acc + x
+}
+
+func SumPipeline(xs []int) int {
+    doubled := xs |> base.Map(Double) |> base.Filter(Even)
+    return doubled |> base.Fold(0, Add)
+}
