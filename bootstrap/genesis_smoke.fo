@@ -124,7 +124,7 @@ func SmokeToolchainSelf() bool {
     toolchain := genesis.BuildToolchainProgram()
     moduleExpr := genesis.TextExpr("example.com/demo")
 
-    if genesis.ExpectProgram(toolchain, env, genesis.CallExpr("version", []genesis.Expr{}), genesis.TextValue("v0.2.0")) == false {
+    if genesis.ExpectProgram(toolchain, env, genesis.CallExpr("version", []genesis.Expr{}), genesis.TextValue("v0.2.1")) == false {
         return false
     }
     if genesis.ExpectProgram(toolchain, env, genesis.CallExpr("help", []genesis.Expr{}), genesis.TextValue(

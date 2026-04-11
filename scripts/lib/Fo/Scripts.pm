@@ -519,7 +519,7 @@ sub check_bootstrapless_rebuild {
 
     print "[3/4] Smoke-checking seed-built host bridge\n";
     my (undef, $version_out, $version_err) = run_cmd_capture("$workdir/bin/fo-seeded", 'version');
-    assert_regex($version_out . $version_err, qr/v0\.2\.0/, "missing v0.2.0 in version output\n");
+    assert_regex($version_out . $version_err, qr/v0\.2\.1/, "missing v0.2.1 in version output\n");
     my (undef, $help_out, $help_err) = run_cmd_capture("$workdir/bin/fo-seeded", 'help');
     assert_regex($help_out . $help_err, qr/fo build/, "missing fo build in help output\n");
 
@@ -980,7 +980,7 @@ sub check_cold_seed_cli {
   quiet_stdout(sub { build_cold_seed_cli($root, $seed_dir, $cold_bin) });
   print "[3/5] Version/help smoke\n";
   my (undef, $version_out, $version_err) = run_cmd_capture($cold_bin, 'version');
-  assert_regex($version_out . $version_err, qr/v0\.2\.0/, "missing v0.2.0 in coldseed version\n");
+  assert_regex($version_out . $version_err, qr/v0\.2\.1/, "missing v0.2.1 in coldseed version\n");
   my (undef, $help_out, $help_err) = run_cmd_capture($cold_bin, 'help');
   assert_regex($help_out . $help_err, qr/fo build/, "missing fo build in coldseed help\n");
 
@@ -1413,6 +1413,8 @@ sub generate_base_collections_to {
     my $text = join("\n", @block) . "\n";
     next if $text =~ /panic\(`extern bridge`\)/;
     $text =~ s/base\.//g;
+    $text =~ s/(_case\d+)\.Value\b/$1.Value0/g;
+    $text =~ s/\bSome(\[[^\]]+\])?\{\s*Value:/'Some' . (defined($1) ? $1 : '') . '{ Value0:'/ge;
     $text =~ s/func Contains\[A any\]\(/func Contains[A comparable](/g;
     $text =~ s/func containsLoop\[A any\]\(/func containsLoop[A comparable](/g;
     push @funcs, $text;
@@ -1532,6 +1534,11 @@ sub generate_base_stdlib_to {
   my $body = join("\n", @lines[$start .. $#lines]) . "\n";
   $body = normalize_generated_go_text($body);
   $body =~ s/base\.//g;
+  $body =~ s/(_case\d+)\.Value\b/$1.Value0/g;
+  $body =~ s/(_case\d+)\.Error\b/$1.Value0/g;
+  $body =~ s/\bSome(\[[^\]]+\])?\{\s*Value:/'Some' . (defined($1) ? $1 : '') . '{ Value0:'/ge;
+  $body =~ s/\bOk(\[[^\]]+\])?\{\s*Value:/'Ok' . (defined($1) ? $1 : '') . '{ Value0:'/ge;
+  $body =~ s/\bErr(\[[^\]]+\])?\{\s*Error:/'Err' . (defined($1) ? $1 : '') . '{ Value0:'/ge;
   $body =~ s/return UnwrapOr\(/return unwrapOr(/g;
   $body =~ s/return MapOption\(/return mapOption(/g;
   $body =~ s/return FlatMapOption\(/return flatMapOption(/g;
@@ -1566,6 +1573,11 @@ sub generate_base_stdlib_to {
 sub normalize_generated_go_text {
   my ($text) = @_;
   return $text if !defined $text || $text eq '';
+  $text =~ s/(_case\d+)\.Value\b/$1.Value0/g;
+  $text =~ s/(_case\d+)\.Error\b/$1.Value0/g;
+  $text =~ s/\bSome(\[[^\]]+\])?\{\s*Value:/'Some' . (defined($1) ? $1 : '') . '{ Value0:'/ge;
+  $text =~ s/\bOk(\[[^\]]+\])?\{\s*Value:/'Ok' . (defined($1) ? $1 : '') . '{ Value0:'/ge;
+  $text =~ s/\bErr(\[[^\]]+\])?\{\s*Error:/'Err' . (defined($1) ? $1 : '') . '{ Value0:'/ge;
   $text =~ s{const \(\n((?:\s+\w+Tag \w+Tag(?: = iota)?\n)+)\)}{"const (\n" . normalize_tag_const_lines($1) . ")"}ge;
   return $text;
 }

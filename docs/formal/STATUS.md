@@ -1,6 +1,6 @@
 # Formal Status
 
-Current release line: `v0.2.0`
+Current release line: `v0.2.1`
 
 Mechanized today:
 
