@@ -2576,7 +2576,7 @@ func IsTypoLikeSuggestion(target string, candidate string) bool {
     if HasAdjacentSwap(left, right, 0) {
         return true
     }
-    if CommonPrefixLength(left, right, 0) >= 3 {
+    if CommonPrefixLength(left, right, 0) >= 4 {
         if AbsInt(len(left) - len(right)) <= 2 {
             return true
         }
