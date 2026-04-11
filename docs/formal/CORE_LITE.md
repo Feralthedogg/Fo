@@ -1,9 +1,10 @@
 # CoreLite Proof Slice
 
-`FoCore-v1` is still mostly a large theorem skeleton.
+`FoCore-v1` still contains large-core theorem layers, but `CoreLite` is no
+longer just a placeholder staging area.
 
-So the repository also carries a smaller concrete subset as the first place
-where actual mechanized proofs can accumulate:
+It is the smallest concrete subset where mechanized local proofs already
+accumulate:
 
 - `CoreLite`
 

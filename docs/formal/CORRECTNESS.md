@@ -212,10 +212,13 @@ Current match observation coverage includes:
 - ctor/wild coverage relations that imply branch selection
 - exhaustive-style existence of a selected branch for the current ctor/wild/binder coverage fragment
 - `copy-update`, `pipeline`, and `tailcall` now also have separate lowered-target models, target-aware soundness chains, and target-aware certificate observation theorems as the preferred upper proof surface
+- `copy-update` now also has structured observation ladders for path/head/prefix plus child, child-chain, grandchild, and grandchild-chain projections
+- `pipeline` now uses stage-result and stage-trace observation predicates rather than only final equality
+- `tailcall` now uses recur observation plus explicit call-shape witnesses
 - legacy non-target pipeline multistage observation now projects directly from the target-aware theorem instead of rebuilding its own chain
 - canonical upper-surface names now point at the target-aware theorems: `copyUpdate_certificate_semantic_observation`, `pipeline_certificate_semantic_observation`, `tailcall_certificate_semantic_observation`
 
-These chains are stronger than a bare theorem skeleton because they connect:
+These chains are stronger than a bare theorem surface because they connect:
 
 - source-side helper semantics
 - source-side semantic observation bundles

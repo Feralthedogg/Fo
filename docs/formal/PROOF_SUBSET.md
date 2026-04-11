@@ -72,6 +72,8 @@ The currently verified repository corpus overlapping with `FoCore-v1` is:
   - `examples/tailcall.fo`
   - `examples/struct.fo`
   - `examples/pipeline.fo`
+  - `examples/pipeline_bind.fo`
+  - `examples/pipeline_fusion.fo`
   - `examples/integration.fo`
   - `examples/copyupdate.fo`
   - `examples/enum.fo`

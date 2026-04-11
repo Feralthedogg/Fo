@@ -24,7 +24,7 @@ Purpose:
 
 - concise theorem statements
 - readable inductive definitions
-- executable proof sketches
+- executable proof terms and checked theorem surfaces
 
 ## 2. Coq Track
 
@@ -107,7 +107,8 @@ This does not yet mean full compiler correctness is complete.
 Allowed:
 
 - “proof target defined”
-- “theorem skeleton exists”
+- “mechanized theorem graph exists”
+- “target-aware theorem surface exists”
 - “regression corpus matches”
 
 Not allowed yet:

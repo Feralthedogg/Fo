@@ -24,13 +24,19 @@ type Diagnostic struct {
     Severity Severity
     Category Category
     Pos token.Pos
+    Code string
     Message string
+    Detail string
+    Suggestion string
     Hint string
+    RelatedPos token.Pos
+    RelatedMessage string
 }
 
 type Diagnostics struct {
     Items []Diagnostic
     HasError bool
+    Sources []SourceContext
 }
 
 type SourceContext struct {
@@ -42,6 +48,7 @@ func New() Diagnostics {
     return Diagnostics{
         Items: []Diagnostic{},
         HasError: false,
+        Sources: []SourceContext{},
     }
 }
 
@@ -114,16 +121,15 @@ func PosString(p token.Pos) string {
 }
 
 func (d Diagnostic) String() string {
-    if d.Hint == "" {
-        return PosString(d.Pos) + ": " + SeverityString(d.Severity) + ": " + d.Message
-    }
-    return PosString(d.Pos) + ": " + SeverityString(d.Severity) + ": " + d.Message + "\n  hint: " + d.Hint
+    prefix := PosString(d.Pos) + ": " + SeverityString(d.Severity) + CodeSuffix(d.Code)
+    return prefix + ": " + d.Message + FormatDetail(d.Detail) + FormatSuggestion(d.Suggestion) + FormatInlineRelated(d) + FormatHint(d.Hint)
 }
 
 func (d Diagnostics) Add(diag Diagnostic) Diagnostics {
     return Diagnostics{
         Items: append(d.Items, diag),
         HasError: d.HasError || IsError(diag.Severity),
+        Sources: d.Sources,
     }
 }
 
@@ -132,8 +138,13 @@ func (d Diagnostics) Error(cat Category, pos token.Pos, msg string) Diagnostics 
         Severity: Error,
         Category: cat,
         Pos: pos,
+        Code: "",
         Message: msg,
+        Detail: "",
+        Suggestion: "",
         Hint: "",
+        RelatedPos: token.MakePos("", 0, 0, 0),
+        RelatedMessage: "",
     })
 }
 
@@ -142,8 +153,73 @@ func (d Diagnostics) ErrorWithHint(cat Category, pos token.Pos, msg string, hint
         Severity: Error,
         Category: cat,
         Pos: pos,
+        Code: "",
         Message: msg,
+        Detail: "",
+        Suggestion: "",
         Hint: hint,
+        RelatedPos: token.MakePos("", 0, 0, 0),
+        RelatedMessage: "",
+    })
+}
+
+func (d Diagnostics) ErrorDetailed(cat Category, pos token.Pos, code string, msg string, detail string, hint string) Diagnostics {
+    return d.Add(Diagnostic{
+        Severity: Error,
+        Category: cat,
+        Pos: pos,
+        Code: code,
+        Message: msg,
+        Detail: detail,
+        Suggestion: "",
+        Hint: hint,
+        RelatedPos: token.MakePos("", 0, 0, 0),
+        RelatedMessage: "",
+    })
+}
+
+func (d Diagnostics) ErrorRelated(cat Category, pos token.Pos, code string, msg string, detail string, hint string, relatedPos token.Pos, relatedMessage string) Diagnostics {
+    return d.Add(Diagnostic{
+        Severity: Error,
+        Category: cat,
+        Pos: pos,
+        Code: code,
+        Message: msg,
+        Detail: detail,
+        Suggestion: "",
+        Hint: hint,
+        RelatedPos: relatedPos,
+        RelatedMessage: relatedMessage,
+    })
+}
+
+func (d Diagnostics) ErrorDetailedSuggested(cat Category, pos token.Pos, code string, msg string, detail string, suggestion string, hint string) Diagnostics {
+    return d.Add(Diagnostic{
+        Severity: Error,
+        Category: cat,
+        Pos: pos,
+        Code: code,
+        Message: msg,
+        Detail: detail,
+        Suggestion: suggestion,
+        Hint: hint,
+        RelatedPos: token.MakePos("", 0, 0, 0),
+        RelatedMessage: "",
+    })
+}
+
+func (d Diagnostics) ErrorRelatedSuggested(cat Category, pos token.Pos, code string, msg string, detail string, suggestion string, hint string, relatedPos token.Pos, relatedMessage string) Diagnostics {
+    return d.Add(Diagnostic{
+        Severity: Error,
+        Category: cat,
+        Pos: pos,
+        Code: code,
+        Message: msg,
+        Detail: detail,
+        Suggestion: suggestion,
+        Hint: hint,
+        RelatedPos: relatedPos,
+        RelatedMessage: relatedMessage,
     })
 }
 
@@ -152,8 +228,28 @@ func (d Diagnostics) Warning(cat Category, pos token.Pos, msg string) Diagnostic
         Severity: Warning,
         Category: cat,
         Pos: pos,
+        Code: "",
         Message: msg,
+        Detail: "",
+        Suggestion: "",
         Hint: "",
+        RelatedPos: token.MakePos("", 0, 0, 0),
+        RelatedMessage: "",
+    })
+}
+
+func (d Diagnostics) WarningRelated(cat Category, pos token.Pos, code string, msg string, detail string, hint string, relatedPos token.Pos, relatedMessage string) Diagnostics {
+    return d.Add(Diagnostic{
+        Severity: Warning,
+        Category: cat,
+        Pos: pos,
+        Code: code,
+        Message: msg,
+        Detail: detail,
+        Suggestion: "",
+        Hint: hint,
+        RelatedPos: relatedPos,
+        RelatedMessage: relatedMessage,
     })
 }
 
@@ -162,9 +258,28 @@ func (d Diagnostics) Info(cat Category, pos token.Pos, msg string) Diagnostics {
         Severity: Info,
         Category: cat,
         Pos: pos,
+        Code: "",
         Message: msg,
+        Detail: "",
+        Suggestion: "",
         Hint: "",
+        RelatedPos: token.MakePos("", 0, 0, 0),
+        RelatedMessage: "",
     })
+}
+
+func (d Diagnostics) WithSource(src string, filename string) Diagnostics {
+    return d{
+        Sources: AppendSourceContext(d.Sources, NewSourceContext(src, filename)),
+    }
+}
+
+func (d Diagnostics) Merge(other Diagnostics) Diagnostics {
+    return Diagnostics{
+        Items: AppendDiagnosticItems(d.Items, other.Items, 0),
+        HasError: d.HasError || other.HasError,
+        Sources: MergeSourceContexts(d.Sources, other.Sources, 0),
+    }
 }
 
 func (d Diagnostics) Len() int {
@@ -186,19 +301,37 @@ func (d Diagnostics) Restore(n int) Diagnostics {
     return Diagnostics{
         Items: trimmed,
         HasError: AnyError(trimmed),
+        Sources: d.Sources,
     }
 }
 
 func (d Diagnostics) Format() string {
-    return JoinDiagnostics(d.Items, 0)
+    if len(d.Sources) > 0 {
+        body := FormatAllWithSources(d.Sources, d.Items, 0)
+        if len(d.Items) == 0 {
+            return body
+        }
+        return body + "\n" + Summary(d.Items, 0, 0, 0)
+    }
+    body := JoinDiagnostics(d.Items, 0)
+    if len(d.Items) == 0 {
+        return body
+    }
+    return body + "\n" + Summary(d.Items, 0, 0, 0)
 }
 
 func (sc SourceContext) FormatDiagnostic(d Diagnostic) string {
     lineBlock := FormatLineBlock(sc.Lines, d.Pos.Line, d.Pos.Column)
+    relatedBlock := FormatRelatedBlock(sc, d)
+    detailBlock := FormatDetail(d.Detail)
+    suggestionBlock := FormatSuggestion(d.Suggestion)
     hintBlock := FormatHint(d.Hint)
-    return SeverityString(d.Severity) + "[" + CategoryString(d.Category) + "]: " + d.Message +
+    return SeverityHeader(d) + ": " + d.Message +
         "\n  --> " + PosString(d.Pos) +
         lineBlock +
+        detailBlock +
+        suggestionBlock +
+        relatedBlock +
         hintBlock
 }
 
@@ -221,17 +354,45 @@ func JoinFormattedDiagnostics(sc SourceContext, items []Diagnostic, idx int) str
     return head + "\n" + JoinFormattedDiagnostics(sc, items, idx + 1)
 }
 
+func FormatAllWithSources(sources []SourceContext, items []Diagnostic, idx int) string {
+    if idx >= len(items) {
+        return ""
+    }
+    head := FormatDiagnosticWithSources(sources, items[idx])
+    if idx + 1 >= len(items) {
+        return head
+    }
+    return head + "\n" + FormatAllWithSources(sources, items, idx + 1)
+}
+
+func FormatDiagnosticWithSources(sources []SourceContext, diag Diagnostic) string {
+    ctx := FindSourceContext(sources, diag.Pos.File, 0)
+    if ctx.Filename == "" {
+        if len(sources) == 1 {
+            return sources[0].FormatDiagnostic(diag)
+        }
+    }
+    if ctx.Filename == "" {
+        return diag.String()
+    }
+    return ctx.FormatDiagnostic(diag)
+}
+
 func FormatLineBlock(lines []string, line int, col int) string {
     if line <= 0 || line > len(lines) {
         return ""
     }
+    prev := FormatPrevLine(lines, line)
     text := lines[line - 1]
-    padding := fmt.Sprintf("%d", line)
-    underline := strings.Repeat(" ", col - 1) + "^"
-    return "\n " + strings.Repeat(" ", len(padding)) + " |\n " +
-        padding + " | " + text + "\n " +
-        strings.Repeat(" ", len(padding)) + " | " + underline + "\n " +
-        strings.Repeat(" ", len(padding)) + " |"
+    next := FormatNextLine(lines, line)
+    underline := strings.Repeat(" ", SafeColumn(col) - 1) + "^"
+    width := len(fmt.Sprintf("%d", MaxInt(line + 1, line)))
+    return prev +
+        "\n " + strings.Repeat(" ", width) + " |\n " +
+        fmt.Sprintf("%d", line) + " | " + text + "\n " +
+        strings.Repeat(" ", width) + " | " + underline +
+        next + "\n " +
+        strings.Repeat(" ", width) + " |"
 }
 
 func FormatHint(hint string) string {
@@ -239,6 +400,133 @@ func FormatHint(hint string) string {
         return ""
     }
     return "\n  hint: " + hint
+}
+
+func CodeSuffix(code string) string {
+    if code == "" {
+        return ""
+    }
+    return "[" + code + "]"
+}
+
+func FormatDetail(detail string) string {
+    if detail == "" {
+        return ""
+    }
+    return "\n  detail: " + detail
+}
+
+func FormatSuggestion(suggestion string) string {
+    if suggestion == "" {
+        return ""
+    }
+    return "\n  did you mean: " + suggestion
+}
+
+func FormatInlineRelated(d Diagnostic) string {
+    if d.RelatedMessage == "" {
+        return ""
+    }
+    return "\n  related: " + PosString(d.RelatedPos) + ": " + d.RelatedMessage
+}
+
+func FormatRelatedBlock(sc SourceContext, d Diagnostic) string {
+    if d.RelatedMessage == "" {
+        return ""
+    }
+    related := "\n  related: " + PosString(d.RelatedPos) + ": " + d.RelatedMessage
+    if d.RelatedPos.File == sc.Filename {
+        if d.RelatedPos.Line > 0 {
+            if d.RelatedPos.Line <= len(sc.Lines) {
+                return related + FormatLineBlock(sc.Lines, d.RelatedPos.Line, d.RelatedPos.Column)
+            }
+        }
+    }
+    return related
+}
+
+func SeverityHeader(d Diagnostic) string {
+    return SeverityString(d.Severity) + "[" + CategoryString(d.Category) + "]" + CodeSuffix(d.Code)
+}
+
+func AppendSourceContext(items []SourceContext, next SourceContext) []SourceContext {
+    if next.Filename == "" {
+        return items
+    }
+    if HasSourceContext(items, next.Filename, 0) {
+        return items
+    }
+    return append(items, next)
+}
+
+func MergeSourceContexts(left []SourceContext, right []SourceContext, idx int) []SourceContext {
+    if idx >= len(right) {
+        return left
+    }
+    return MergeSourceContexts(AppendSourceContext(left, right[idx]), right, idx + 1)
+}
+
+func HasSourceContext(items []SourceContext, filename string, idx int) bool {
+    if idx >= len(items) {
+        return false
+    }
+    if items[idx].Filename == filename {
+        return true
+    }
+    return HasSourceContext(items, filename, idx + 1)
+}
+
+func FindSourceContext(items []SourceContext, filename string, idx int) SourceContext {
+    if idx >= len(items) {
+        return SourceContext{
+            Lines: []string{},
+            Filename: "",
+        }
+    }
+    if items[idx].Filename == filename {
+        return items[idx]
+    }
+    return FindSourceContext(items, filename, idx + 1)
+}
+
+func AppendDiagnosticItems(left []Diagnostic, right []Diagnostic, idx int) []Diagnostic {
+    if idx >= len(right) {
+        return left
+    }
+    return AppendDiagnosticItems(append(left, right[idx]), right, idx + 1)
+}
+
+func LineNumberPadding(line int, maxLine int) string {
+    width := len(fmt.Sprintf("%d", maxLine))
+    return strings.Repeat(" ", width - len(fmt.Sprintf("%d", line)))
+}
+
+func FormatPrevLine(lines []string, line int) string {
+    if !(line > 1) {
+        return ""
+    }
+    return "\n " + LineNumberPadding(line - 1, line + 1) + fmt.Sprintf("%d", line - 1) + " | " + lines[line - 2]
+}
+
+func FormatNextLine(lines []string, line int) string {
+    if !(line < len(lines)) {
+        return ""
+    }
+    return "\n " + LineNumberPadding(line + 1, line + 1) + fmt.Sprintf("%d", line + 1) + " | " + lines[line]
+}
+
+func SafeColumn(col int) int {
+    if col <= 0 {
+        return 1
+    }
+    return col
+}
+
+func MaxInt(a int, b int) int {
+    if a > b {
+        return a
+    }
+    return b
 }
 
 func Summary(items []Diagnostic, idx int, errs int, warns int) string {

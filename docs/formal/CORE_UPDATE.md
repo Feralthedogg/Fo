@@ -30,12 +30,17 @@ Currently discharged:
 - arbitrary-path lookup-after-success for successful updates
 - one-segment nested update lookup correctness
 - two-segment nested update lookup correctness relative to inner-field presence
+- structured observation witnesses for path / head / prefix update views
+- first-child projection theorems from prefix witnesses
+- first-child recursive chain projection theorems
+- grandchild projection theorems
+- grandchild-chain projection theorems
 
 Still not completed:
 
 - arbitrary-length path correctness
 - untouched-subtree preservation for general nested updates
-- lowering preservation for general copy-update
+- lowering preservation for fully general nested copy-update
 
 ## Repository Mapping
 

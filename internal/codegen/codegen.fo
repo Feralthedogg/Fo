@@ -1263,6 +1263,11 @@ func GenerateStatements(stmts []ast.Stmt, indent string, resultTypes []string, e
     if len(stmts) == 0 {
         return ""
     }
+    fusedPair := GenerateBindReturnPipelineFusion(stmts, indent, resultTypes, env, enums)
+    if HasText(fusedPair) {
+        tail := GenerateStatements(stmts[2:], indent, resultTypes, CodegenEnvAfterStmt(stmts[0], env, enums), enums)
+        return fusedPair + tail
+    }
     head := GenerateStmt(stmts[0], stmts[1:], indent, resultTypes, env, enums)
     tail := GenerateStatements(stmts[1:], indent, resultTypes, CodegenEnvAfterStmt(stmts[0], env, enums), enums)
     return head + tail
@@ -1869,6 +1874,69 @@ func GenerateBindPipelineFusion(name string, expr ast.Expr, indent string, env [
         indent + "for _, " + itemVar + " := range " + sourceVar + " {\n" +
         GeneratePipelineLoopBody(fusion.Stages, 0, itemVar, GenerateGoName(name), indent + "    ", enums) +
         indent + "}\n"
+}
+
+func GenerateBindReturnPipelineFusion(stmts []ast.Stmt, indent string, resultTypes []string, env []CodegenBinding, enums []EnumInfo) string {
+    if len(stmts) < 2 {
+        return ""
+    }
+    bindStmt := stmts[0]
+    retStmt := stmts[1]
+    if !ast.StmtIsBind(bindStmt) {
+        return ""
+    }
+    if !ast.StmtIsReturn(retStmt) {
+        return ""
+    }
+    names := ast.StmtBindNames(bindStmt)
+    if !(len(names) == 1) {
+        return ""
+    }
+    results := ast.StmtReturnResults(retStmt)
+    if !(len(results) == 1) {
+        return ""
+    }
+    bindFusion := ExtractPipelineFusion(ast.StmtBindValue(bindStmt))
+    if len(bindFusion.Stages) == 0 {
+        return ""
+    }
+    retFusion := ExtractPipelineFusion(results[0])
+    if len(retFusion.Stages) == 0 {
+        return ""
+    }
+    if !ast.ExprIsIdent(retFusion.Source) {
+        return ""
+    }
+    if !StringsEqual(ast.ExprIdentName(retFusion.Source), names[0]) {
+        return ""
+    }
+    combined := ConcatPipelineStages(bindFusion.Stages, retFusion.Stages, 0)
+    if !PipelineStagesAreFusible(combined, 0) {
+        return ""
+    }
+    if !(len(resultTypes) == 1) {
+        return ""
+    }
+    sourceVar := "_pipeSourceRet"
+    accVar := "_pipeAccRet"
+    itemVar := "_pipeItemRet"
+    init := GeneratePipelineAccumulatorBinding(accVar, sourceVar, resultTypes[0], combined, indent, enums)
+    if !HasText(init) {
+        return ""
+    }
+    return indent + sourceVar + " := " + GenerateExpr(bindFusion.Source, enums) + "\n" +
+        init +
+        indent + "for _, " + itemVar + " := range " + sourceVar + " {\n" +
+        GeneratePipelineLoopBody(combined, 0, itemVar, accVar, indent + "    ", enums) +
+        indent + "}\n" +
+        indent + "return " + accVar + "\n"
+}
+
+func ConcatPipelineStages(left []PipelineStage, right []PipelineStage, idx int) []PipelineStage {
+    if idx >= len(right) {
+        return left
+    }
+    return ConcatPipelineStages(append(left, right[idx]), right, idx + 1)
 }
 
 func TitleName(name string) string {

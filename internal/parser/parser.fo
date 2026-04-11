@@ -4,6 +4,8 @@ import "github.com/Feralthedogg/Fo/internal/ast"
 import "github.com/Feralthedogg/Fo/internal/diagnostic"
 import "github.com/Feralthedogg/Fo/internal/lexer"
 import "github.com/Feralthedogg/Fo/internal/token"
+import "fmt"
+import "strings"
 
 type Parser struct {
     Tokens []token.Token
@@ -69,8 +71,16 @@ func New(tokens []token.Token) Parser {
     }
 }
 
+func NewWithSource(tokens []token.Token, src string, filename string) Parser {
+    return Parser{
+        Tokens: tokens,
+        Index: 0,
+        Diag: diagnostic.New().WithSource(src, filename),
+    }
+}
+
 func ParseSource(src string, filename string) FileResult {
-    return New(lexer.Tokenize(src, filename)).ParseFile()
+    return NewWithSource(lexer.Tokenize(src, filename), src, filename).ParseFile()
 }
 
 func (p Parser) Current() token.Token {
@@ -107,8 +117,272 @@ func (p Parser) PeekN(offset int) token.Token {
 
 func (p Parser) AddError(pos token.Pos, msg string) Parser {
     return p{
-        Diag: p.Diag.Error(diagnostic.SyntaxCategory(), pos, msg),
+        Diag: p.Diag.ErrorDetailed(diagnostic.SyntaxCategory(), pos, "FSYNTAX000", msg, "", ""),
     }
+}
+
+func ExpectedFoundHint(expected token.Type, found token.Type) string {
+    if found == token.EOFType() {
+        return "The file ended before this construct finished. Check for a missing closing token or an incomplete declaration."
+    }
+    if expected == token.RBraceType() {
+        return "A block or composite literal was opened earlier but is not closed here."
+    }
+    if expected == token.RParenType() {
+        return "A parameter list, tuple, or grouped expression is still open."
+    }
+    if expected == token.IdentType() {
+        return "An identifier is required at this position."
+    }
+    return ""
+}
+
+func ExpectedFoundSuggestion(expected token.Type, cur token.Token) string {
+    if cur.Literal == "" {
+        return ""
+    }
+    expectedText := token.TypeString(expected)
+    if KeywordSuggestionScore(cur.Literal, expectedText) > 0 {
+        return "'" + expectedText + "'"
+    }
+    return ""
+}
+
+func SuggestTopLevelDecl(cur token.Token) string {
+    return SuggestKeyword(cur.Literal, []string{"func", "type", "extern"}, 0, "", 0)
+}
+
+func SuggestTypeBodyDecl(cur token.Token) string {
+    return SuggestKeyword(cur.Literal, []string{"struct", "enum", "interface"}, 0, "", 0)
+}
+
+func SuggestPatternStart(cur token.Token) string {
+    return SuggestKeyword(cur.Literal, []string{"true", "false"}, 0, "", 0)
+}
+
+func SuggestExpressionStart(cur token.Token) string {
+    return SuggestKeyword(cur.Literal, []string{"true", "false", "func"}, 0, "", 0)
+}
+
+func PatternStartHint(found token.Token) string {
+    if found.Type == token.EOFType() {
+        return "A pattern was expected here, but the file ended before the match case or destructuring pattern finished."
+    }
+    return "Patterns can start with '_', an identifier, a constructor name, a literal, or a grouped pattern like '(...)'."
+}
+
+func PatternStartDetail(found token.Token) string {
+    return "The parser expected a pattern here. Valid starters include '_', a binding name, an enum constructor like 'Some(...)', a literal like '0' or 'true', or a tuple/struct-style pattern."
+}
+
+func ExpressionStartHint(found token.Token) string {
+    if found.Type == token.EOFType() {
+        return "An expression was expected here, but the file ended first."
+    }
+    return "Expressions can start with an identifier, literal, function literal, selector target, or a grouped expression '(...)'."
+}
+
+func ExpressionStartDetail(found token.Token) string {
+    return "The parser expected an expression at this position. Valid starters include identifiers, literals, function literals, calls, selectors, copy-updates, and grouped expressions."
+}
+
+func IsTopLevelDeclStart(cur token.Token) bool {
+    if cur.Type == token.PackageType() {
+        return true
+    }
+    if cur.Type == token.ImportType() {
+        return true
+    }
+    if cur.Type == token.FuncType() {
+        return true
+    }
+    if cur.Type == token.TypeDeclType() {
+        return true
+    }
+    if cur.Type == token.ExternType() {
+        return true
+    }
+    if cur.Type == token.EOFType() {
+        return true
+    }
+    return false
+}
+
+func (p Parser) RecoverTopLevelDecl() Parser {
+    cur := p.Current()
+    if IsTopLevelDeclStart(cur) {
+        return p
+    }
+    return p.Advance().RecoverTopLevelDecl()
+}
+
+func IsCaseBoundary(cur token.Token) bool {
+    if cur.Type == token.CaseType() {
+        return true
+    }
+    if cur.Type == token.DefaultType() {
+        return true
+    }
+    if cur.Type == token.RBraceType() {
+        return true
+    }
+    if cur.Type == token.EOFType() {
+        return true
+    }
+    return false
+}
+
+func (p Parser) RecoverCaseBoundary() Parser {
+    cur := p.Current()
+    if IsCaseBoundary(cur) {
+        return p
+    }
+    return p.Advance().RecoverCaseBoundary()
+}
+
+type CaseRecoveryResult struct {
+    Next Parser
+    Skipped int
+}
+
+func (p Parser) RecoverCaseBoundaryCount(skipped int) CaseRecoveryResult {
+    cur := p.Current()
+    if IsCaseBoundary(cur) {
+        return CaseRecoveryResult{
+            Next: p,
+            Skipped: skipped,
+        }
+    }
+    return p.Advance().RecoverCaseBoundaryCount(skipped + 1)
+}
+
+func WithDiag(p Parser, diag diagnostic.Diagnostics) Parser {
+    return p{
+        Diag: diag,
+    }
+}
+
+func RecoveryCountText(skipped int, boundary string) string {
+    if skipped <= 0 {
+        return "The parser resumed immediately at the next " + boundary + "."
+    }
+    return "The parser skipped " + fmt.Sprintf("%d", skipped) + " token(s) until the next " + boundary + "."
+}
+
+func SuggestKeyword(literal string, candidates []string, idx int, best string, bestScore int) string {
+    if idx >= len(candidates) {
+        if bestScore <= 0 {
+            return ""
+        }
+        return "'" + best + "'"
+    }
+    score := KeywordSuggestionScore(literal, candidates[idx])
+    if score > bestScore {
+        return SuggestKeyword(literal, candidates, idx + 1, candidates[idx], score)
+    }
+    return SuggestKeyword(literal, candidates, idx + 1, best, bestScore)
+}
+
+func KeywordSuggestionScore(left string, right string) int {
+    if left == "" || right == "" {
+        return 0
+    }
+    a := strings.ToLower(left)
+    b := strings.ToLower(right)
+    if a == b {
+        return 1000
+    }
+    if KeywordHasAdjacentSwap(a, b, 0) {
+        return 80 - KeywordAbs(len(a) - len(b))
+    }
+    prefix := KeywordPrefixLen(a, b, 0)
+    subseq := KeywordSubsequenceLen(a, b, 0, 0)
+    if prefix == 0 {
+        if subseq < 2 {
+            if !(strings.Contains(b, a) || strings.Contains(a, b)) {
+                return 0
+            }
+        }
+    }
+    containsScore := KeywordContainsBonus(prefix * 10 + subseq * 4 - KeywordAbs(len(a) - len(b)), a, b)
+    startScore := KeywordStartsWithBonus(containsScore, a, b)
+    if startScore <= 0 {
+        return 0
+    }
+    return startScore
+}
+
+func KeywordPrefixLen(left string, right string, idx int) int {
+    if idx >= len(left) || idx >= len(right) {
+        return idx
+    }
+    if !(left[idx] == right[idx]) {
+        return idx
+    }
+    return KeywordPrefixLen(left, right, idx + 1)
+}
+
+func KeywordAbs(value int) int {
+    if value < 0 {
+        return -value
+    }
+    return value
+}
+
+func KeywordContainsBonus(score int, left string, right string) int {
+    if strings.Contains(right, left) || strings.Contains(left, right) {
+        return score + 5
+    }
+    return score
+}
+
+func KeywordStartsWithBonus(score int, left string, right string) int {
+    if strings.HasPrefix(right, string(left[0])) {
+        return score + 3
+    }
+    return score
+}
+
+func KeywordHasAdjacentSwap(left string, right string, idx int) bool {
+    if len(left) == len(right) {
+        if idx + 1 >= len(left) {
+            return false
+        }
+        if left[idx] == right[idx] {
+            return KeywordHasAdjacentSwap(left, right, idx + 1)
+        }
+        if left[idx] == right[idx + 1] {
+            if left[idx + 1] == right[idx] {
+                return KeywordTailEqual(left, right, idx + 2)
+            }
+        }
+    }
+    return false
+}
+
+func KeywordTailEqual(left string, right string, idx int) bool {
+    if idx >= len(left) {
+        return true
+    }
+    if !(left[idx] == right[idx]) {
+        return false
+    }
+    return KeywordTailEqual(left, right, idx + 1)
+}
+
+func KeywordSubsequenceLen(left string, right string, leftIdx int, rightIdx int) int {
+    if leftIdx >= len(left) || rightIdx >= len(right) {
+        return 0
+    }
+    if left[leftIdx] == right[rightIdx] {
+        return 1 + KeywordSubsequenceLen(left, right, leftIdx + 1, rightIdx + 1)
+    }
+    skipRight := KeywordSubsequenceLen(left, right, leftIdx, rightIdx + 1)
+    skipLeft := KeywordSubsequenceLen(left, right, leftIdx + 1, rightIdx)
+    if skipRight > skipLeft {
+        return skipRight
+    }
+    return skipLeft
 }
 
 func (p Parser) Expect(expected token.Type) ExpectResult {
@@ -119,11 +393,20 @@ func (p Parser) Expect(expected token.Type) ExpectResult {
             Tok: cur,
         }
     }
-    return ExpectResult{
-        Next: p.AddError(
+    updated := p{
+        Diag: p.Diag.ErrorDetailedSuggested(
+            diagnostic.SyntaxCategory(),
             cur.Pos,
+            "FSYNTAX001",
             "expected '" + token.TypeString(expected) + "', found '" + token.TypeString(cur.Type) + "'",
-        ).Advance(),
+            "parser expected token " + token.TypeString(expected) + " but the current token is " + token.TypeString(cur.Type),
+            ExpectedFoundSuggestion(expected, cur),
+            ExpectedFoundHint(expected, cur.Type),
+        ),
+    }
+    next := updated.Advance()
+    return ExpectResult{
+        Next: next,
         Tok: cur,
     }
 }
@@ -196,12 +479,20 @@ func (p Parser) ParseTopLevelDecl() DeclResult {
         return p.ParseTypeDecl()
     }
 
-    next := p.AddError(
-        cur.Pos,
-        "expected top-level declaration, found '" + token.TypeString(cur.Type) + "'",
-    ).Advance()
+    next := p{
+        Diag: p.Diag.ErrorDetailedSuggested(
+            diagnostic.SyntaxCategory(),
+            cur.Pos,
+            "FSYNTAX002",
+            "expected top-level declaration, found '" + token.TypeString(cur.Type) + "'",
+            "Top-level Fo files may only contain package clauses, imports, functions, and type declarations.",
+            SuggestTopLevelDecl(cur),
+            "Start a declaration with 'func', 'type', or 'extern func'. If the first token is a typo, fix it first; the parser will resume at the next top-level declaration to reduce follow-up noise.",
+        ),
+    }
+    advanced := next.Advance().RecoverTopLevelDecl()
     return DeclResult{
-        Next: next,
+        Next: advanced,
         Decl: None[ast.Decl](),
     }
 }
@@ -219,7 +510,19 @@ func (p Parser) ParseExternFuncDecl() DeclResult {
             Decl: Some[ast.Decl](MarkExternDecl(d)),
         }
     }
-    bad := extTok.Next.AddError(extTok.Next.Current().Pos, "expected 'func' after 'extern'").Advance()
+    updated := extTok.Next
+    withDiag := updated{
+        Diag: updated.Diag.ErrorDetailedSuggested(
+            diagnostic.SyntaxCategory(),
+            updated.Current().Pos,
+            "FSYNTAX006",
+            "expected 'func' after 'extern'",
+            "Extern declarations in Fo must start with 'extern func'.",
+            "'func'",
+            "Write 'extern func Name(...) ...' to declare a bridge symbol.",
+        ),
+    }
+    bad := withDiag.Advance()
     return DeclResult{
         Next: bad,
         Decl: None[ast.Decl](),
@@ -617,7 +920,18 @@ func (p Parser) ParseTypeDeclBody(pos token.Pos, name string) TypeDeclBodyResult
             Decl: ast.MakeTypeDeclInterface(pos, name, methods.Methods),
         }
     }
-    bad := p.AddError(cur.Pos, "expected type definition body").Advance()
+    next := p{
+        Diag: p.Diag.ErrorDetailedSuggested(
+            diagnostic.SyntaxCategory(),
+            cur.Pos,
+            "FSYNTAX003",
+            "expected type definition body",
+            "After 'type Name' the parser expects 'struct', 'interface', or 'enum'.",
+            SuggestTypeBodyDecl(cur),
+            "Write 'struct { ... }', 'interface { ... }', or 'enum { ... }' after the type name.",
+        ),
+    }
+    bad := next.Advance().RecoverTopLevelDecl()
     return TypeDeclBodyResult{
         Next: bad,
         Decl: ast.MakeTypeDeclStruct(pos, name, []ast.FieldDef{}),
@@ -740,8 +1054,18 @@ func (p Parser) ParseBlockStmts(block ast.BlockStmt) BlockResult {
         }
     }
     if cur.Type == token.EOFType() {
+        next := p{
+            Diag: p.Diag.ErrorDetailed(
+                diagnostic.SyntaxCategory(),
+                cur.Pos,
+                "FSYNTAX004",
+                "expected '}', found EOF",
+                "A block or composite construct reached end-of-file before it was closed.",
+                "Add the missing closing '}' for the surrounding block.",
+            ),
+        }
         return BlockResult{
-            Next: p.AddError(cur.Pos, "expected '}', found EOF"),
+            Next: next,
             Block: block,
         }
     }
@@ -836,6 +1160,24 @@ type MatchCaseResult struct {
 func (p Parser) ParseMatchCase() MatchCaseResult {
     caseTok := p.Expect(token.CaseType())
     pat := caseTok.Next.ParsePattern()
+    if !(pat.Next.Current().Type == token.ColonType()) {
+        next := pat.Next
+        recovery := next.RecoverCaseBoundaryCount(0)
+        updated := next{
+            Diag: next.Diag.ErrorDetailed(
+                diagnostic.SyntaxCategory(),
+                next.Current().Pos,
+                "FSYNTAX008",
+                "expected ':' after match case pattern",
+                "Each 'case' in a match must end its pattern with ':' before the case body starts.",
+                "Write ':' after the case pattern. " + RecoveryCountText(recovery.Skipped, "'case' or '}'") + " Later cases can still be checked.",
+            ),
+        }
+        return MatchCaseResult{
+            Next: WithDiag(recovery.Next, updated.Diag),
+            Case: ast.MakeMatchCase(caseTok.Tok.Pos, pat.Pattern, []ast.Stmt{}),
+        }
+    }
     colon := pat.Next.Expect(token.ColonType())
     body := colon.Next.ParseCaseBody([]ast.Stmt{})
     return MatchCaseResult{
@@ -904,8 +1246,19 @@ func (p Parser) ParsePattern() PatternResult {
             Pattern: ast.MakeIdentPattern(cur.Pos, cur.Literal),
         }
     }
+    updated := p{
+        Diag: p.Diag.ErrorDetailedSuggested(
+            diagnostic.SyntaxCategory(),
+            cur.Pos,
+            "FSYNTAX007",
+            "expected pattern, found '" + token.TypeString(cur.Type) + "'",
+            PatternStartDetail(cur),
+            SuggestPatternStart(cur),
+            PatternStartHint(cur),
+        ),
+    }
     return PatternResult{
-        Next: p.AddError(cur.Pos, "expected pattern").Advance(),
+        Next: updated.Advance(),
         Pattern: ast.MakeWildcardPattern(cur.Pos),
     }
 }
@@ -1054,6 +1407,24 @@ func (p Parser) ParseCaseClause() CaseClauseResult {
 
     caseTok := p.Expect(token.CaseType())
     expr := caseTok.Next.ParseExpr()
+    if !(expr.Next.Current().Type == token.ColonType()) {
+        next := expr.Next
+        recovery := next.RecoverCaseBoundaryCount(0)
+        updated := next{
+            Diag: next.Diag.ErrorDetailed(
+                diagnostic.SyntaxCategory(),
+                next.Current().Pos,
+                "FSYNTAX009",
+                "expected ':' after switch case expression",
+                "Each switch case expression must be followed by ':' before the case body starts.",
+                "Write ':' after the case expression. " + RecoveryCountText(recovery.Skipped, "'case', 'default', or '}'") + " Later cases can still be checked.",
+            ),
+        }
+        return CaseClauseResult{
+            Next: WithDiag(recovery.Next, updated.Diag),
+            Case: ast.MakeCaseClause(caseTok.Tok.Pos, false, []ast.Expr{expr.Expr}, []ast.Stmt{}),
+        }
+    }
     colon := expr.Next.Expect(token.ColonType())
     body := colon.Next.ParseCaseBody([]ast.Stmt{})
     return CaseClauseResult{
@@ -1525,10 +1896,18 @@ func (p Parser) ParseIndexOrSlice(left ast.Expr) IndexOrSliceResult {
 
 func (p Parser) ParsePrimary() ExprResult {
     cur := p.Current()
-    next := p.AddError(
-        cur.Pos,
-        "expected expression, found '" + token.TypeString(cur.Type) + "'",
-    ).Advance()
+    next := p{
+        Diag: p.Diag.ErrorDetailedSuggested(
+            diagnostic.SyntaxCategory(),
+            cur.Pos,
+            "FSYNTAX005",
+            "expected expression, found '" + token.TypeString(cur.Type) + "'",
+            ExpressionStartDetail(cur),
+            SuggestExpressionStart(cur),
+            ExpressionStartHint(cur),
+        ),
+    }
+    advanced := next.Advance()
     if cur.Type == token.IdentType() {
         return ExprResult{
             Next: p.Advance(),
@@ -1553,7 +1932,7 @@ func (p Parser) ParsePrimary() ExprResult {
         }
     }
     return ExprResult{
-        Next: next,
+        Next: advanced,
         Expr: ast.MakeIdent(cur.Pos, "<error>"),
     }
 }

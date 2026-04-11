@@ -36,7 +36,7 @@ Current practical status:
   - core literals / `if`
   - pattern selection subset
   - immutable copy-update subset
-- abstract codegen-lowering theorem surfaces now exist for:
+- active large-core theorem surfaces now exist for:
   - tailcall lowering
   - match lowering
   - copy-update lowering
@@ -52,8 +52,12 @@ Current practical status:
 - typing/codegen files also include helper-facing bridge lemmas for those semantic layers and code-shape emission lemmas for compiled forms
 - codegen artifacts now also carry reflection/correspondence predicates that relate extracted plans/trees/layouts/shapes back to source expressions or programs
 - codegen now also exposes separate lowered-target models and canonical upper-surface theorem names for `copy-update`, `pipeline`, and `tailcall`
+- copy-update observation now carries structured `path -> head -> prefix -> child -> child-chain -> grandchild -> grandchild-chain` projections
+- pipeline observation now carries stage-result and stage-trace structure instead of only final equality
+- tailcall observation now carries both recur behavior and explicit call-shape witnesses
 - older root/path/single/recur observation theorem names still exist, but they now serve as compatibility wrappers over the target-aware surface
-- those optimization theorems are not yet refined to the current full implementation details
+- the active Lean/Coq trees are placeholder-free and no longer rely on explicit theorem-assumption boundaries
+- those optimization theorems are still lighter than full implementation-complete semantic preservation
 - repository scripts still treat the formal track as an auxiliary verification layer, not the primary release gate
 
 Operationally:

@@ -170,6 +170,7 @@ Working examples in this repository:
 - [hello.fo](../examples/hello.fo)
 - [struct.fo](../examples/struct.fo)
 - [pipeline.fo](../examples/pipeline.fo)
+- [pipeline_bind.fo](../examples/pipeline_bind.fo)
 - [pipeline_fusion.fo](../examples/pipeline_fusion.fo)
 - [copyupdate.fo](../examples/copyupdate.fo)
 - [enum.fo](../examples/enum.fo)

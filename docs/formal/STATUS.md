@@ -8,6 +8,7 @@ Mechanized today:
 - structured pipeline single-stage and multi-stage observation predicates
 - structured copy-update path/head/prefix ladders with child, child-chain, grandchild, and grandchild-chain projections
 - constructive nested binder-path witness plumbing in Lean and Coq
+- placeholder-free Lean and Coq theorem trees on the active formal path
 
 Not claimed yet:
 

@@ -102,17 +102,14 @@ func MergeDecls(acc ast.File, decls []ast.Decl, idx int) ast.File {
 }
 
 func MergeDiagnostics(acc diagnostic.Diagnostics, next diagnostic.Diagnostics, idx int) diagnostic.Diagnostics {
-    if idx >= len(next.Items) {
-        return acc
-    }
-    return MergeDiagnostics(acc.Add(next.Items[idx]), next, idx + 1)
+    return acc.Merge(next)
 }
 
 func CheckFile(file ast.File, parseDiag diagnostic.Diagnostics) diagnostic.Diagnostics {
     if parseDiag.HasError {
         return diagnostic.New()
     }
-    return checker.Check(file)
+    return checker.CheckWithBase(file, parseDiag.Restore(0))
 }
 
 func GenerateFile(file ast.File) string {

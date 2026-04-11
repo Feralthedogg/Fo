@@ -37,7 +37,7 @@ Currently discharged for tuple / constructor / struct exact-shape cases:
 - uniqueness preservation from explicit substitution-uniqueness premises
 - exact-shape progress lemmas
 - tuple/struct exact witnesses
-- tuple/struct witness-domain agreement hooks for higher layers
+- tuple/struct witness-domain agreement lemmas used by higher layers
 
 Still not completed:
 

@@ -74,6 +74,7 @@ func EmptyInterfaceInfo() InterfaceInfo {
 type MethodInfo struct {
     ReceiverType string
     Name string
+    ParamNames []string
     ParamTypes []string
     ResultTypes []string
 }
@@ -82,6 +83,7 @@ func EmptyMethodInfo() MethodInfo {
     return MethodInfo{
         ReceiverType: "",
         Name: "",
+        ParamNames: []string{},
         ParamTypes: []string{},
         ResultTypes: []string{},
     }
@@ -90,6 +92,7 @@ func EmptyMethodInfo() MethodInfo {
 type FuncInfo struct {
     Name string
     TypeParams []string
+    ParamNames []string
     ParamTypes []string
     ResultTypes []string
 }
@@ -98,6 +101,7 @@ func EmptyFuncInfo() FuncInfo {
     return FuncInfo{
         Name: "",
         TypeParams: []string{},
+        ParamNames: []string{},
         ParamTypes: []string{},
         ResultTypes: []string{},
     }
@@ -109,6 +113,11 @@ type TypeBinding struct {
 }
 
 func Check(file ast.File) diagnostic.Diagnostics {
+    return CheckWithBase(file, diagnostic.New())
+}
+
+func CheckWithBase(file ast.File, base diagnostic.Diagnostics) diagnostic.Diagnostics {
+    imports := CollectImportEntries(file.Imports, 0, []NameEntry{})
     externs := EffectiveExternNames(file)
     enums := CollectEnums(file.Decls, 0, []EnumInfo{})
     structs := CollectStructs(file.Decls, 0, []StructInfo{})
@@ -116,7 +125,40 @@ func Check(file ast.File) diagnostic.Diagnostics {
     funcs := CollectFuncs(file.Decls, 0, []FuncInfo{})
     constructors := CollectConstructors(file.Decls, 0, []FuncInfo{})
     methods := CollectMethods(file.Decls, 0, []MethodInfo{})
-    return CheckDecls(file.Decls, []NameEntry{}, diagnostic.New(), externs, enums, structs, interfaces, ConcatFuncInfos(funcs, constructors), methods)
+    return CheckDecls(file.Decls, []NameEntry{}, imports, base, externs, enums, structs, interfaces, ConcatFuncInfos(funcs, constructors), methods)
+}
+
+func CollectImportEntries(imports []ast.ImportDecl, idx int, acc []NameEntry) []NameEntry {
+    if idx >= len(imports) {
+        return acc
+    }
+    name := ImportBaseName(ast.ImportPath(imports[idx]))
+    if name == "" {
+        return CollectImportEntries(imports, idx + 1, acc)
+    }
+    return CollectImportEntries(imports, idx + 1, append(acc, NameEntry{
+        Name: name,
+        Kind: "import",
+        Pos: imports[idx].Pos,
+    }))
+}
+
+func ImportBaseName(path string) string {
+    trimmed := strings.TrimPrefix(strings.TrimSuffix(path, "\""), "\"")
+    if trimmed == "github.com/Feralthedogg/Fo/stdlib/fo" {
+        return "base"
+    }
+    return ImportBaseNameFrom(trimmed, len(trimmed) - 1, "")
+}
+
+func ImportBaseNameFrom(path string, idx int, acc string) string {
+    if idx < 0 {
+        return acc
+    }
+    if path[idx] == "/"[0] {
+        return acc
+    }
+    return ImportBaseNameFrom(path, idx - 1, string(path[idx]) + acc)
 }
 
 func EffectiveExternNames(file ast.File) []string {
@@ -213,6 +255,7 @@ func InterfaceMethodInfos(methods []ast.MethodSig, idx int, acc []FuncInfo) []Fu
     return InterfaceMethodInfos(methods, idx + 1, append(acc, FuncInfo{
         Name: ast.MethodSigName(methods[idx]),
         TypeParams: []string{},
+        ParamNames: FieldNames(ast.MethodSigParams(methods[idx]), 0, []string{}),
         ParamTypes: FieldTypes(ast.MethodSigParams(methods[idx]), 0, []string{}),
         ResultTypes: TypeNames(ast.MethodSigResults(methods[idx]), 0, []string{}),
     }))
@@ -231,6 +274,7 @@ func CollectFuncs(decls []ast.Decl, idx int, acc []FuncInfo) []FuncInfo {
                 append(acc, FuncInfo{
                     Name: ast.DeclName(decl),
                     TypeParams: TypeParamNames(ast.DeclTypeParams(decl), 0, []string{}),
+                    ParamNames: FieldNames(ast.DeclParams(decl), 0, []string{}),
                     ParamTypes: FieldTypes(ast.DeclParams(decl), 0, []string{}),
                     ResultTypes: TypeNames(ast.DeclResults(decl), 0, []string{}),
                 }),
@@ -253,6 +297,7 @@ func CollectMethods(decls []ast.Decl, idx int, acc []MethodInfo) []MethodInfo {
                 append(acc, MethodInfo{
                     ReceiverType: TypeExprName(ast.FieldType(ast.DeclReceiverField(decl))),
                     Name: ast.DeclName(decl),
+                    ParamNames: FieldNames(ast.DeclParams(decl), 0, []string{}),
                     ParamTypes: FieldTypes(ast.DeclParams(decl), 0, []string{}),
                     ResultTypes: TypeNames(ast.DeclResults(decl), 0, []string{}),
                 }),
@@ -301,6 +346,7 @@ func ConstructorInfos(enumType string, typeParams []string, variants []ast.Varia
     info := FuncInfo{
         Name: ast.VariantName(variants[idx]),
         TypeParams: typeParams,
+        ParamNames: []string{},
         ParamTypes: TypeNames(ast.VariantFields(variants[idx]), 0, []string{}),
         ResultTypes: []string{enumType},
     }
@@ -325,6 +371,13 @@ func FieldTypes(fields []ast.FieldDef, idx int, acc []string) []string {
     return FieldTypes(fields, idx + 1, append(acc, TypeExprName(ast.FieldType(fields[idx]))))
 }
 
+func FieldNames(fields []ast.FieldDef, idx int, acc []string) []string {
+    if idx >= len(fields) {
+        return acc
+    }
+    return FieldNames(fields, idx + 1, append(acc, ast.FieldName(fields[idx])))
+}
+
 func TypeNames(items []ast.TypeExpr, idx int, acc []string) []string {
     if idx >= len(items) {
         return acc
@@ -346,20 +399,20 @@ func VariantNamesAcc(items []ast.Variant, idx int, acc []string) []string {
     return VariantNamesAcc(items, idx + 1, append(acc, ast.VariantName(items[idx])))
 }
 
-func CheckDecls(decls []ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+func CheckDecls(decls []ast.Decl, seen []NameEntry, imports []NameEntry, diag diagnostic.Diagnostics, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
     if len(decls) == 0 {
         return diag
     }
 
     current := decls[0]
-    nextDiag := CheckDecl(current, seen, diag, externs, enums, structs, interfaces, funcs, methods)
+    nextDiag := CheckDecl(current, seen, imports, diag, externs, enums, structs, interfaces, funcs, methods)
     nextSeen := ExtendSeen(current, seen)
-    return CheckDecls(decls[1:], nextSeen, nextDiag, externs, enums, structs, interfaces, funcs, methods)
+    return CheckDecls(decls[1:], nextSeen, imports, nextDiag, externs, enums, structs, interfaces, funcs, methods)
 }
 
-func CheckDecl(decl ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+func CheckDecl(decl ast.Decl, seen []NameEntry, imports []NameEntry, diag diagnostic.Diagnostics, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
     if ast.DeclIsFuncDecl(decl) {
-        return CheckFuncDecl(decl, seen, diag, externs, enums, structs, interfaces, funcs, methods)
+        return CheckFuncDecl(decl, seen, imports, diag, externs, enums, structs, interfaces, funcs, methods)
     }
     if ast.DeclIsTypeDecl(decl) {
         return CheckTypeDecl(decl, seen, diag)
@@ -367,10 +420,10 @@ func CheckDecl(decl ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics, ext
     return diag
 }
 
-func CheckFuncDecl(decl ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+func CheckFuncDecl(decl ast.Decl, seen []NameEntry, imports []NameEntry, diag diagnostic.Diagnostics, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
     headerDiag := CheckFuncDeclHeader(decl, seen, diag)
     paramState := CheckFieldDefs(ast.DeclParams(decl), []NameEntry{}, "parameter", headerDiag)
-    return CheckFuncDeclBody(decl, paramState, externs, enums, structs, interfaces, funcs, methods)
+    return CheckFuncDeclBody(decl, paramState, imports, externs, enums, structs, interfaces, funcs, methods)
 }
 
 func CheckFuncDeclHeader(decl ast.Decl, seen []NameEntry, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
@@ -384,7 +437,7 @@ func CheckFuncDeclHeader(decl ast.Decl, seen []NameEntry, diag diagnostic.Diagno
     return CheckVariadicParams(ast.DeclParams(decl), 0, diag)
 }
 
-func CheckFuncDeclBody(decl ast.Decl, paramState DuplicateState, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+func CheckFuncDeclBody(decl ast.Decl, paramState DuplicateState, imports []NameEntry, externs []string, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
     typeEnv := ParamTypeEnv(ast.DeclParams(decl), 0, []TypeEntry{})
     if ast.DeclHasReceiver(decl) {
         receiver := ast.DeclReceiverField(decl)
@@ -403,14 +456,23 @@ func CheckFuncDeclBody(decl ast.Decl, paramState DuplicateState, externs []strin
         if ast.DeclIsExtern(decl) {
             return recvState.Diag
         }
-        bodyDiag := CheckBlock(ast.DeclBodyBlock(decl), recvState.Visible, recvState.Visible, recvState.Diag, externs)
+        importVisible := ConcatNameEntries(imports, recvState.Visible, 0)
+        bodyDiag := CheckBlock(ast.DeclBodyBlock(decl), recvState.Visible, importVisible, recvState.Diag, externs)
         return CheckSemanticBlock(ast.DeclBodyBlock(decl), ast.DeclResults(decl), bodyDiag, recvEnv, enums, structs, interfaces, funcs, methods)
     }
     if ast.DeclIsExtern(decl) {
         return paramState.Diag
     }
-    bodyDiag := CheckBlock(ast.DeclBodyBlock(decl), paramState.Seen, paramState.Seen, paramState.Diag, externs)
+    importVisible := ConcatNameEntries(imports, paramState.Seen, 0)
+    bodyDiag := CheckBlock(ast.DeclBodyBlock(decl), paramState.Seen, importVisible, paramState.Diag, externs)
     return CheckSemanticBlock(ast.DeclBodyBlock(decl), ast.DeclResults(decl), bodyDiag, typeEnv, enums, structs, interfaces, funcs, methods)
+}
+
+func ConcatNameEntries(left []NameEntry, right []NameEntry, idx int) []NameEntry {
+    if idx >= len(right) {
+        return left
+    }
+    return ConcatNameEntries(append(left, right[idx]), right, idx + 1)
 }
 
 func ParamTypeEnv(fields []ast.FieldDef, idx int, acc []TypeEntry) []TypeEntry {
@@ -511,11 +573,17 @@ func CheckVariadicParams(fields []ast.FieldDef, idx int, diag diagnostic.Diagnos
 func CheckDuplicateLocalName(name string, kind string, pos token.Pos, seen []NameEntry, diag diagnostic.Diagnostics) DuplicateState {
     prev := FindNameEntry(seen, name)
     if !isNone[NameEntry](prev) {
+        item := unwrapOr[NameEntry](prev, EmptyNameEntry())
         return DuplicateState{
-            Diag: diag.Error(
+            Diag: diag.ErrorRelated(
                 diagnostic.TypeErrorCategory(),
                 pos,
+                "FTYPE001",
                 "duplicate "+kind+" declaration: "+name,
+                "This declaration conflicts with an earlier " + EntryLabel(item) + ".",
+                "Rename one of the declarations so each local name is introduced only once in the same scope.",
+                item.Pos,
+                "previous " + EntryLabel(item) + " declared here",
             ),
             Seen: seen,
         }
@@ -545,10 +613,16 @@ func CheckInitName(name string, pos token.Pos, diag diagnostic.Diagnostics) diag
 func CheckDuplicateName(name string, kind string, pos token.Pos, seen []NameEntry, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
     prev := FindNameEntry(seen, name)
     if !isNone[NameEntry](prev) {
-        return diag.Error(
+        item := unwrapOr[NameEntry](prev, EmptyNameEntry())
+        return diag.ErrorRelated(
             diagnostic.TypeErrorCategory(),
             pos,
+            "FTYPE002",
             "duplicate "+kind+" declaration: "+name,
+            "Top-level declarations share one namespace per package.",
+            "Rename the declaration or remove the earlier one.",
+            item.Pos,
+            "previous " + EntryLabel(item) + " declared here",
         )
     }
     return diag
@@ -684,11 +758,17 @@ func RegisterNames(names []string, kind string, pos token.Pos, local []NameEntry
 func RegisterName(name string, kind string, pos token.Pos, local []NameEntry, visible []NameEntry, diag diagnostic.Diagnostics) BindingState {
     prev := FindNameEntry(local, name)
     if !isNone[NameEntry](prev) {
+        item := unwrapOr[NameEntry](prev, EmptyNameEntry())
         return BindingState{
-            Diag: diag.Error(
+            Diag: diag.ErrorRelated(
                 diagnostic.ImmutabilityCategory(),
                 pos,
+                "FIMM001",
                 "reassignment is not allowed in Fo: "+name,
+                "Bindings in Fo are immutable once introduced in the same block scope.",
+                "Introduce a new name instead of reusing '" + name + "'.",
+                item.Pos,
+                "original " + EntryLabel(item) + " declared here",
             ),
             Local: local,
             Visible: visible,
@@ -714,10 +794,15 @@ func ShadowDiag(name string, pos token.Pos, visible []NameEntry, diag diagnostic
     prev := FindNameEntry(visible, name)
     if !isNone[NameEntry](prev) {
         item := unwrapOr[NameEntry](prev, EmptyNameEntry())
-        return diag.Warning(
+        return diag.WarningRelated(
             diagnostic.TypeErrorCategory(),
             pos,
+            "FTYPE010",
             "shadowing "+item.Kind+" declaration: "+name,
+            "The new binding hides an earlier visible declaration with the same name.",
+            "Shadowing is legal here, but it usually reduces readability.",
+            item.Pos,
+            "shadowed " + EntryLabel(item) + " declared here",
         )
     }
     return diag
@@ -732,6 +817,34 @@ func CheckExprs(exprs []ast.Expr, idx int, visible []NameEntry, diag diagnostic.
 }
 
 func CheckExpr(expr ast.Expr, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if ast.ExprIsIdent(expr) {
+        name := ast.ExprIdentName(expr)
+        if IsBuiltinName(name) {
+            return diag
+        }
+        if LooksLikeEnumSymbol(name) {
+            return diag
+        }
+        if !isNone[NameEntry](FindLastNameEntry(visible, name)) {
+            return diag
+        }
+        candidates := VisibleNames(visible, 0, []string{})
+        suggestion := SuggestName(name, candidates, 0, "", 0)
+        if !IsTypoLikeSuggestion(name, suggestion) {
+            return diag
+        }
+        return diag.ErrorRelatedSuggested(
+            diagnostic.TypeErrorCategory(),
+            expr.TokenPos(),
+            "FTYPE011",
+            "unknown name "+name,
+            "This identifier is not bound in the current scope.",
+            MaybeSuggestionText(suggestion),
+            UnknownNameHint(visible),
+            SuggestedRelatedPos(visible, suggestion),
+            SuggestedRelatedMessage(visible, suggestion),
+        )
+    }
     if ast.ExprIsCall(expr) {
         next := CheckCallExpr(expr, visible, diag, externs)
         return CheckExprs(ast.ExprCallArgs(expr), 0, visible, next, externs)
@@ -928,16 +1041,23 @@ func CheckEnumPatternType(pattern ast.Pattern, expectedType string, pos token.Po
         if len(subPats) == len(item.ParamTypes) {
             return CheckPatternTypes(subPats, item.ParamTypes, 0, diag, enums, structs, funcs)
         }
-        return diag.Error(
+        return diag.ErrorDetailed(
             diagnostic.TypeErrorCategory(),
             pos,
+            "FTYPE020",
             "pattern arity mismatch for "+name+": expected "+IntString(len(item.ParamTypes))+", got "+IntString(len(subPats)),
+            "Constructor signature is " + CallSignatureDetail(item) + ".",
+            "Adjust the number of nested subpatterns to match the constructor payload arity.",
         )
     }
-    return diag.Error(
+    return diag.ErrorDetailedSuggested(
         diagnostic.TypeErrorCategory(),
         pos,
+        "FTYPE021",
         "pattern variant "+name+" does not belong to "+expectedType,
+        "The matched value has enum type " + expectedType + ", but the pattern names a constructor from a different enum or an unknown constructor.",
+        MaybeSuggestionText(SuggestName(name, unwrapOr[EnumInfo](FindEnumInfo(enums, expectedType), EmptyEnumInfo()).Variants, 0, "", 0)),
+        EnumVariantHint(expectedType, enums),
     )
 }
 
@@ -971,10 +1091,14 @@ func CheckStructPatternFields(fields []ast.FieldPattern, structType string, idx 
             fields,
             structType,
             idx + 1,
-            diag.Error(
+            diag.ErrorDetailedSuggested(
                 diagnostic.TypeErrorCategory(),
                 ast.FieldPatternPatternValue(fields[idx]).TokenPos(),
+                "FTYPE030",
                 "unknown field "+name+" on "+structType,
+                "The struct pattern mentions a field that does not exist on the matched struct type.",
+                MaybeSuggestionText(SuggestName(name, StructFieldNames(structType, structs), 0, "", 0)),
+                StructFieldHint(structType, structs),
             ),
             enums,
             structs,
@@ -1076,10 +1200,13 @@ func CheckConditionShape(expr ast.Expr, pos token.Pos, diag diagnostic.Diagnosti
     if got == "bool" {
         return diag
     }
-    return diag.Error(
+    return diag.ErrorDetailed(
         diagnostic.TypeErrorCategory(),
         pos,
+        "FTYPE040",
         "if condition must be bool, got "+got,
+        "Conditional branches are selected from a boolean value only.",
+        "Compare the value explicitly or convert the expression to a bool before using it in 'if'.",
     )
 }
 
@@ -1093,11 +1220,24 @@ func CheckReturnShape(exprs []ast.Expr, results []ast.TypeExpr, pos token.Pos, d
         if len(elems) == len(results) {
             return CheckReturnTupleTypes(elems, results, 0, exprs[0].TokenPos(), diag, interfaces, methods)
         }
+        if !(got == "") {
+            return diag.ErrorDetailed(
+                diagnostic.TypeErrorCategory(),
+                pos,
+                "FTYPE041",
+                "return value count mismatch: expected "+IntString(len(results))+", got "+IntString(len(exprs)),
+                "The function returns " + IntString(len(results)) + " values, but this return statement produces one expression of inferred type " + got + ". " + ReturnExprReason(exprs[0], got, env, enums, structs, funcs, methods),
+                "Return the same number of values as the function result list, or change the function signature if a single aggregate value is intended.",
+            )
+        }
     }
-    return diag.Error(
+    return diag.ErrorDetailed(
         diagnostic.TypeErrorCategory(),
         pos,
+        "FTYPE041",
         "return value count mismatch: expected "+IntString(len(results))+", got "+IntString(len(exprs)),
+        "The function signature and the return statement disagree on result arity.",
+        "Return the same number of values as the function result list, or wrap multiple values in an explicit tuple only when the signature expects it.",
     )
 }
 
@@ -1120,10 +1260,13 @@ func CheckReturnTypes(exprs []ast.Expr, results []ast.TypeExpr, idx int, diag di
         exprs,
         results,
         idx + 1,
-        diag.Error(
+        diag.ErrorDetailed(
             diagnostic.TypeErrorCategory(),
             exprs[idx].TokenPos(),
+            "FTYPE042",
             "return type mismatch: expected "+expected+", got "+got,
+            "Result #" + IntString(idx + 1) + " is declared as " + expected + ", but the returned expression is inferred as " + got + ". " + ReturnExprReason(exprs[idx], got, env, enums, structs, funcs, methods),
+            "Change the returned expression so it produces " + expected + ", or change the function result type if the current expression is the intended one.",
         ),
         env,
         enums,
@@ -1147,14 +1290,71 @@ func CheckReturnTupleTypes(got []string, results []ast.TypeExpr, idx int, pos to
         results,
         idx + 1,
         pos,
-        diag.Error(
+        diag.ErrorDetailed(
             diagnostic.TypeErrorCategory(),
             pos,
+            "FTYPE043",
             "return type mismatch: expected "+expected+", got "+got[idx],
+            "Tuple result #" + IntString(idx + 1) + " is declared as " + expected + ", but the returned tuple element is inferred as " + got[idx] + ".",
+            "Adjust the tuple element expression or the function result list so they agree.",
         ),
         interfaces,
         methods,
     )
+}
+
+func ReturnExprReason(expr ast.Expr, got string, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo, methods []MethodInfo) string {
+    if ast.ExprIsIdent(expr) {
+        name := ast.ExprIdentName(expr)
+        bound := LookupTypeEnv(env, name)
+        if !(bound == "") {
+            return "Name '" + name + "' is currently bound as " + bound + "."
+        }
+        return "Name '" + name + "' is inferred as " + got + "."
+    }
+    if ast.ExprIsCall(expr) {
+        fn := ast.ExprCallFunc(expr)
+        if ast.ExprIsIdent(fn) {
+            name := ast.ExprIdentName(fn)
+            sig := ResolveFuncSig(funcs, name)
+            if !isNone[FuncInfo](sig) {
+                info := unwrapOr[FuncInfo](sig, EmptyFuncInfo())
+                return "Call '" + name + "' resolves to " + CallSignatureDetail(info) + "."
+            }
+            if !(EnumTypeForVariant(name, enums) == "") {
+                return "Constructor call '" + name + "' builds enum value " + got + "."
+            }
+        }
+        if ast.ExprIsSelector(fn) {
+            recvType := InferExprTypeNameFromEnv(ast.ExprSelectorTarget(fn), env, enums, structs, funcs, methods)
+            if !(recvType == "") {
+                return "Method call '" + recvType + "." + ast.ExprSelectorField(fn) + "' is inferred as " + got + "."
+            }
+        }
+        return "This call expression is inferred as " + got + "."
+    }
+    if ast.ExprIsSelector(expr) {
+        recvType := InferExprTypeNameFromEnv(ast.ExprSelectorTarget(expr), env, enums, structs, funcs, methods)
+        if !(recvType == "") {
+            return "Selector '" + recvType + "." + ast.ExprSelectorField(expr) + "' resolves to " + got + "."
+        }
+    }
+    if ast.ExprIsStructLit(expr) {
+        return "Struct literal constructs " + ast.ExprStructLitType(expr) + "."
+    }
+    if ast.ExprIsCopyUpdate(expr) {
+        sourceType := InferExprTypeNameFromEnv(ast.ExprCopyUpdateSource(expr), env, enums, structs, funcs, methods)
+        if !(sourceType == "") {
+            return "Copy-update preserves the source struct type " + sourceType + "."
+        }
+    }
+    if ast.ExprIsTuple(expr) {
+        return "Tuple literal is inferred as " + got + "."
+    }
+    if ast.ExprIsBasicLit(expr) {
+        return "Literal expression is inferred as " + got + "."
+    }
+    return "This expression is inferred as " + got + "."
 }
 
 func TypeExprName(expr ast.TypeExpr) string {
@@ -1572,32 +1772,45 @@ func StringIn(items []string, want string) bool {
 
 type CoverageState struct {
     Diag diagnostic.Diagnostics
-    Seen []string
+    Seen []CoverageEntry
     HasWildcard bool
+    CatchAllPos token.Pos
+}
+
+type CoverageEntry struct {
+    Name string
+    Pos token.Pos
 }
 
 func CheckMatchCasesAgainstEnum(cases []ast.MatchCase, info EnumInfo, pos token.Pos, diag diagnostic.Diagnostics) diagnostic.Diagnostics {
-    state := AnalyzeMatchCoverage(cases, 0, []string{}, false, diag)
+    state := AnalyzeMatchCoverage(cases, 0, []CoverageEntry{}, false, ast.ZeroPos(), diag)
     if state.HasWildcard {
         return state.Diag
     }
-    missing := MissingVariants(info.Variants, state.Seen, 0, []string{})
+    seenNames := CoverageEntryNames(state.Seen, 0, []string{})
+    missing := MissingVariants(info.Variants, seenNames, 0, []string{})
     if len(missing) == 0 {
         return state.Diag
     }
-    return state.Diag.Error(
+    suggestion := MissingVariantSuggestion(cases, info, missing)
+    return state.Diag.ErrorDetailedSuggested(
         diagnostic.ExhaustivenessCategory(),
         pos,
+        "FEXH001",
         "match does not cover every case of '"+info.Name+"'. Missing: "+JoinStrings(missing, 0),
+        ExhaustivenessDetail(info.Name, missing),
+        MaybeSuggestionText(suggestion),
+        ExhaustivenessHint(missing, suggestion),
     )
 }
 
-func AnalyzeMatchCoverage(cases []ast.MatchCase, idx int, seen []string, hasWildcard bool, diag diagnostic.Diagnostics) CoverageState {
+func AnalyzeMatchCoverage(cases []ast.MatchCase, idx int, seen []CoverageEntry, hasWildcard bool, catchAllPos token.Pos, diag diagnostic.Diagnostics) CoverageState {
     if idx >= len(cases) {
         return CoverageState{
             Diag: diag,
             Seen: seen,
             HasWildcard: hasWildcard,
+            CatchAllPos: catchAllPos,
         }
     }
     pattern := ast.MatchCasePattern(cases[idx])
@@ -1607,37 +1820,109 @@ func AnalyzeMatchCoverage(cases []ast.MatchCase, idx int, seen []string, hasWild
             idx + 1,
             seen,
             hasWildcard,
-            diag.Warning(
+            catchAllPos,
+            diag.WarningRelated(
                 diagnostic.ExhaustivenessCategory(),
                 cases[idx].Pos,
+                "FEXH002",
                 "unreachable match case",
+                "A previous catch-all pattern already handles every remaining value.",
+                "Remove this case or move it before the catch-all case if it is meant to match first.",
+                catchAllPos,
+                "previous catch-all case is here",
             ),
         )
     }
     if ast.PatternIsWildcard(pattern) {
-        return AnalyzeMatchCoverage(cases, idx + 1, seen, true, diag)
+        return AnalyzeMatchCoverage(cases, idx + 1, seen, true, cases[idx].Pos, diag)
     }
     if ast.PatternIsIdent(pattern) {
-        return AnalyzeMatchCoverage(cases, idx + 1, seen, true, diag)
+        return AnalyzeMatchCoverage(cases, idx + 1, seen, true, cases[idx].Pos, diag)
     }
     if ast.PatternIsEnum(pattern) {
         name := ast.PatternEnumName(pattern)
-        if StringIn(seen, name) {
+        prev := FindCoverageEntry(seen, name)
+        if !isNone[CoverageEntry](prev) {
+            item := unwrapOr[CoverageEntry](prev, CoverageEntry{Name: "", Pos: ast.ZeroPos()})
             return AnalyzeMatchCoverage(
                 cases,
                 idx + 1,
                 seen,
                 false,
-                diag.Warning(
+                catchAllPos,
+                diag.WarningRelated(
                     diagnostic.ExhaustivenessCategory(),
                     cases[idx].Pos,
+                    "FEXH003",
                     "redundant match case",
+                    "This variant was already handled by an earlier case.",
+                    "Remove the duplicate case or merge its logic into the earlier matching branch.",
+                    item.Pos,
+                    "previous case for '"+name+"' is here",
                 ),
             )
         }
-        return AnalyzeMatchCoverage(cases, idx + 1, append(seen, name), false, diag)
+        return AnalyzeMatchCoverage(cases, idx + 1, append(seen, CoverageEntry{Name: name, Pos: cases[idx].Pos}), false, catchAllPos, diag)
     }
-    return AnalyzeMatchCoverage(cases, idx + 1, seen, false, diag)
+    return AnalyzeMatchCoverage(cases, idx + 1, seen, false, catchAllPos, diag)
+}
+
+func CoverageEntryNames(items []CoverageEntry, idx int, acc []string) []string {
+    if idx >= len(items) {
+        return acc
+    }
+    return CoverageEntryNames(items, idx + 1, append(acc, items[idx].Name))
+}
+
+func FindCoverageEntry(items []CoverageEntry, name string) Option[CoverageEntry] {
+    if len(items) == 0 {
+        return None[CoverageEntry]()
+    }
+    if items[0].Name == name {
+        return Some[CoverageEntry](items[0])
+    }
+    return FindCoverageEntry(items[1:], name)
+}
+
+func ExhaustivenessDetail(typeName string, missing []string) string {
+    return "The matched value has enum type " + typeName + ", but the case list still leaves uncovered constructors."
+}
+
+func ExhaustivenessHint(missing []string, suggestion string) string {
+    if !(suggestion == "") {
+        return "Add a case for " + suggestion + " or add a final catch-all only if every remaining case is intentionally handled the same way."
+    }
+    return "Add explicit cases for the missing variants, or add a final catch-all only if every remaining case is intentionally handled the same way."
+}
+
+func MissingVariantSuggestion(cases []ast.MatchCase, info EnumInfo, missing []string) string {
+    if len(missing) == 1 {
+        return missing[0]
+    }
+    return SuggestMissingVariantFromCases(cases, info, missing, 0, "", 0)
+}
+
+func SuggestMissingVariantFromCases(cases []ast.MatchCase, info EnumInfo, missing []string, idx int, best string, bestScore int) string {
+    if idx >= len(cases) {
+        if bestScore <= 0 {
+            return ""
+        }
+        return best
+    }
+    pattern := ast.MatchCasePattern(cases[idx])
+    if ast.PatternIsEnum(pattern) {
+        name := ast.PatternEnumName(pattern)
+        if !StringIn(info.Variants, name) {
+            missingSuggestion := SuggestName(name, missing, 0, "", 0)
+            if IsTypoLikeSuggestion(name, missingSuggestion) {
+                score := SuggestionScore(name, missingSuggestion)
+                if score > bestScore {
+                    return SuggestMissingVariantFromCases(cases, info, missing, idx + 1, missingSuggestion, score)
+                }
+            }
+        }
+    }
+    return SuggestMissingVariantFromCases(cases, info, missing, idx + 1, best, bestScore)
 }
 
 func MissingVariants(all []string, seen []string, idx int, acc []string) []string {
@@ -2162,6 +2447,374 @@ func JoinStrings(items []string, idx int) string {
     return items[idx] + ", " + JoinStrings(items, idx + 1)
 }
 
+func EntryLabel(entry NameEntry) string {
+    return entry.Kind + " '" + entry.Name + "'"
+}
+
+func StructFieldNames(typeName string, structs []StructInfo) []string {
+    info := FindStructInfo(structs, typeName)
+    if isNone[StructInfo](info) {
+        return []string{}
+    }
+    item := unwrapOr[StructInfo](info, EmptyStructInfo())
+    return StructFieldNamesFrom(item.Fields, 0, []string{})
+}
+
+func StructFieldNamesFrom(fields []FieldTypeInfo, idx int, acc []string) []string {
+    if idx >= len(fields) {
+        return acc
+    }
+    return StructFieldNamesFrom(fields, idx + 1, append(acc, fields[idx].Name))
+}
+
+func StructFieldHint(typeName string, structs []StructInfo) string {
+    names := StructFieldNames(typeName, structs)
+    if len(names) == 0 {
+        return ""
+    }
+    return "Available fields on " + typeName + ": " + JoinStrings(names, 0) + "."
+}
+
+func MethodNamesForReceiver(receiverType string, methods []MethodInfo, idx int, acc []string) []string {
+    if idx >= len(methods) {
+        return acc
+    }
+    item := methods[idx]
+    if BaseTypeName(item.ReceiverType) == BaseTypeName(receiverType) {
+        return MethodNamesForReceiver(receiverType, methods, idx + 1, append(acc, item.Name))
+    }
+    return MethodNamesForReceiver(receiverType, methods, idx + 1, acc)
+}
+
+func MethodHint(receiverType string, methods []MethodInfo) string {
+    names := MethodNamesForReceiver(receiverType, methods, 0, []string{})
+    if len(names) == 0 {
+        return ""
+    }
+    return "Available methods on " + receiverType + ": " + JoinStrings(names, 0) + "."
+}
+
+func ConcatStrings(left []string, right []string, idx int) []string {
+    if idx >= len(right) {
+        return left
+    }
+    return ConcatStrings(append(left, right[idx]), right, idx + 1)
+}
+
+func AppendUniqueStrings(items []string, next string) []string {
+    if next == "" {
+        return items
+    }
+    if StringIn(items, next) {
+        return items
+    }
+    return append(items, next)
+}
+
+func VisibleNames(entries []NameEntry, idx int, acc []string) []string {
+    if idx >= len(entries) {
+        return acc
+    }
+    return VisibleNames(entries, idx + 1, AppendUniqueStrings(acc, entries[idx].Name))
+}
+
+func FuncNames(items []FuncInfo, idx int, acc []string) []string {
+    if idx >= len(items) {
+        return acc
+    }
+    return FuncNames(items, idx + 1, AppendUniqueStrings(acc, items[idx].Name))
+}
+
+func MemberHint(receiverType string, structs []StructInfo, methods []MethodInfo) string {
+    fieldHint := StructFieldHint(receiverType, structs)
+    methodHint := MethodHint(receiverType, methods)
+    if fieldHint == "" {
+        return methodHint
+    }
+    if methodHint == "" {
+        return fieldHint
+    }
+    return fieldHint + " " + methodHint
+}
+
+func EnumVariantHint(typeName string, enums []EnumInfo) string {
+    info := FindEnumInfo(enums, typeName)
+    if isNone[EnumInfo](info) {
+        return ""
+    }
+    item := unwrapOr[EnumInfo](info, EmptyEnumInfo())
+    if len(item.Variants) == 0 {
+        return ""
+    }
+    return "Valid variants for " + typeName + ": " + JoinStrings(item.Variants, 0) + "."
+}
+
+func UnknownNameHint(visible []NameEntry) string {
+    names := VisibleNames(visible, 0, []string{})
+    if len(names) == 0 {
+        return "Declare the name before using it, or fix the spelling if this is a typo."
+    }
+    return "Available names in this scope include: " + JoinStrings(names, 0) + "."
+}
+
+func UnknownCallHint(candidates []string) string {
+    if len(candidates) == 0 {
+        return "Declare the function or constructor before calling it, or fix the spelling if this is a typo."
+    }
+    return "Known callable names here include: " + JoinStrings(candidates, 0) + "."
+}
+
+func IsTypoLikeSuggestion(target string, candidate string) bool {
+    if target == "" || candidate == "" {
+        return false
+    }
+    left := strings.ToLower(target)
+    right := strings.ToLower(candidate)
+    if left == right {
+        return true
+    }
+    if HasAdjacentSwap(left, right, 0) {
+        return true
+    }
+    if CommonPrefixLength(left, right, 0) >= 3 {
+        if AbsInt(len(left) - len(right)) <= 2 {
+            return true
+        }
+    }
+    if SubsequenceLength(left, right, 0, 0) >= len(left) - 1 {
+        if AbsInt(len(left) - len(right)) <= 2 {
+            return true
+        }
+    }
+    if strings.Contains(right, left) || strings.Contains(left, right) {
+        if AbsInt(len(left) - len(right)) <= 1 {
+            return true
+        }
+    }
+    return false
+}
+
+func IsBuiltinName(name string) bool {
+    if name == "nil" {
+        return true
+    }
+    return false
+}
+
+func LooksLikeEnumSymbol(name string) bool {
+    if name == "" {
+        return false
+    }
+    ch := name[0]
+    if ch >= "A"[0] {
+        if ch <= "Z"[0] {
+            return true
+        }
+    }
+    return false
+}
+
+func IsBuiltinCallName(name string) bool {
+    if name == "len" {
+        return true
+    }
+    if name == "append" {
+        return true
+    }
+    if name == "string" {
+        return true
+    }
+    if name == "int" {
+        return true
+    }
+    if name == "byte" {
+        return true
+    }
+    return false
+}
+
+func CallSignatureDetail(info FuncInfo) string {
+    return info.Name + "(" + JoinSignatureParams(info.ParamNames, info.ParamTypes, 0, []string{}) + ") -> (" + JoinStrings(info.ResultTypes, 0) + ")"
+}
+
+func CallExampleShape(info FuncInfo, idx int, acc []string) string {
+    if idx >= len(info.ParamTypes) {
+        return info.Name + "(" + JoinStrings(acc, 0) + ")"
+    }
+    if idx < len(info.ParamNames) {
+        if !(info.ParamNames[idx] == "") {
+            return CallExampleShape(info, idx + 1, append(acc, "<" + info.ParamNames[idx] + ">"))
+        }
+    }
+    return CallExampleShape(info, idx + 1, append(acc, "<arg" + IntString(idx + 1) + ">"))
+}
+
+func SuggestionReason(target string, suggestion string) string {
+    if target == "" || suggestion == "" {
+        return ""
+    }
+    left := strings.ToLower(target)
+    right := strings.ToLower(suggestion)
+    if HasAdjacentSwap(left, right, 0) {
+        return "The suggested name swaps two adjacent letters compared with the misspelled name."
+    }
+    prefix := CommonPrefixLength(left, right, 0)
+    if prefix >= 3 {
+        return "The suggested name shares the same leading letters and is the closest available member by spelling."
+    }
+    if strings.Contains(right, left) || strings.Contains(left, right) {
+        return "The suggested name is the closest available member by substring match."
+    }
+    if SubsequenceLength(left, right, 0, 0) >= len(left) - 1 {
+        return "The suggested name differs by only a very small spelling change."
+    }
+    return "The suggested name is the closest available member by spelling."
+}
+
+func JoinSignatureParams(names []string, types []string, idx int, acc []string) string {
+    if idx >= len(types) {
+        return JoinStrings(acc, 0)
+    }
+    if idx < len(names) {
+        if !(names[idx] == "") {
+            return JoinSignatureParams(names, types, idx + 1, append(acc, names[idx] + " " + types[idx]))
+        }
+    }
+    return JoinSignatureParams(names, types, idx + 1, append(acc, types[idx]))
+}
+
+func SuggestName(target string, candidates []string, idx int, best string, bestScore int) string {
+    if idx >= len(candidates) {
+        if bestScore <= 0 {
+            return ""
+        }
+        return best
+    }
+    score := SuggestionScore(target, candidates[idx])
+    if score > bestScore {
+        return SuggestName(target, candidates, idx + 1, candidates[idx], score)
+    }
+    return SuggestName(target, candidates, idx + 1, best, bestScore)
+}
+
+func SuggestionScore(target string, candidate string) int {
+    if target == "" || candidate == "" {
+        return 0
+    }
+    left := strings.ToLower(target)
+    right := strings.ToLower(candidate)
+    if left == right {
+        return 1000
+    }
+    if HasAdjacentSwap(left, right, 0) {
+        return 80 - AbsInt(len(left) - len(right))
+    }
+    prefix := CommonPrefixLength(left, right, 0)
+    subseq := SubsequenceLength(left, right, 0, 0)
+    if prefix == 0 {
+        if subseq < 2 {
+            if !(strings.Contains(right, left) || strings.Contains(left, right)) {
+                return 0
+            }
+        }
+    }
+    baseScore := prefix * 10 + subseq * 4
+    containsScore := AddContainsBonus(baseScore, left, right)
+    lengthScore := containsScore - AbsInt(len(left) - len(right))
+    endingScore := AddEndsWithBonus(lengthScore, left, right)
+    return AddStartsWithBonus(endingScore, left, right)
+}
+
+func AddContainsBonus(score int, left string, right string) int {
+    if strings.Contains(right, left) || strings.Contains(left, right) {
+        return score + 5
+    }
+    return score
+}
+
+func AddStartsWithBonus(score int, left string, right string) int {
+    if strings.HasPrefix(right, string(left[0])) {
+        return score + 3
+    }
+    return score
+}
+
+func AddEndsWithBonus(score int, left string, right string) int {
+    if len(left) == 0 || len(right) == 0 {
+        return score
+    }
+    if left[len(left) - 1] == right[len(right) - 1] {
+        return score + 2
+    }
+    return score
+}
+
+func CommonPrefixLength(left string, right string, idx int) int {
+    if idx >= len(left) || idx >= len(right) {
+        return idx
+    }
+    if !(left[idx] == right[idx]) {
+        return idx
+    }
+    return CommonPrefixLength(left, right, idx + 1)
+}
+
+func AbsInt(value int) int {
+    if value < 0 {
+        return -value
+    }
+    return value
+}
+
+func HasAdjacentSwap(left string, right string, idx int) bool {
+    if len(left) == len(right) {
+        if idx + 1 >= len(left) {
+            return false
+        }
+        if left[idx] == right[idx] {
+            return HasAdjacentSwap(left, right, idx + 1)
+        }
+        if left[idx] == right[idx + 1] {
+            if left[idx + 1] == right[idx] {
+                return TailEquals(left, right, idx + 2)
+            }
+        }
+    }
+    return false
+}
+
+func TailEquals(left string, right string, idx int) bool {
+    if idx >= len(left) {
+        return true
+    }
+    if !(left[idx] == right[idx]) {
+        return false
+    }
+    return TailEquals(left, right, idx + 1)
+}
+
+func SubsequenceLength(left string, right string, leftIdx int, rightIdx int) int {
+    if leftIdx >= len(left) || rightIdx >= len(right) {
+        return 0
+    }
+    if left[leftIdx] == right[rightIdx] {
+        return 1 + SubsequenceLength(left, right, leftIdx + 1, rightIdx + 1)
+    }
+    skipRight := SubsequenceLength(left, right, leftIdx, rightIdx + 1)
+    skipLeft := SubsequenceLength(left, right, leftIdx + 1, rightIdx)
+    if skipRight > skipLeft {
+        return skipRight
+    }
+    return skipLeft
+}
+
+func MaybeSuggestionText(value string) string {
+    if value == "" {
+        return ""
+    }
+    return "'" + value + "'"
+}
+
 func CheckSemanticExprs(exprs []ast.Expr, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
     if idx >= len(exprs) {
         return diag
@@ -2187,7 +2840,32 @@ func CheckSemanticExpr(expr ast.Expr, diag diagnostic.Diagnostics, env []TypeEnt
         return CheckSemanticExpr(ast.ExprPipelineRight(expr), left, env, enums, structs, interfaces, funcs, methods)
     }
     if ast.ExprIsSelector(expr) {
-        return CheckSemanticExpr(ast.ExprSelectorTarget(expr), diag, env, enums, structs, interfaces, funcs, methods)
+        checked := CheckSemanticExpr(ast.ExprSelectorTarget(expr), diag, env, enums, structs, interfaces, funcs, methods)
+        recvType := InferExprTypeNameFromEnv(ast.ExprSelectorTarget(expr), env, enums, structs, funcs, methods)
+        fieldName := ast.ExprSelectorField(expr)
+        if recvType == "" {
+            return checked
+        }
+        if !(FieldTypeForStruct(recvType, fieldName, structs) == "") {
+            return checked
+        }
+        if !isNone[MethodInfo](FindMethodInfo(methods, recvType, fieldName)) {
+            return checked
+        }
+        if !IsKnownStructType(recvType, structs) {
+            return checked
+        }
+        members := ConcatStrings(StructFieldNames(recvType, structs), MethodNamesForReceiver(recvType, methods, 0, []string{}), 0)
+        suggestion := SuggestName(fieldName, members, 0, "", 0)
+        return checked.ErrorDetailedSuggested(
+            diagnostic.TypeErrorCategory(),
+            expr.TokenPos(),
+            "FTYPE055",
+            "unknown selector "+fieldName+" on "+recvType,
+            "The selector does not resolve to a field or method on the receiver type. " + SuggestionReason(fieldName, suggestion),
+            MaybeSuggestionText(suggestion),
+            MemberHint(recvType, structs, methods),
+        )
     }
     if ast.ExprIsIndex(expr) {
         left := CheckSemanticExpr(ast.ExprIndexTarget(expr), diag, env, enums, structs, interfaces, funcs, methods)
@@ -2239,14 +2917,19 @@ func CheckStructLiteralFields(fields []ast.FieldInit, structType string, idx int
     name := ast.FieldInitNameValue(fields[idx])
     fieldType := FieldTypeForStruct(structType, name, structs)
     if fieldType == "" {
+        suggestion := SuggestName(name, StructFieldNames(structType, structs), 0, "", 0)
         return CheckStructLiteralFields(
             fields,
             structType,
             idx + 1,
-            diag.Error(
+            diag.ErrorDetailedSuggested(
                 diagnostic.TypeErrorCategory(),
                 ast.FieldInitExprValue(fields[idx]).TokenPos(),
+                "FTYPE050",
                 "unknown field "+name+" on "+structType,
+                "The struct literal initializes a field that is not declared on this struct type. " + SuggestionReason(name, suggestion),
+                MaybeSuggestionText(suggestion),
+                StructFieldHint(structType, structs),
             ),
             env,
             enums,
@@ -2267,10 +2950,13 @@ func CheckStructLiteralFields(fields []ast.FieldInit, structType string, idx int
         fields,
         structType,
         idx + 1,
-        diag.Error(
+        diag.ErrorDetailed(
             diagnostic.TypeErrorCategory(),
             ast.FieldInitExprValue(fields[idx]).TokenPos(),
+            "FTYPE051",
             "field type mismatch for "+name+": expected "+fieldType+", got "+got,
+            "The initializer expression type does not match the declared field type.",
+            "",
         ),
         env,
         enums,
@@ -2289,10 +2975,13 @@ func CheckCopyUpdateExpr(expr ast.Expr, diag diagnostic.Diagnostics, env []TypeE
         return checked
     }
     if !IsKnownStructType(sourceType, structs) {
-        return checked.Error(
+        return checked.ErrorDetailed(
             diagnostic.TypeErrorCategory(),
             expr.TokenPos(),
+            "FTYPE052",
             "copy-update requires a struct source, got "+sourceType,
+            "Copy-update can only rebuild declared struct values.",
+            "Use a struct literal or a value whose inferred type is a struct.",
         )
     }
     return CheckFieldUpdatePaths(ast.ExprCopyUpdateUpdates(expr), sourceType, 0, checked, env, enums, structs, interfaces, funcs, methods)
@@ -2305,14 +2994,19 @@ func CheckFieldUpdatePaths(fields []ast.FieldUpdate, structType string, idx int,
     path := ast.FieldUpdatePathValue(fields[idx])
     fieldType := ResolveFieldPathType(structType, path, structs)
     if fieldType == "" {
+        suggestion := SuggestName(path[0], StructFieldNames(structType, structs), 0, "", 0)
         return CheckFieldUpdatePaths(
             fields,
             structType,
             idx + 1,
-            diag.Error(
+            diag.ErrorDetailedSuggested(
                 diagnostic.TypeErrorCategory(),
                 ast.FieldUpdateExprValue(fields[idx]).TokenPos(),
+                "FTYPE053",
                 "unknown update path "+JoinStrings(path, 0)+" on "+structType,
+                "The copy-update path does not resolve against the source struct type. " + SuggestionReason(path[0], suggestion),
+                MaybeSuggestionText(suggestion),
+                StructFieldHint(structType, structs),
             ),
             env,
             enums,
@@ -2333,10 +3027,13 @@ func CheckFieldUpdatePaths(fields []ast.FieldUpdate, structType string, idx int,
         fields,
         structType,
         idx + 1,
-        diag.Error(
+        diag.ErrorDetailed(
             diagnostic.TypeErrorCategory(),
             ast.FieldUpdateExprValue(fields[idx]).TokenPos(),
+            "FTYPE054",
             "update type mismatch for "+JoinStrings(path, 0)+": expected "+fieldType+", got "+got,
+            "The assigned update value does not match the resolved field-path type.",
+            "",
         ),
         env,
         enums,
@@ -2373,33 +3070,52 @@ func CheckFieldUpdateExprsSemantic(fields []ast.FieldUpdate, idx int, diag diagn
 func CheckCallSignature(expr ast.Expr, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
     fn := ast.ExprCallFunc(expr)
     if ast.ExprIsIdent(fn) {
-        return CheckResolvedCall(
-            ast.ExprCallArgs(expr),
-            ResolveFuncSig(funcs, ast.ExprIdentName(fn)),
-            expr.TokenPos(),
-            diag,
-            env,
-            enums,
-            structs,
-            interfaces,
-            funcs,
-            methods,
-        )
+        name := ast.ExprIdentName(fn)
+        if IsBuiltinCallName(name) {
+            return diag
+        }
+        if !(LookupTypeEnv(env, name) == "") {
+            return diag
+        }
+        sig := ResolveFuncSig(funcs, name)
+        if isNone[FuncInfo](sig) {
+            candidates := FuncNames(funcs, 0, []string{})
+            suggestion := SuggestName(name, candidates, 0, "", 0)
+            if !IsTypoLikeSuggestion(name, suggestion) {
+                return diag
+            }
+            return diag.ErrorDetailedSuggested(
+                diagnostic.TypeErrorCategory(),
+                expr.TokenPos(),
+                "FTYPE063",
+                "unknown call target "+name,
+                "The call does not resolve to a declared function or enum constructor.",
+                MaybeSuggestionText(suggestion),
+                UnknownCallHint(candidates),
+            )
+        }
+        return CheckResolvedCall(ast.ExprCallArgs(expr), sig, expr.TokenPos(), diag, env, enums, structs, interfaces, funcs, methods)
     }
     if ast.ExprIsSelector(fn) {
         recvType := InferExprTypeNameFromEnv(ast.ExprSelectorTarget(fn), env, enums, structs, funcs, methods)
-        return CheckResolvedCall(
-            ast.ExprCallArgs(expr),
-            ResolveMethodSig(methods, recvType, ast.ExprSelectorField(fn)),
-            expr.TokenPos(),
-            diag,
-            env,
-            enums,
-            structs,
-            interfaces,
-            funcs,
-            methods,
-        )
+        sig := ResolveMethodSig(methods, recvType, ast.ExprSelectorField(fn))
+        if isNone[FuncInfo](sig) {
+            methodNames := MethodNamesForReceiver(recvType, methods, 0, []string{})
+            if !(recvType == "") {
+                if len(methodNames) > 0 {
+                    return diag.ErrorDetailedSuggested(
+                        diagnostic.TypeErrorCategory(),
+                        expr.TokenPos(),
+                        "FTYPE062",
+                        "unknown method "+ast.ExprSelectorField(fn)+" on "+recvType,
+                        "The call target does not resolve to a declared method on the receiver type.",
+                        MaybeSuggestionText(SuggestName(ast.ExprSelectorField(fn), methodNames, 0, "", 0)),
+                        MethodHint(recvType, methods),
+                    )
+                }
+            }
+        }
+        return CheckResolvedCall(ast.ExprCallArgs(expr), sig, expr.TokenPos(), diag, env, enums, structs, interfaces, funcs, methods)
     }
     return diag
 }
@@ -2408,39 +3124,45 @@ func CheckResolvedCall(args []ast.Expr, sig Option[FuncInfo], pos token.Pos, dia
     if !isNone[FuncInfo](sig) {
         info := unwrapOr[FuncInfo](sig, EmptyFuncInfo())
         if len(args) == len(info.ParamTypes) {
-            return CheckCallArgTypes(args, info.ParamTypes, 0, diag, env, enums, structs, interfaces, funcs, methods)
+            return CheckCallArgTypes(args, info, 0, diag, env, enums, structs, interfaces, funcs, methods)
         }
-        return diag.Error(
+        return diag.ErrorDetailed(
             diagnostic.TypeErrorCategory(),
             pos,
+            "FTYPE060",
             "argument count mismatch: expected "+IntString(len(info.ParamTypes))+", got "+IntString(len(args)),
+            "Resolved callee signature is " + CallSignatureDetail(info) + ". Supplied argument types are " + ArgumentTypesSummary(args, 0, []string{}, env, enums, structs, funcs, methods) + ".",
+            "Pass exactly the number of arguments required by the resolved function or method. Expected parameters are " + ArgumentParameterSummary(info, 0, []string{}) + ". Example call shape: " + CallExampleShape(info, 0, []string{}) + ".",
         )
     }
     return diag
 }
 
-func CheckCallArgTypes(args []ast.Expr, expected []string, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
+func CheckCallArgTypes(args []ast.Expr, info FuncInfo, idx int, diag diagnostic.Diagnostics, env []TypeEntry, enums []EnumInfo, structs []StructInfo, interfaces []InterfaceInfo, funcs []FuncInfo, methods []MethodInfo) diagnostic.Diagnostics {
     if idx >= len(args) {
         return diag
     }
     got := InferExprTypeNameFromEnv(args[idx], env, enums, structs, funcs, methods)
-    if expected[idx] == "" {
-        return CheckCallArgTypes(args, expected, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    if info.ParamTypes[idx] == "" {
+        return CheckCallArgTypes(args, info, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
     }
     if got == "" {
-        return CheckCallArgTypes(args, expected, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+        return CheckCallArgTypes(args, info, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
     }
-    if ArgumentTypeCompatible(expected[idx], got, interfaces, methods) {
-        return CheckCallArgTypes(args, expected, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
+    if ArgumentTypeCompatible(info.ParamTypes[idx], got, interfaces, methods) {
+        return CheckCallArgTypes(args, info, idx + 1, diag, env, enums, structs, interfaces, funcs, methods)
     }
     return CheckCallArgTypes(
         args,
-        expected,
+        info,
         idx + 1,
-        diag.Error(
+        diag.ErrorDetailed(
             diagnostic.TypeErrorCategory(),
             args[idx].TokenPos(),
-            "argument type mismatch: expected "+expected[idx]+", got "+got,
+            "FTYPE061",
+            "argument type mismatch for "+ArgumentLabel(info, idx)+": expected "+info.ParamTypes[idx]+", got "+got,
+            "Parameter " + ArgumentLabel(info, idx) + " of " + CallSignatureDetail(info) + " expects " + info.ParamTypes[idx] + ", but this argument is inferred as " + got + ". " + ReturnExprReason(args[idx], got, env, enums, structs, funcs, methods),
+            "Change this argument so it produces " + info.ParamTypes[idx] + ", or call a different function whose parameter type matches the current expression.",
         ),
         env,
         enums,
@@ -2449,6 +3171,38 @@ func CheckCallArgTypes(args []ast.Expr, expected []string, idx int, diag diagnos
         funcs,
         methods,
     )
+}
+
+func ArgumentTypesSummary(args []ast.Expr, idx int, acc []string, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo, methods []MethodInfo) string {
+    if idx >= len(args) {
+        return "[" + JoinStrings(acc, 0) + "]"
+    }
+    got := InferExprTypeNameFromEnv(args[idx], env, enums, structs, funcs, methods)
+    if got == "" {
+        return ArgumentTypesSummary(args, idx + 1, append(acc, "#" + IntString(idx + 1) + ": ?"), env, enums, structs, funcs, methods)
+    }
+    return ArgumentTypesSummary(args, idx + 1, append(acc, "#" + IntString(idx + 1) + ": " + got), env, enums, structs, funcs, methods)
+}
+
+func ArgumentParameterSummary(info FuncInfo, idx int, acc []string) string {
+    if idx >= len(info.ParamTypes) {
+        return "[" + JoinStrings(acc, 0) + "]"
+    }
+    if idx < len(info.ParamNames) {
+        if !(info.ParamNames[idx] == "") {
+            return ArgumentParameterSummary(info, idx + 1, append(acc, "#" + IntString(idx + 1) + " " + info.ParamNames[idx] + ": " + info.ParamTypes[idx]))
+        }
+    }
+    return ArgumentParameterSummary(info, idx + 1, append(acc, "#" + IntString(idx + 1) + ": " + info.ParamTypes[idx]))
+}
+
+func ArgumentLabel(info FuncInfo, idx int) string {
+    if idx < len(info.ParamNames) {
+        if !(info.ParamNames[idx] == "") {
+            return "#" + IntString(idx + 1) + " '" + info.ParamNames[idx] + "'"
+        }
+    }
+    return "#" + IntString(idx + 1)
 }
 
 func ResolveFuncSig(funcs []FuncInfo, name string) Option[FuncInfo] {
@@ -2468,6 +3222,7 @@ func ResolveMethodSig(methods []MethodInfo, receiverType string, name string) Op
         return Some[FuncInfo](FuncInfo{
             Name: item.Name,
             TypeParams: []string{},
+            ParamNames: item.ParamNames,
             ParamTypes: item.ParamTypes,
             ResultTypes: item.ResultTypes,
         })
@@ -2509,8 +3264,8 @@ func CheckOptionalExpr(value Option[ast.Expr], visible []NameEntry, diag diagnos
 }
 
 func CheckCallExpr(expr ast.Expr, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
-    next := CheckExpr(ast.ExprCallFunc(expr), visible, diag, externs)
     fn := ast.ExprCallFunc(expr)
+    next := CheckCallTargetExpr(fn, visible, diag, externs)
     if ast.ExprIsIdent(fn) {
         name := ast.ExprIdentName(fn)
         if IsExternName(externs, name) {
@@ -2526,6 +3281,16 @@ func CheckCallExpr(expr ast.Expr, visible []NameEntry, diag diagnostic.Diagnosti
         }
     }
     return next
+}
+
+func CheckCallTargetExpr(fn ast.Expr, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
+    if ast.ExprIsIdent(fn) {
+        return diag
+    }
+    if ast.ExprIsSelector(fn) {
+        return CheckExpr(ast.ExprSelectorTarget(fn), visible, diag, externs)
+    }
+    return CheckExpr(fn, visible, diag, externs)
 }
 
 func CheckFieldInitExprs(fields []ast.FieldInit, idx int, visible []NameEntry, diag diagnostic.Diagnostics, externs []string) diagnostic.Diagnostics {
@@ -2665,4 +3430,41 @@ func FindNameEntry(entries []NameEntry, name string) Option[NameEntry] {
         return Some[NameEntry](entries[0])
     }
     return FindNameEntry(entries[1:], name)
+}
+
+func FindLastNameEntry(entries []NameEntry, name string) Option[NameEntry] {
+    if len(entries) == 0 {
+        return None[NameEntry]()
+    }
+    tail := FindLastNameEntry(entries[1:], name)
+    if !isNone[NameEntry](tail) {
+        return tail
+    }
+    if entries[0].Name == name {
+        return Some[NameEntry](entries[0])
+    }
+    return None[NameEntry]()
+}
+
+func SuggestedRelatedPos(entries []NameEntry, suggestion string) token.Pos {
+    if suggestion == "" {
+        return token.MakePos("", 0, 0, 0)
+    }
+    entry := FindLastNameEntry(entries, suggestion)
+    if isNone[NameEntry](entry) {
+        return token.MakePos("", 0, 0, 0)
+    }
+    return unwrapOr[NameEntry](entry, EmptyNameEntry()).Pos
+}
+
+func SuggestedRelatedMessage(entries []NameEntry, suggestion string) string {
+    if suggestion == "" {
+        return ""
+    }
+    entry := FindLastNameEntry(entries, suggestion)
+    if isNone[NameEntry](entry) {
+        return ""
+    }
+    item := unwrapOr[NameEntry](entry, EmptyNameEntry())
+    return "nearby " + EntryLabel(item) + " declared here"
 }

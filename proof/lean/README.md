@@ -1,13 +1,15 @@
-# Lean Proof Skeleton
+# Lean Proof Track
 
-This directory contains the Lean-side skeleton for the Fo formal proof effort.
+This directory contains the Lean-side mechanized proof track for Fo.
 
 Current status:
 
-- syntax, semantics, typing, and codegen theorem targets are declared
-- environment and pattern-matching skeletons are declared
-- several local core lemmas are discharged
-- codegen optimization theorems are stated against abstract lowering interfaces
-- the full implementation-level proof story is still a skeleton
+- syntax, semantics, typing, and codegen layers are mechanized
+- concrete local proof slices are discharged in `CoreLite`, `CoreMatch`, and `CoreUpdate`
+- codegen now carries artifact, certificate, target-aware, and observation layers
+- the active Lean tree is placeholder-free
+- the full implementation-level correctness story is still incomplete
 
-The intent is to stabilize theorem statements before investing in full proof scripts.
+The current role of the Lean track is no longer just theorem declaration. It is
+an active mechanization surface with lightweight large-core predicates and
+heavier concrete local slices.

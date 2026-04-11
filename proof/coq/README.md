@@ -1,13 +1,15 @@
-# Coq Proof Skeleton
+# Coq Proof Track
 
-This directory contains the Coq-side skeleton for the Fo formal proof effort.
+This directory contains the Coq-side mechanized proof track for Fo.
 
 Current status:
 
-- theorem targets are stated
-- environment and pattern-matching skeletons are stated
-- several local core lemmas are discharged
-- codegen optimization theorems are stated against abstract lowering interfaces
-- the full implementation-level proof story is still a skeleton
+- syntax, semantics, typing, and codegen layers are mechanized
+- concrete local proof slices are discharged in `CoreLite`, `CoreMatch`, and `CoreUpdate`
+- codegen now carries artifact, certificate, target-aware, and observation layers
+- the active Coq tree is placeholder-free
+- the full implementation-level correctness story is still incomplete
 
-The Coq track mirrors the Lean track so the proof program is not locked to one prover too early.
+The Coq track mirrors the Lean track so the proof program is not locked to one
+prover too early, while still keeping a live mechanized graph rather than a
+declaration-only shell.

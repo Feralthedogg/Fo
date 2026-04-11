@@ -14,6 +14,7 @@ Fo is a Fo-first self-hosting transpiler workspace.
 - [Syntax](docs/SYNTAX.md)
 - [CLI](docs/CLI.md)
 - [Formal track](docs/FORMAL.md)
+- [Formal status](docs/formal/STATUS.md)
 
 ## Common Workflow
 
