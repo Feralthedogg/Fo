@@ -519,7 +519,7 @@ sub check_bootstrapless_rebuild {
 
     print "[3/4] Smoke-checking seed-built host bridge\n";
     my (undef, $version_out, $version_err) = run_cmd_capture("$workdir/bin/fo-seeded", 'version');
-    assert_regex($version_out . $version_err, qr/v0\.2\.1/, "missing v0.2.1 in version output\n");
+    assert_regex($version_out . $version_err, qr/v1\.0\.0/, "missing v1.0.0 in version output\n");
     my (undef, $help_out, $help_err) = run_cmd_capture("$workdir/bin/fo-seeded", 'help');
     assert_regex($help_out . $help_err, qr/fo build/, "missing fo build in help output\n");
 
@@ -980,7 +980,7 @@ sub check_cold_seed_cli {
   quiet_stdout(sub { build_cold_seed_cli($root, $seed_dir, $cold_bin) });
   print "[3/5] Version/help smoke\n";
   my (undef, $version_out, $version_err) = run_cmd_capture($cold_bin, 'version');
-  assert_regex($version_out . $version_err, qr/v0\.2\.1/, "missing v0.2.1 in coldseed version\n");
+  assert_regex($version_out . $version_err, qr/v1\.0\.0/, "missing v1.0.0 in coldseed version\n");
   my (undef, $help_out, $help_err) = run_cmd_capture($cold_bin, 'help');
   assert_regex($help_out . $help_err, qr/fo build/, "missing fo build in coldseed help\n");
 

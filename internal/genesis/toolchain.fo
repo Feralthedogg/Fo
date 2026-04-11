@@ -232,7 +232,7 @@ func DefaultArgsExpr(args Expr) Expr {
 func BuildToolchainProgram() Program {
     return NewProgram([]FuncDef{
         Function("version", []string{}, []Stmt{
-            ReturnStmt(TextExpr("v0.2.1")),
+            ReturnStmt(TextExpr("v1.0.0")),
         }),
         Function("help", []string{}, []Stmt{
             ReturnStmt(UsageExpr()),
