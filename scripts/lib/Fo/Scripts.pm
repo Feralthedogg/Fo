@@ -131,7 +131,8 @@ sub resolve_genesis_bins {
   my ($root) = @_;
   my $core_bin = resolve_generation_bin($root);
   die "missing compiler seed\n" if !-x $core_bin;
-  return ($core_bin, $core_bin);
+  my $genesis_bin = -x "$root/build/fo-selfhosted" ? "$root/build/fo-selfhosted" : $core_bin;
+  return ($core_bin, $genesis_bin);
 }
 
 sub strings_contains {
