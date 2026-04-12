@@ -305,14 +305,14 @@ func resolvePackageRunResult(cmd string, targets []string) fo.RunResult {
     if !module.Ok {
         return fo.FailureResult(module.Error)
     }
-    packages := collectRequestedPackages(module, targets)
+    packages := collectRequestedRunPackages(module, cmd, targets)
     if !packages.Ok {
         return fo.FailureResult(packages.Error)
     }
     if len(packages.Items) == 0 {
         return fo.FailureResult("no Fo packages found")
     }
-    compiled := compilePackagesParallel(packages.Items)
+    compiled := compilePackagesForCommand(cmd, packages.Items)
     if !compiled.Ok {
         return fo.FailureResult(compiled.Error)
     }
@@ -346,6 +346,61 @@ func resolvePackageRunResult(cmd string, targets []string) fo.RunResult {
         return fo.ExecCommandResult(project.TestPackageAction(generated.Items, goArgs))
     }
     return fo.FailureResult("unknown package compile command: " + cmd)
+}
+
+func compilePackagesForCommand(cmd string, items []PackageUnit) CompileResultsResult {
+    if cmd == "check" {
+        return compilePackagesSerial(items, 0, []CachedCompileResult{})
+    }
+    return compilePackagesParallel(items)
+}
+
+func collectRequestedRunPackages(module ModuleInfo, cmd string, targets []string) PackageUnitsResult {
+    if cmd == "check" {
+        if !targetsRequireFullScan(targets, 0) {
+            return collectRequestedRootPackages(module, targets)
+        }
+        return collectRequestedCheckPackages(module, targets, 0, []PackageUnit{})
+    }
+    return collectRequestedPackages(module, targets)
+}
+
+func collectRequestedCheckPackages(module ModuleInfo, targets []string, idx int, acc []PackageUnit) PackageUnitsResult {
+    if idx >= len(targets) {
+        if len(acc) == 0 {
+            return collectRequestedRootPackages(module, []string{"."})
+        }
+        return MakePackageUnitsResult(true, acc, "")
+    }
+    target := targets[idx]
+    if strings.Contains(target, "...") {
+        rootDir := absoluteTargetDir(stripRecursiveTarget(target))
+        scanned := scanModulePackagesUnder(module.Root, module.ModulePath, rootDir)
+        if !scanned.Ok {
+            return scanned
+        }
+        return collectRequestedCheckPackages(module, targets, idx + 1, appendPackageUnitsUnique(acc, scanned.Items, 0))
+    }
+    targetDir := absoluteTargetDir(target)
+    built := buildPackageUnitFromDir(targetDir, module.Root, module.ModulePath)
+    if !built.Ok {
+        return MakePackageUnitsResult(false, []PackageUnit{}, built.Error)
+    }
+    return collectRequestedCheckPackages(module, targets, idx + 1, appendPackageUnitUnique(acc, built.Item))
+}
+
+func appendPackageUnitsUnique(acc []PackageUnit, items []PackageUnit, idx int) []PackageUnit {
+    if idx >= len(items) {
+        return acc
+    }
+    return appendPackageUnitsUnique(appendPackageUnitUnique(acc, items[idx]), items, idx + 1)
+}
+
+func appendPackageUnitUnique(acc []PackageUnit, item PackageUnit) []PackageUnit {
+    if hasPackageUnit(acc, item.ImportPath, 0) {
+        return acc
+    }
+    return append(acc, item)
 }
 
 func generatedGoIsMainPackage(src string) bool {
@@ -534,6 +589,18 @@ func compilePackagesParallel(items []PackageUnit) CompileResultsResult {
     return waitCompileTasks(compilePackageTasks(items, 0, []base.Task[CachedCompileResult]{}))
 }
 
+func compilePackagesSerial(items []PackageUnit, idx int, acc []CachedCompileResult) CompileResultsResult {
+    if idx >= len(items) {
+        failure := findCompileFailure(acc, 0)
+        if !(failure == "") {
+            return MakeCompileResultsResult(false, []CachedCompileResult{}, failure)
+        }
+        return MakeCompileResultsResult(true, acc, "")
+    }
+    compiled := compilePackageCached(items[idx])
+    return compilePackagesSerial(items, idx + 1, append(acc, compiled))
+}
+
 func compilePackageTasks(items []PackageUnit, idx int, acc []base.Task[CachedCompileResult]) []base.Task[CachedCompileResult] {
     if idx >= len(items) {
         return acc
@@ -665,16 +732,135 @@ func findModuleInfoFrom(dir string) ModuleInfo {
 }
 
 func collectRequestedPackages(module ModuleInfo, targets []string) PackageUnitsResult {
-    scanned := scanModulePackages(module.Root, module.ModulePath)
-    if !scanned.Ok {
-        return scanned
+    if !targetsRequireFullScan(targets, 0) {
+        resolved := resolveTargetImportsDirect(module, targets, 0, []string{})
+        if !resolved.Ok {
+            return MakePackageUnitsResult(false, []PackageUnit{}, resolved.Error)
+        }
+        return collectPackageUnitsFromImports(module, resolved.Items, 0, []PackageUnit{}, []string{})
     }
-    resolved := resolveTargetImports(module, targets, scanned.Items, 0, []string{})
+    resolved := resolveTargetImportsSelective(module, targets, 0, []string{})
     if !resolved.Ok {
         return MakePackageUnitsResult(false, []PackageUnit{}, resolved.Error)
     }
-    closure := collectPackageClosure(scanned.Items, resolved.Items, 0, []string{})
-    return collectPackageUnitsByImportOrder(scanned.Items, closure, 0, []PackageUnit{})
+    return collectPackageUnitsFromImports(module, resolved.Items, 0, []PackageUnit{}, []string{})
+}
+
+func collectRequestedRootPackages(module ModuleInfo, targets []string) PackageUnitsResult {
+    resolved := resolveTargetImportsDirect(module, targets, 0, []string{})
+    if !resolved.Ok {
+        return MakePackageUnitsResult(false, []PackageUnit{}, resolved.Error)
+    }
+    return collectRootPackageUnits(module, resolved.Items, 0, []PackageUnit{})
+}
+
+func collectRootPackageUnits(module ModuleInfo, imports []string, idx int, acc []PackageUnit) PackageUnitsResult {
+    if idx >= len(imports) {
+        return MakePackageUnitsResult(true, acc, "")
+    }
+    unit := buildPackageUnitFromImportPath(module, imports[idx])
+    if !unit.Ok {
+        return MakePackageUnitsResult(false, []PackageUnit{}, unit.Error)
+    }
+    return collectRootPackageUnits(module, imports, idx + 1, append(acc, unit.Item))
+}
+
+func targetsRequireFullScan(targets []string, idx int) bool {
+    if idx >= len(targets) {
+        return false
+    }
+    if strings.Contains(targets[idx], "...") {
+        return true
+    }
+    return targetsRequireFullScan(targets, idx + 1)
+}
+
+func resolveTargetImportsDirect(module ModuleInfo, targets []string, idx int, acc []string) base.StringsResult {
+    if idx >= len(targets) {
+        if len(acc) == 0 {
+            return base.MakeStringsResult(true, []string{module.ModulePath}, "")
+        }
+        return base.MakeStringsResult(true, acc, "")
+    }
+    target := targets[idx]
+    if strings.Contains(target, "...") {
+        return base.MakeStringsResult(false, []string{}, "recursive package targets require full scan path")
+    }
+    targetDir := absoluteTargetDir(target)
+    importPath := packageImportPath(module.Root, module.ModulePath, targetDir)
+    return resolveTargetImportsDirect(module, targets, idx + 1, appendUniqueStrings(acc, importPath, 0))
+}
+
+func resolveTargetImportsSelective(module ModuleInfo, targets []string, idx int, acc []string) base.StringsResult {
+    if idx >= len(targets) {
+        if len(acc) == 0 {
+            return base.MakeStringsResult(true, []string{module.ModulePath}, "")
+        }
+        return base.MakeStringsResult(true, acc, "")
+    }
+    target := targets[idx]
+    if strings.Contains(target, "...") {
+        rootDir := absoluteTargetDir(stripRecursiveTarget(target))
+        scanned := scanModulePackagesUnder(module.Root, module.ModulePath, rootDir)
+        if !scanned.Ok {
+            return base.MakeStringsResult(false, []string{}, scanned.Error)
+        }
+        imports := collectPackageImportsUnderDir(scanned.Items, rootDir, 0, []string{})
+        return resolveTargetImportsSelective(module, targets, idx + 1, appendStringsUnique(acc, imports, 0))
+    }
+    targetDir := absoluteTargetDir(target)
+    importPath := packageImportPath(module.Root, module.ModulePath, targetDir)
+    return resolveTargetImportsSelective(module, targets, idx + 1, appendUniqueStrings(acc, importPath, 0))
+}
+
+func collectPackageUnitsFromImports(module ModuleInfo, imports []string, idx int, acc []PackageUnit, seen []string) PackageUnitsResult {
+    if idx >= len(imports) {
+        return MakePackageUnitsResult(true, acc, "")
+    }
+    importPath := imports[idx]
+    if containsString(seen, importPath, 0) {
+        return collectPackageUnitsFromImports(module, imports, idx + 1, acc, seen)
+    }
+    unit := buildPackageUnitFromImportPath(module, importPath)
+    if !unit.Ok {
+        return MakePackageUnitsResult(false, []PackageUnit{}, unit.Error)
+    }
+    nextAcc := append(acc, unit.Item)
+    nextSeen := append(seen, importPath)
+    nextImports := appendStringsUnique(imports, unit.Item.LocalImports, 0)
+    return collectPackageUnitsFromImports(module, nextImports, idx + 1, nextAcc, nextSeen)
+}
+
+func buildPackageUnitFromImportPath(module ModuleInfo, importPath string) PackageUnitResult {
+    dirResult := packageDirFromImportPath(module, importPath)
+    if !dirResult.Ok {
+        return MakePackageUnitResult(false, MakePackageUnit("", "", []string{}, "", []string{}), dirResult.Error)
+    }
+    return buildPackageUnitFromDir(dirResult.Value, module.Root, module.ModulePath)
+}
+
+func buildPackageUnitFromDir(dir string, moduleRoot string, modulePath string) PackageUnitResult {
+    entries, err := os.ReadDir(dir)
+    if !(err == nil) {
+        return MakePackageUnitResult(false, MakePackageUnit("", "", []string{}, "", []string{}), err.Error())
+    }
+    fileNames := collectFoEntryNames(entries, 0, []string{})
+    if len(fileNames) == 0 {
+        return MakePackageUnitResult(false, MakePackageUnit("", "", []string{}, "", []string{}), "no Fo package found for " + dir + " (directory has no top-level .fo package)")
+    }
+    return buildPackageUnit(dir, moduleRoot, modulePath, fileNames)
+}
+
+func packageDirFromImportPath(module ModuleInfo, importPath string) base.StringResult {
+    if importPath == module.ModulePath {
+        return base.MakeStringResult(true, module.Root, "")
+    }
+    prefix := module.ModulePath + "/"
+    if !strings.HasPrefix(importPath, prefix) {
+        return base.MakeStringResult(false, "", "import " + importPath + " is outside module " + module.ModulePath)
+    }
+    suffix := strings.TrimPrefix(importPath, prefix)
+    return base.MakeStringResult(true, filepath.Join(module.Root, filepath.FromSlash(suffix)), "")
 }
 
 func resolveTargetImports(module ModuleInfo, targets []string, items []PackageUnit, idx int, acc []string) base.StringsResult {
@@ -765,6 +951,10 @@ func isDirWithin(path string, root string) bool {
 
 func scanModulePackages(moduleRoot string, modulePath string) PackageUnitsResult {
     return scanModulePackageDir(moduleRoot, moduleRoot, modulePath, []PackageUnit{})
+}
+
+func scanModulePackagesUnder(moduleRoot string, modulePath string, dir string) PackageUnitsResult {
+    return scanModulePackageDir(moduleRoot, dir, modulePath, []PackageUnit{})
 }
 
 func scanModulePackageDir(moduleRoot string, dir string, modulePath string, acc []PackageUnit) PackageUnitsResult {

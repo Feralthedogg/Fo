@@ -61,6 +61,10 @@ func QuoteByte() byte {
     return byte(34)
 }
 
+func RuneQuoteByte() byte {
+    return byte(39)
+}
+
 func BackslashByte() byte {
     return byte(92)
 }
@@ -148,6 +152,14 @@ func (l Lexer) NextToken() TokenResult {
         }
     }
 
+    if cur.Ch == RuneQuoteByte() {
+        res := cur.ScanRune()
+        return TokenResult{
+            Next: SetLastToken(res.Next, res.Tok.Type),
+            Tok: res.Tok,
+        }
+    }
+
     res := cur.ScanOperator()
     return TokenResult{
         Next: SetLastToken(res.Next, res.Tok.Type),
@@ -178,6 +190,17 @@ func (l Lexer) ScanNumber() TokenResult {
     pos := l.CurrentPos()
     start := l.Pos
     next := l.ConsumeDigits()
+    if next.Ch == "."[0] {
+        frac := next.Next()
+        if IsDigit(frac.Ch) {
+            end := frac.ConsumeDigits()
+            literal := SliceText(end.Src, start, end.Pos)
+            return TokenResult{
+                Next: end,
+                Tok: token.MakeToken(token.FloatLitType(), literal, pos),
+            }
+        }
+    }
     literal := SliceText(next.Src, start, next.Pos)
     return TokenResult{
         Next: next,
@@ -210,6 +233,31 @@ func (l Lexer) ScanString() TokenResult {
     }
 }
 
+func (l Lexer) ScanRune() TokenResult {
+    pos := l.CurrentPos()
+    start := l.Pos
+    body := l.Next().ConsumeRuneBody()
+
+    if body.Ch == RuneQuoteByte() {
+        next := body.Next()
+        literal := SliceText(next.Src, start, next.Pos)
+        return TokenResult{
+            Next: next,
+            Tok: token.MakeToken(token.RuneLitType(), literal, pos),
+        }
+    }
+
+    literal := SliceText(body.Src, start, body.Pos)
+    diag := body.Diag.Error(diagnostic.LexicalCategory(), pos, "unterminated rune literal")
+    next := body{
+        Diag: diag,
+    }
+    return TokenResult{
+        Next: next,
+        Tok: token.MakeToken(token.RuneLitType(), literal, pos),
+    }
+}
+
 func (l Lexer) ConsumeDigits() Lexer {
     if IsDigit(l.Ch) || l.Ch == UnderscoreByte() {
         return l.Next().ConsumeDigits()
@@ -229,6 +277,20 @@ func (l Lexer) ConsumeStringBody() Lexer {
         return escaped.Next().ConsumeStringBody()
     }
     return l.Next().ConsumeStringBody()
+}
+
+func (l Lexer) ConsumeRuneBody() Lexer {
+    if l.Ch == ZeroByte() || l.Ch == NewlineByte() || l.Ch == RuneQuoteByte() {
+        return l
+    }
+    if l.Ch == BackslashByte() {
+        escaped := l.Next()
+        if escaped.Ch == ZeroByte() {
+            return escaped
+        }
+        return escaped.Next().ConsumeRuneBody()
+    }
+    return l.Next().ConsumeRuneBody()
 }
 
 func (l Lexer) ScanOperator() TokenResult {

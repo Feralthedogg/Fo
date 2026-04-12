@@ -59,6 +59,7 @@ func (d PackageDecl) declTag() {}
 
 type ImportDecl struct {
     Pos token.Pos
+    Alias string
     Path string
 }
 
@@ -197,6 +198,15 @@ func (t SliceType) TokenPos() token.Pos { return t.Pos }
 func (t SliceType) nodeTag() {}
 func (t SliceType) typeExprTag() {}
 
+type PointerType struct {
+    Pos token.Pos
+    Elem TypeExpr
+}
+
+func (t PointerType) TokenPos() token.Pos { return t.Pos }
+func (t PointerType) nodeTag() {}
+func (t PointerType) typeExprTag() {}
+
 type MapType struct {
     Pos token.Pos
     Key TypeExpr
@@ -265,6 +275,15 @@ type BindStmt struct {
 func (s BindStmt) TokenPos() token.Pos { return s.Pos }
 func (s BindStmt) nodeTag() {}
 func (s BindStmt) stmtTag() {}
+
+type DiscardStmt struct {
+    Pos token.Pos
+    Value Expr
+}
+
+func (s DiscardStmt) TokenPos() token.Pos { return s.Pos }
+func (s DiscardStmt) nodeTag() {}
+func (s DiscardStmt) stmtTag() {}
 
 type ReturnStmt struct {
     Pos token.Pos
@@ -364,6 +383,7 @@ func (e TupleLit) exprTag() {}
 
 type SliceLit struct {
     Pos token.Pos
+    TypeName string
     ElemType Option[TypeExpr]
     Elems []Expr
 }
@@ -374,6 +394,7 @@ func (e SliceLit) exprTag() {}
 
 type MapLit struct {
     Pos token.Pos
+    TypeName string
     KeyType TypeExpr
     ValueType TypeExpr
     Entries []MapEntry
@@ -428,6 +449,16 @@ type FuncLit struct {
 func (e FuncLit) TokenPos() token.Pos { return e.Pos }
 func (e FuncLit) nodeTag() {}
 func (e FuncLit) exprTag() {}
+
+type MakeExpr struct {
+    Pos token.Pos
+    Type TypeExpr
+    Args []Expr
+}
+
+func (e MakeExpr) TokenPos() token.Pos { return e.Pos }
+func (e MakeExpr) nodeTag() {}
+func (e MakeExpr) exprTag() {}
 
 type CallExpr struct {
     Pos token.Pos
@@ -585,8 +616,13 @@ func MakePackageDecl(pos token.Pos, name string) PackageDecl {
 }
 
 func MakeImportDecl(pos token.Pos, path string) ImportDecl {
+    return MakeImportDeclAlias(pos, "", path)
+}
+
+func MakeImportDeclAlias(pos token.Pos, alias string, path string) ImportDecl {
     return ImportDecl{
         Pos: pos,
+        Alias: alias,
         Path: path,
     }
 }
@@ -650,6 +686,13 @@ func MakeNamedTypeWithArgs(pos token.Pos, name string, typeArgs []TypeExpr) Name
 
 func MakeSliceType(pos token.Pos, elem TypeExpr) SliceType {
     return SliceType{
+        Pos: pos,
+        Elem: elem,
+    }
+}
+
+func MakePointerType(pos token.Pos, elem TypeExpr) PointerType {
+    return PointerType{
         Pos: pos,
         Elem: elem,
     }
@@ -820,6 +863,13 @@ func MakeBindStmtNames(pos token.Pos, names []string, value Expr) BindStmt {
     }
 }
 
+func MakeDiscardStmt(pos token.Pos, value Expr) DiscardStmt {
+    return DiscardStmt{
+        Pos: pos,
+        Value: value,
+    }
+}
+
 func MakeExprStmt(pos token.Pos, expr Expr) ExprStmt {
     return ExprStmt{
         Pos: pos,
@@ -881,6 +931,23 @@ func MakeTupleLit(pos token.Pos, elems []Expr) TupleLit {
     return TupleLit{
         Pos: pos,
         Elems: elems,
+    }
+}
+
+func MakeMapEntry(key Expr, value Expr) MapEntry {
+    return MapEntry{
+        Key: key,
+        Value: value,
+    }
+}
+
+func MakeMapLit(pos token.Pos, typeName string, keyType TypeExpr, valueType TypeExpr, entries []MapEntry) MapLit {
+    return MapLit{
+        Pos: pos,
+        TypeName: typeName,
+        KeyType: keyType,
+        ValueType: valueType,
+        Entries: entries,
     }
 }
 
@@ -985,7 +1052,17 @@ func MakeSliceExpr(pos token.Pos, x Expr, low Option[Expr], high Option[Expr]) S
 func MakeSliceLit(pos token.Pos, elem TypeExpr, elems []Expr) SliceLit {
     return SliceLit{
         Pos: pos,
+        TypeName: "",
         ElemType: Some[TypeExpr](elem),
+        Elems: elems,
+    }
+}
+
+func MakeNamedSliceLit(pos token.Pos, typeName string, elems []Expr) SliceLit {
+    return SliceLit{
+        Pos: pos,
+        TypeName: typeName,
+        ElemType: None[TypeExpr](),
         Elems: elems,
     }
 }
@@ -996,6 +1073,14 @@ func MakeFuncLit(pos token.Pos, params []FieldDef, results []TypeExpr, body Bloc
         Params: params,
         Results: results,
         Body: body,
+    }
+}
+
+func MakeMakeExpr(pos token.Pos, typ TypeExpr, args []Expr) MakeExpr {
+    return MakeExpr{
+        Pos: pos,
+        Type: typ,
+        Args: args,
     }
 }
 
@@ -1160,6 +1245,17 @@ func FilePackageName(file File) string {
 
 func ImportPath(imp ImportDecl) string {
     return imp.Path
+}
+
+func ImportAlias(imp ImportDecl) string {
+    return imp.Alias
+}
+
+func ImportSpec(imp ImportDecl) string {
+    if imp.Alias == "" {
+        return imp.Path
+    }
+    return imp.Alias + " " + imp.Path
 }
 
 func DeclResults(decl Decl) []TypeExpr {
@@ -1353,6 +1449,15 @@ func StmtIsExpr(stmt Stmt) bool {
     }
 }
 
+func StmtIsDiscard(stmt Stmt) bool {
+    match stmt {
+    case DiscardStmt{}:
+        return true
+    case _:
+        return false
+    }
+}
+
 func StmtBindNames(stmt Stmt) []string {
     match stmt {
     case BindStmt{Names: names}:
@@ -1375,6 +1480,15 @@ func StmtExprValue(stmt Stmt) Expr {
     match stmt {
     case ExprStmt{Expr: expr}:
         return expr
+    case _:
+        return MakeIdent(ZeroPos(), "_")
+    }
+}
+
+func StmtDiscardValue(stmt Stmt) Expr {
+    match stmt {
+    case DiscardStmt{Value: value}:
+        return value
     case _:
         return MakeIdent(ZeroPos(), "_")
     }
@@ -1697,6 +1811,106 @@ func ExprSelectorField(expr Expr) string {
     }
 }
 
+func ExprQualifiedName(expr Expr) string {
+    if ExprIsIdent(expr) {
+        return ExprIdentName(expr)
+    }
+    if ExprIsSelector(expr) {
+        prefix := ExprQualifiedName(ExprSelectorTarget(expr))
+        if prefix == "" {
+            return ""
+        }
+        return prefix + "." + ExprSelectorField(expr)
+    }
+    return ""
+}
+
+func ExprPos(expr Expr) token.Pos {
+    match expr {
+    case Ident{Pos: pos}:
+        return pos
+    case BasicLit{Pos: pos}:
+        return pos
+    case TupleLit{Pos: pos}:
+        return pos
+    case SliceLit{Pos: pos}:
+        return pos
+    case MapLit{Pos: pos}:
+        return pos
+    case StructLit{Pos: pos}:
+        return pos
+    case CopyUpdateExpr{Pos: pos}:
+        return pos
+    case FuncLit{Pos: pos}:
+        return pos
+    case MakeExpr{Pos: pos}:
+        return pos
+    case CallExpr{Pos: pos}:
+        return pos
+    case PipelineExpr{Pos: pos}:
+        return pos
+    case BinaryExpr{Pos: pos}:
+        return pos
+    case UnaryExpr{Pos: pos}:
+        return pos
+    case SelectorExpr{Pos: pos}:
+        return pos
+    case IndexExpr{Pos: pos}:
+        return pos
+    case SliceExpr{Pos: pos}:
+        return pos
+    case MatchExpr{Pos: pos}:
+        return pos
+    case _:
+        return ZeroPos()
+    }
+}
+
+func ExprIsMapLit(expr Expr) bool {
+    match expr {
+    case MapLit{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func ExprMapLitTypeName(expr Expr) string {
+    match expr {
+    case MapLit{TypeName: name}:
+        return name
+    case _:
+        return ""
+    }
+}
+
+func ExprMapLitKeyType(expr Expr) TypeExpr {
+    match expr {
+    case MapLit{KeyType: keyType}:
+        return keyType
+    case _:
+        return MakeNamedType(ZeroPos(), "any")
+    }
+}
+
+func ExprMapLitValueType(expr Expr) TypeExpr {
+    match expr {
+    case MapLit{ValueType: valueType}:
+        return valueType
+    case _:
+        return MakeNamedType(ZeroPos(), "any")
+    }
+}
+
+func ExprMapLitEntries(expr Expr) []MapEntry {
+    match expr {
+    case MapLit{Entries: entries}:
+        return entries
+    case _:
+        return []MapEntry{}
+    }
+}
+
 func ExprIsIndex(expr Expr) bool {
     match expr {
     case IndexExpr{}:
@@ -1804,6 +2018,15 @@ func ExprIsFuncLit(expr Expr) bool {
     }
 }
 
+func ExprIsMake(expr Expr) bool {
+    match expr {
+    case MakeExpr{}:
+        return true
+    case _:
+        return false
+    }
+}
+
 func ExprFuncLitParams(expr Expr) []FieldDef {
     match expr {
     case FuncLit{Params: params}:
@@ -1828,6 +2051,24 @@ func ExprFuncLitBody(expr Expr) BlockStmt {
         return body
     case _:
         return MakeBlockStmt(ZeroPos())
+    }
+}
+
+func ExprMakeType(expr Expr) TypeExpr {
+    match expr {
+    case MakeExpr{Type: typ}:
+        return typ
+    case _:
+        return MakeNamedType(ZeroPos(), "any")
+    }
+}
+
+func ExprMakeArgs(expr Expr) []Expr {
+    match expr {
+    case MakeExpr{Args: args}:
+        return args
+    case _:
+        return []Expr{}
     }
 }
 
@@ -1892,6 +2133,15 @@ func ExprSliceLitType(expr Expr) Option[TypeExpr] {
     }
 }
 
+func ExprSliceLitTypeName(expr Expr) string {
+    match expr {
+    case SliceLit{TypeName: typeName}:
+        return typeName
+    case _:
+        return ""
+    }
+}
+
 func ExprSliceLitElems(expr Expr) []Expr {
     match expr {
     case SliceLit{Elems: elems}:
@@ -1940,6 +2190,15 @@ func TypeExprQualifiedArgs(expr TypeExpr) []TypeExpr {
 func TypeExprIsSlice(expr TypeExpr) bool {
     match expr {
     case SliceType{}:
+        return true
+    case _:
+        return false
+    }
+}
+
+func TypeExprIsPointer(expr TypeExpr) bool {
+    match expr {
+    case PointerType{}:
         return true
     case _:
         return false
@@ -2021,6 +2280,15 @@ func TypeExprChanReceiveOnly(expr TypeExpr) bool {
 func TypeExprSliceElem(expr TypeExpr) TypeExpr {
     match expr {
     case SliceType{Elem: elem}:
+        return elem
+    case _:
+        return MakeNamedType(ZeroPos(), "any")
+    }
+}
+
+func TypeExprPointerElem(expr TypeExpr) TypeExpr {
+    match expr {
+    case PointerType{Elem: elem}:
         return elem
     case _:
         return MakeNamedType(ZeroPos(), "any")

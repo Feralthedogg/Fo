@@ -229,8 +229,8 @@ sub build_stage_root {
 sub with_temp_build_roots {
   my ($root, $code) = @_;
   my $sandbox = tempdir('.fo-build-run.XXXXXX', DIR => $root, CLEANUP => 1);
-  local $ENV{FO_WORKSPACE_ROOT} = "$sandbox/work";
-  local $ENV{FO_STAGE_ROOT} = "$sandbox/stage";
+  local $ENV{FO_WORKSPACE_ROOT} = $ENV{FO_WORKSPACE_ROOT} // "$sandbox/work";
+  local $ENV{FO_STAGE_ROOT} = $ENV{FO_STAGE_ROOT} // "$sandbox/stage";
   return $code->();
 }
 
@@ -368,16 +368,29 @@ sub build_cli_core {
       sub { $check_file->($path) }
     } @checks);
 
+    if (-f "$root/internal/checker/stdlibindex_generated.go") {
+      ensure_dir("$stage_root/internal/checker");
+      copy_file("$root/internal/checker/stdlibindex_generated.go", "$stage_root/internal/checker/stdlibindex_generated.go");
+    }
+    if (-f "$root/internal/checker/livebridge.go") {
+      ensure_dir("$stage_root/internal/checker");
+      copy_file("$root/internal/checker/livebridge.go", "$stage_root/internal/checker/livebridge.go");
+    }
+    if (-f "$root/internal/checker/livepackages.go") {
+      ensure_dir("$stage_root/internal/checker");
+      copy_file("$root/internal/checker/livepackages.go", "$stage_root/internal/checker/livepackages.go");
+    }
+
     remove_paths("$root/cmd/fohost/main.go");
     ensure_dir("$stage_root/stdlib/fo");
     generate_base_package_to($root, "$stage_root/stdlib/fo", $fo_bin);
 
     remove_paths($workspace_root);
     ensure_dir($workspace_root);
-    write_file(
-      "$workspace_root/go.mod",
-      "module github.com/Feralthedogg/Fo\n\ngo 1.25.6\n",
-    );
+    copy_file("$root/go.mod", "$workspace_root/go.mod");
+    if (-f "$root/go.sum") {
+      copy_file("$root/go.sum", "$workspace_root/go.sum");
+    }
     copy_tree_contents($stage_root, $workspace_root);
     1;
   } or do {
@@ -453,6 +466,7 @@ sub build_selfhosted_cli {
   if (!-x $fo_bin) {
     die "missing self-hosted compiler at $fo_bin\n";
   }
+  run_cmd({ quiet => 1 }, 'bash', "$root/scripts/generate-stdlib-symbol-index.sh");
   with_temp_build_roots($root, sub {
     print "[1/2] Re-transpiling Fo CLI core with self-hosted compiler\n";
     build_cli_core($root, $fo_bin);
@@ -471,6 +485,9 @@ sub build_selfhosted_cli {
       "$root/build/fo-selfhosted",
       './cmd/fohost',
     );
+    remove_paths("$root/.fo-build-live");
+    ensure_dir("$root/.fo-build-live");
+    copy_tree_contents(build_workspace_root($root), "$root/.fo-build-live");
     print "Built self-hosted CLI: $root/build/fo-selfhosted\n";
     return;
   });
@@ -497,10 +514,10 @@ sub check_bootstrapless_rebuild {
       "$workdir/cmd",
       "$workdir/stdlib/fo",
     );
-    write_file(
-      "$workdir/go.mod",
-      "module github.com/Feralthedogg/Fo\n\ngo 1.25.6\n",
-    );
+    copy_file("$root/go.mod", "$workdir/go.mod");
+    if (-f "$root/go.sum") {
+      copy_file("$root/go.sum", "$workdir/go.sum");
+    }
     copy_tree_contents(build_workspace_root($root) . "/internal", "$workdir/internal");
     copy_tree_contents(build_workspace_root($root) . "/cmd", "$workdir/cmd");
     copy_tree_contents(build_workspace_root($root) . "/stdlib/fo", "$workdir/stdlib/fo");
@@ -1307,10 +1324,10 @@ sub freeze_seed_snapshot {
       "$target_dir/cmd",
       "$target_dir/stdlib/fo",
     );
-    write_file(
-      "$target_dir/go.mod",
-      "module github.com/Feralthedogg/Fo\n\ngo 1.25.6\n",
-    );
+    copy_file("$root/go.mod", "$target_dir/go.mod");
+    if (-f "$root/go.sum") {
+      copy_file("$root/go.sum", "$target_dir/go.sum");
+    }
     copy_tree_contents(build_workspace_root($root) . "/internal", "$target_dir/internal");
     copy_tree_contents(build_workspace_root($root) . "/cmd", "$target_dir/cmd");
     copy_tree_contents(build_workspace_root($root) . "/stdlib/fo", "$target_dir/stdlib/fo");
@@ -1616,6 +1633,9 @@ sub materialize_genesis_seed {
     "cmd/fohost/main.go",
     "internal/ast/ast.go",
     "internal/checker/checker.go",
+    "internal/checker/stdlibindex_generated.go",
+    "internal/checker/livebridge.go",
+    "internal/checker/livepackages.go",
     "internal/codegen/codegen.go",
     "internal/diagnostic/diagnostic.go",
     "internal/driver/driver.go",
@@ -1643,10 +1663,10 @@ sub materialize_genesis_seed {
   ensure_dir($target_dir);
 
   print "[3/4] Materializing Fo-side genesis seed to $target_dir\n";
-  write_file(
-    "$target_dir/go.mod",
-    "module github.com/Feralthedogg/Fo\n\ngo 1.25.6\n",
-  );
+  copy_file("$root/go.mod", "$target_dir/go.mod");
+  if (-f "$root/go.sum") {
+    copy_file("$root/go.sum", "$target_dir/go.sum");
+  }
   write_file(
     "$target_dir/SEED.txt",
     "Cold-start seed snapshot for Fo.\n\nThis directory is generated from the current self-hosted compiler binary in\nbuild/fo and is intended to provide a Go-only seed path without depending on\narchived bootstrap source trees at build time.\n",

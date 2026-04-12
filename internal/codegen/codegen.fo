@@ -98,29 +98,29 @@ func Generate(file ast.File) string {
 }
 
 func GenerateImports(imports []ast.ImportDecl, decls string) string {
-    basePaths := CollectImportPaths(imports, 0, []string{})
-    paths := MaybeAppendPreludeImport(basePaths, decls)
-    if len(paths) == 0 {
+    baseSpecs := CollectImportSpecs(imports, 0, []string{})
+    specs := MaybeAppendPreludeImportSpec(baseSpecs, decls)
+    if len(specs) == 0 {
         return ""
     }
-    if len(paths) == 1 {
-        return "import " + NormalizeImportPath(paths[0]) + "\n"
+    if len(specs) == 1 {
+        return "import " + specs[0] + "\n"
     }
-    return "import (\n" + GenerateImportPathLines(paths, "    ", 0) + ")\n"
+    return "import (\n" + GenerateImportSpecLines(specs, "    ", 0) + ")\n"
 }
 
-func CollectImportPaths(imports []ast.ImportDecl, idx int, acc []string) []string {
+func CollectImportSpecs(imports []ast.ImportDecl, idx int, acc []string) []string {
     if idx >= len(imports) {
         return acc
     }
-    return CollectImportPaths(imports, idx + 1, AppendImportPath(acc, ast.ImportPath(imports[idx])))
+    return CollectImportSpecs(imports, idx + 1, AppendImportSpec(acc, ImportSpec(imports[idx])))
 }
 
-func MaybeAppendPreludeImport(paths []string, decls string) []string {
+func MaybeAppendPreludeImportSpec(specs []string, decls string) []string {
     if NeedsPreludeImport(decls) {
-        return AppendImportPath(paths, "github.com/Feralthedogg/Fo/stdlib/fo")
+        return AppendImportSpec(specs, NormalizeImportPath("github.com/Feralthedogg/Fo/stdlib/fo"))
     }
-    return paths
+    return specs
 }
 
 func NeedsPreludeImport(decls string) bool {
@@ -148,14 +148,14 @@ func NeedsPreludeImport(decls string) bool {
     return false
 }
 
-func AppendImportPath(paths []string, path string) []string {
-    if path == "" {
-        return paths
+func AppendImportSpec(specs []string, spec string) []string {
+    if spec == "" {
+        return specs
     }
-    if ContainsString(paths, path, 0) {
-        return paths
+    if ContainsString(specs, spec, 0) {
+        return specs
     }
-    return append(paths, path)
+    return append(specs, spec)
 }
 
 func ContainsString(items []string, value string, idx int) bool {
@@ -168,11 +168,11 @@ func ContainsString(items []string, value string, idx int) bool {
     return ContainsString(items, value, idx + 1)
 }
 
-func GenerateImportPathLines(paths []string, indent string, idx int) string {
-    if idx >= len(paths) {
+func GenerateImportSpecLines(specs []string, indent string, idx int) string {
+    if idx >= len(specs) {
         return ""
     }
-    return indent + NormalizeImportPath(paths[idx]) + "\n" + GenerateImportPathLines(paths, indent, idx + 1)
+    return indent + specs[idx] + "\n" + GenerateImportSpecLines(specs, indent, idx + 1)
 }
 
 func NormalizeImportPath(path string) string {
@@ -195,6 +195,15 @@ func StripTrailingQuote(path string, quote string) string {
         return path
     }
     return StripTrailingQuote(next, quote)
+}
+
+func ImportSpec(imp ast.ImportDecl) string {
+    alias := ast.ImportAlias(imp)
+    path := NormalizeImportPath(ast.ImportPath(imp))
+    if alias == "" {
+        return path
+    }
+    return alias + " " + path
 }
 
 func QuoteString() string {
@@ -559,7 +568,7 @@ func GenerateTailLoopStatements(stmts []ast.Stmt, fnName string, params []ast.Fi
     }
     stmt := stmts[0]
     rest := stmts[1:]
-    if ast.StmtIsBind(stmt) || ast.StmtIsExpr(stmt) {
+    if ast.StmtIsBind(stmt) || ast.StmtIsExpr(stmt) || ast.StmtIsDiscard(stmt) {
         nextEnv := CodegenEnvAfterStmt(stmt, env, enums)
         return GenerateStmt(stmt, rest, indent, resultTypes, env, enums) +
             GenerateTailLoopStatements(rest, fnName, params, indent, resultTypes, nextEnv, enums)
@@ -638,6 +647,12 @@ func AnalyzeTailLowerStatements(stmts []ast.Stmt, fnName string, paramCount int,
     rest := stmts[1:]
     if ast.StmtIsBind(stmt) {
         if ExprContainsSelfCall(ast.StmtBindValue(stmt), fnName) {
+            return MakeTailLowerInfo(false, false, false)
+        }
+        return AnalyzeTailLowerStatements(rest, fnName, paramCount, zeroResult)
+    }
+    if ast.StmtIsDiscard(stmt) {
+        if ExprContainsSelfCall(ast.StmtDiscardValue(stmt), fnName) {
             return MakeTailLowerInfo(false, false, false)
         }
         return AnalyzeTailLowerStatements(rest, fnName, paramCount, zeroResult)
@@ -852,6 +867,9 @@ func ExprContainsSelfCall(expr ast.Expr, fnName string) bool {
             return true
         }
         return ExprListContainsSelfCall(ast.ExprCallArgs(expr), fnName, 0)
+    }
+    if ast.ExprIsMake(expr) {
+        return ExprListContainsSelfCall(ast.ExprMakeArgs(expr), fnName, 0)
     }
     if ast.ExprIsTuple(expr) {
         return ExprListContainsSelfCall(ast.ExprTupleElems(expr), fnName, 0)
@@ -1195,6 +1213,9 @@ func GenerateTypeExpr(expr ast.TypeExpr) string {
     if ast.TypeExprIsMap(expr) {
         return "map[" + GenerateTypeExpr(ast.TypeExprMapKey(expr)) + "]" + GenerateTypeExpr(ast.TypeExprMapValue(expr))
     }
+    if ast.TypeExprIsPointer(expr) {
+        return "*" + GenerateTypeExpr(ast.TypeExprPointerElem(expr))
+    }
     if ast.TypeExprIsTuple(expr) {
         return GenerateTupleTypeExpr(ast.TypeExprTupleElems(expr), 0)
     }
@@ -1294,6 +1315,9 @@ func GenerateStmt(stmt ast.Stmt, tail []ast.Stmt, indent string, resultTypes []s
         }
         return indent + GenerateGoName(names[0]) + " := " + GenerateExpr(ast.StmtBindValue(stmt), enums) + "\n"
     }
+    if ast.StmtIsDiscard(stmt) {
+        return indent + "_ = " + GenerateExpr(ast.StmtDiscardValue(stmt), enums) + "\n"
+    }
     if ast.StmtIsIf(stmt) {
         return indent + "if " + GenerateExpr(ast.StmtIfCond(stmt), enums) + " " +
             GenerateBlock(ast.StmtIfBody(stmt), indent + "    ", resultTypes, env, enums) + "\n"
@@ -1355,6 +1379,9 @@ func ExtendCodegenEnv(names []string, inferred string, env []CodegenBinding, idx
         return env
     }
     if len(names) == 1 {
+        if IsBlankCodegenName(names[0]) {
+            return env
+        }
         return append(env, CodegenBinding{
             Name: names[0],
             TypeName: inferred,
@@ -1371,11 +1398,18 @@ func ExtendCodegenTupleEnv(names []string, elems []string, env []CodegenBinding,
     if idx >= len(names) {
         return env
     }
+    if IsBlankCodegenName(names[idx]) {
+        return ExtendCodegenTupleEnv(names, elems, env, idx + 1)
+    }
     next := append(env, CodegenBinding{
         Name: names[idx],
         TypeName: elems[idx],
     })
     return ExtendCodegenTupleEnv(names, elems, next, idx + 1)
+}
+
+func IsBlankCodegenName(name string) bool {
+    return name == "_"
 }
 
 func GenerateExprs(exprs []ast.Expr, enums []EnumInfo) string {
@@ -1386,6 +1420,13 @@ func GenerateExprs(exprs []ast.Expr, enums []EnumInfo) string {
         return GenerateExpr(exprs[0], enums)
     }
     return GenerateExpr(exprs[0], enums) + ", " + GenerateExprs(exprs[1:], enums)
+}
+
+func GenerateMakeExpr(typ ast.TypeExpr, args []ast.Expr, enums []EnumInfo) string {
+    if len(args) == 0 {
+        return "make(" + GenerateTypeExpr(typ) + ")"
+    }
+    return "make(" + GenerateTypeExpr(typ) + ", " + GenerateExprs(args, enums) + ")"
 }
 
 func JoinNameList(items []string, idx int) string {
@@ -1476,6 +1517,9 @@ func StmtMentionsName(stmt ast.Stmt, name string) bool {
     if ast.StmtIsBind(stmt) {
         return ExprMentionsName(ast.StmtBindValue(stmt), name)
     }
+    if ast.StmtIsDiscard(stmt) {
+        return ExprMentionsName(ast.StmtDiscardValue(stmt), name)
+    }
     if ast.StmtIsIf(stmt) {
         if ExprMentionsName(ast.StmtIfCond(stmt), name) {
             return true
@@ -1565,6 +1609,9 @@ func ExprMentionsName(expr ast.Expr, name string) bool {
             return true
         }
         return ExprListMentionsName(ast.ExprCallArgs(expr), name, 0)
+    }
+    if ast.ExprIsMake(expr) {
+        return ExprListMentionsName(ast.ExprMakeArgs(expr), name, 0)
     }
     if ast.ExprIsSelector(expr) {
         return ExprMentionsName(ast.ExprSelectorTarget(expr), name)
@@ -1662,6 +1709,9 @@ func GenerateExpr(expr ast.Expr, enums []EnumInfo) string {
     if ast.ExprIsCall(expr) {
         return GenerateCallExpr(expr, enums)
     }
+    if ast.ExprIsMake(expr) {
+        return GenerateMakeExpr(ast.ExprMakeType(expr), ast.ExprMakeArgs(expr), enums)
+    }
     if ast.ExprIsSelector(expr) {
         return GenerateExpr(ast.ExprSelectorTarget(expr), enums) + "." + GenerateGoName(ast.ExprSelectorField(expr))
     }
@@ -1673,11 +1723,20 @@ func GenerateExpr(expr ast.Expr, enums []EnumInfo) string {
             GenerateOptionalExpr(ast.ExprSliceLow(expr), enums) + ":" +
             GenerateOptionalExpr(ast.ExprSliceHigh(expr), enums) + "]"
     }
+    if ast.ExprIsMapLit(expr) {
+        return GenerateMapLit(
+            ast.ExprMapLitTypeName(expr),
+            ast.ExprMapLitKeyType(expr),
+            ast.ExprMapLitValueType(expr),
+            ast.ExprMapLitEntries(expr),
+            enums,
+        )
+    }
     if ast.ExprIsStructLit(expr) {
         return GenerateStructLit(ast.ExprStructLitType(expr), ast.ExprStructLitFields(expr), enums)
     }
     if ast.ExprIsSliceLit(expr) {
-        return GenerateSliceLit(ast.ExprSliceLitType(expr), ast.ExprSliceLitElems(expr), enums)
+        return GenerateSliceLit(ast.ExprSliceLitTypeName(expr), ast.ExprSliceLitType(expr), ast.ExprSliceLitElems(expr), enums)
     }
     if ast.ExprIsFuncLit(expr) {
         return GenerateFuncLitExpr(ast.ExprFuncLitParams(expr), ast.ExprFuncLitResults(expr), ast.ExprFuncLitBody(expr), enums)
@@ -2125,6 +2184,31 @@ func GenerateStructLit(name string, fields []ast.FieldInit, enums []EnumInfo) st
     return GenerateGoName(name) + "{ " + GenerateFieldInits(fields, enums) + " }"
 }
 
+func GenerateMapLit(typeName string, keyType ast.TypeExpr, valueType ast.TypeExpr, entries []ast.MapEntry, enums []EnumInfo) string {
+    if !(typeName == "") {
+        if len(entries) == 0 {
+            return GenerateGoName(typeName) + "{}"
+        }
+        return GenerateGoName(typeName) + "{ " + GenerateMapEntries(entries, enums) + " }"
+    }
+    prefix := "map[" + GenerateTypeExpr(keyType) + "]" + GenerateTypeExpr(valueType)
+    if len(entries) == 0 {
+        return prefix + "{}"
+    }
+    return prefix + "{ " + GenerateMapEntries(entries, enums) + " }"
+}
+
+func GenerateMapEntries(entries []ast.MapEntry, enums []EnumInfo) string {
+    if len(entries) == 0 {
+        return ""
+    }
+    head := GenerateExpr(entries[0].Key, enums) + ": " + GenerateExpr(entries[0].Value, enums)
+    if len(entries) == 1 {
+        return head
+    }
+    return head + ", " + GenerateMapEntries(entries[1:], enums)
+}
+
 func GenerateFieldInits(fields []ast.FieldInit, enums []EnumInfo) string {
     if len(fields) == 0 {
         return ""
@@ -2136,7 +2220,13 @@ func GenerateFieldInits(fields []ast.FieldInit, enums []EnumInfo) string {
     return head + ", " + GenerateFieldInits(fields[1:], enums)
 }
 
-func GenerateSliceLit(elemType Option[ast.TypeExpr], elems []ast.Expr, enums []EnumInfo) string {
+func GenerateSliceLit(typeName string, elemType Option[ast.TypeExpr], elems []ast.Expr, enums []EnumInfo) string {
+    if !(typeName == "") {
+        if len(elems) == 0 {
+            return GenerateGoName(typeName) + "{}"
+        }
+        return GenerateGoName(typeName) + "{ " + GenerateExprs(elems, enums) + " }"
+    }
     typ := SliceElemTypeString(elemType)
     return "[]" + typ + "{ " + GenerateExprs(elems, enums) + " }"
 }
@@ -2861,6 +2951,9 @@ func InferExprTypeName(expr ast.Expr, env []CodegenBinding, enums []EnumInfo) st
     if ast.ExprIsCall(expr) {
         return InferCallExprTypeName(expr, env, enums)
     }
+    if ast.ExprIsMake(expr) {
+        return GenerateTypeExpr(ast.ExprMakeType(expr))
+    }
     if ast.ExprIsStructLit(expr) {
         return ast.ExprStructLitType(expr)
     }
@@ -2953,6 +3046,12 @@ func BasicLitTypeName(kind token.Type, value string) string {
     }
     if kind == token.IntLitType() {
         return "int"
+    }
+    if kind == token.FloatLitType() {
+        return "float64"
+    }
+    if kind == token.RuneLitType() {
+        return "rune"
     }
     if kind == token.TrueType() || kind == token.FalseType() {
         return "bool"

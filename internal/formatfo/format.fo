@@ -43,7 +43,7 @@ func FormatImports(imports []ast.ImportDecl) string {
         return ""
     }
     if len(imports) == 1 {
-        return "import " + ast.ImportPath(imports[0]) + "\n"
+        return "import " + ast.ImportSpec(imports[0]) + "\n"
     }
     return "import (\n" + FormatImportLines(imports, 0) + ")\n"
 }
@@ -52,7 +52,7 @@ func FormatImportLines(imports []ast.ImportDecl, idx int) string {
     if idx >= len(imports) {
         return ""
     }
-    return "    " + ast.ImportPath(imports[idx]) + "\n" + FormatImportLines(imports, idx + 1)
+    return "    " + ast.ImportSpec(imports[idx]) + "\n" + FormatImportLines(imports, idx + 1)
 }
 
 func FormatDecls(decls []ast.Decl, idx int) string {
@@ -300,6 +300,9 @@ func FormatStmt(stmt ast.Stmt, level int) string {
         }
         return indent + names[0] + " := " + FormatExpr(ast.StmtBindValue(stmt)) + "\n"
     }
+    if ast.StmtIsDiscard(stmt) {
+        return indent + "_ = " + FormatExpr(ast.StmtDiscardValue(stmt)) + "\n"
+    }
     if ast.StmtIsReturn(stmt) {
         results := ast.StmtReturnResults(stmt)
         if len(results) == 0 {
@@ -415,6 +418,13 @@ func FormatExpr(expr ast.Expr) string {
     }
     if ast.ExprIsCopyUpdate(expr) {
         return FormatExpr(ast.ExprCopyUpdateSource(expr)) + "{ " + FormatFieldUpdates(ast.ExprCopyUpdateUpdates(expr), 0) + " }"
+    }
+    if ast.ExprIsMake(expr) {
+        tail := FormatExprs(ast.ExprMakeArgs(expr), 0)
+        if tail == "" {
+            return "make(" + FormatTypeExpr(ast.ExprMakeType(expr)) + ")"
+        }
+        return "make(" + FormatTypeExpr(ast.ExprMakeType(expr)) + ", " + tail + ")"
     }
     if ast.ExprIsSliceLit(expr) {
         return "[]" + FormatOptionalTypeExpr(ast.ExprSliceLitType(expr)) + "{ " + FormatExprs(ast.ExprSliceLitElems(expr), 0) + " }"

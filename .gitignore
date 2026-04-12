@@ -8,6 +8,7 @@
 # Fo caches and transient workdirs
 .fo-cache/
 .fo-build/
+.fo-build-live/
 .fo-build-stage/
 .fo-build-run.*/
 .cold-seed-check.*/
@@ -28,6 +29,7 @@ bootstrap/seed-genesis/
 # Local build outputs
 build/
 dist/
+checker_import_probe
 
 # Generated Go outputs
 .tmp_tokenprobe.go

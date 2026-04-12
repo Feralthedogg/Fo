@@ -107,7 +107,9 @@ func IllegalType() Type { return ILLEGAL }
 func EOFType() Type { return EOF }
 func IdentType() Type { return IDENT }
 func IntLitType() Type { return INT_LIT }
+func FloatLitType() Type { return FLOAT_LIT }
 func StringLitType() Type { return STRING_LIT }
+func RuneLitType() Type { return RUNE_LIT }
 func TrueType() Type { return TRUE }
 func FalseType() Type { return FALSE }
 func PackageType() Type { return PACKAGE }
