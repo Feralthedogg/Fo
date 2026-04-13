@@ -19,6 +19,12 @@ type TokenResult struct {
     Tok token.Token
 }
 
+type ScanAdvanceResult struct {
+    Pos int
+    Line int
+    Column int
+}
+
 func New(src string, filename string) Lexer {
     base := Lexer{
         Src: src,
@@ -110,10 +116,8 @@ func (l Lexer) CurrentPos() token.Pos {
 }
 
 func (l Lexer) SkipWhitespace() Lexer {
-    if l.Ch == SpaceByte() || l.Ch == TabByte() || l.Ch == CarriageReturnByte() || l.Ch == NewlineByte() {
-        return l.Next().SkipWhitespace()
-    }
-    return l
+    next := ScanWhitespaceState(l.Src, l.Pos, l.Line, l.Column)
+    return AdvanceTo(l, next.Pos, next.Line, next.Column)
 }
 
 func (l Lexer) NextToken() TokenResult {
@@ -170,11 +174,11 @@ func (l Lexer) NextToken() TokenResult {
 func (l Lexer) ScanIdentifier() TokenResult {
     pos := l.CurrentPos()
     start := l.Pos
-    next := l.ConsumeIdentifier()
-    literal := SliceText(next.Src, start, next.Pos)
+    end := ScanIdentifierEnd(l.Src, l.Pos)
+    literal := SliceText(l.Src, start, end)
     typ := token.LookupIdent(literal)
     return TokenResult{
-        Next: next,
+        Next: AdvanceTo(l, end, l.Line, l.Column + (end - start)),
         Tok: token.MakeToken(typ, literal, pos),
     }
 }
@@ -189,19 +193,21 @@ func (l Lexer) ConsumeIdentifier() Lexer {
 func (l Lexer) ScanNumber() TokenResult {
     pos := l.CurrentPos()
     start := l.Pos
-    next := l.ConsumeDigits()
+    endPos := ScanDigitsEnd(l.Src, l.Pos)
+    next := AdvanceTo(l, endPos, l.Line, l.Column + (endPos - start))
     if next.Ch == "."[0] {
         frac := next.Next()
         if IsDigit(frac.Ch) {
-            end := frac.ConsumeDigits()
-            literal := SliceText(end.Src, start, end.Pos)
+            fracEndPos := ScanDigitsEnd(l.Src, frac.Pos)
+            end := AdvanceTo(frac, fracEndPos, frac.Line, frac.Column + (fracEndPos - frac.Pos))
+            literal := SliceText(l.Src, start, end.Pos)
             return TokenResult{
                 Next: end,
                 Tok: token.MakeToken(token.FloatLitType(), literal, pos),
             }
         }
     }
-    literal := SliceText(next.Src, start, next.Pos)
+    literal := SliceText(l.Src, start, next.Pos)
     return TokenResult{
         Next: next,
         Tok: token.MakeToken(token.IntLitType(), literal, pos),
@@ -211,24 +217,26 @@ func (l Lexer) ScanNumber() TokenResult {
 func (l Lexer) ScanString() TokenResult {
     pos := l.CurrentPos()
     start := l.Pos
-    body := l.Next().ConsumeStringBody()
+    open := l.Next()
+    bodyState := ScanQuotedBodyState(open.Src, open.Pos, open.Line, open.Column, QuoteByte())
+    body := AdvanceTo(open, bodyState.Pos, bodyState.Line, bodyState.Column)
 
     if body.Ch == QuoteByte() {
-        next := body.Next()
-        literal := SliceText(next.Src, start, next.Pos)
+        closed := body.Next()
+        literal := SliceText(closed.Src, start, closed.Pos)
         return TokenResult{
-            Next: next,
+            Next: closed,
             Tok: token.MakeToken(token.StringLitType(), literal, pos),
         }
     }
 
     literal := SliceText(body.Src, start, body.Pos)
     diag := body.Diag.Error(diagnostic.LexicalCategory(), pos, "unterminated string literal")
-    next := body{
+    broken := body{
         Diag: diag,
     }
     return TokenResult{
-        Next: next,
+        Next: broken,
         Tok: token.MakeToken(token.StringLitType(), literal, pos),
     }
 }
@@ -236,24 +244,26 @@ func (l Lexer) ScanString() TokenResult {
 func (l Lexer) ScanRune() TokenResult {
     pos := l.CurrentPos()
     start := l.Pos
-    body := l.Next().ConsumeRuneBody()
+    open := l.Next()
+    bodyState := ScanQuotedBodyState(open.Src, open.Pos, open.Line, open.Column, RuneQuoteByte())
+    body := AdvanceTo(open, bodyState.Pos, bodyState.Line, bodyState.Column)
 
     if body.Ch == RuneQuoteByte() {
-        next := body.Next()
-        literal := SliceText(next.Src, start, next.Pos)
+        closed := body.Next()
+        literal := SliceText(closed.Src, start, closed.Pos)
         return TokenResult{
-            Next: next,
+            Next: closed,
             Tok: token.MakeToken(token.RuneLitType(), literal, pos),
         }
     }
 
     literal := SliceText(body.Src, start, body.Pos)
     diag := body.Diag.Error(diagnostic.LexicalCategory(), pos, "unterminated rune literal")
-    next := body{
+    broken := body{
         Diag: diag,
     }
     return TokenResult{
-        Next: next,
+        Next: broken,
         Tok: token.MakeToken(token.RuneLitType(), literal, pos),
     }
 }
@@ -263,34 +273,6 @@ func (l Lexer) ConsumeDigits() Lexer {
         return l.Next().ConsumeDigits()
     }
     return l
-}
-
-func (l Lexer) ConsumeStringBody() Lexer {
-    if l.Ch == ZeroByte() || l.Ch == NewlineByte() || l.Ch == QuoteByte() {
-        return l
-    }
-    if l.Ch == BackslashByte() {
-        escaped := l.Next()
-        if escaped.Ch == ZeroByte() {
-            return escaped
-        }
-        return escaped.Next().ConsumeStringBody()
-    }
-    return l.Next().ConsumeStringBody()
-}
-
-func (l Lexer) ConsumeRuneBody() Lexer {
-    if l.Ch == ZeroByte() || l.Ch == NewlineByte() || l.Ch == RuneQuoteByte() {
-        return l
-    }
-    if l.Ch == BackslashByte() {
-        escaped := l.Next()
-        if escaped.Ch == ZeroByte() {
-            return escaped
-        }
-        return escaped.Next().ConsumeRuneBody()
-    }
-    return l.Next().ConsumeRuneBody()
 }
 
 func (l Lexer) ScanOperator() TokenResult {
@@ -479,6 +461,93 @@ func IsDigit(ch byte) bool {
     return false
 }
 
+func AdvanceTo(l Lexer, pos int, line int, column int) Lexer {
+    next := l{
+        Pos: pos,
+        Line: line,
+        Column: column,
+    }
+    return next.Advance()
+}
+
+func ScanWhitespaceState(src string, pos int, line int, column int) ScanAdvanceResult {
+    if pos >= len(src) {
+        return ScanAdvanceResult{
+            Pos: pos,
+            Line: line,
+            Column: column,
+        }
+    }
+    ch := src[pos]
+    if ch == SpaceByte() || ch == TabByte() || ch == CarriageReturnByte() {
+        return ScanWhitespaceState(src, pos + 1, line, column + 1)
+    }
+    if ch == NewlineByte() {
+        return ScanWhitespaceState(src, pos + 1, line + 1, 1)
+    }
+    return ScanAdvanceResult{
+        Pos: pos,
+        Line: line,
+        Column: column,
+    }
+}
+
+func ScanIdentifierEnd(src string, pos int) int {
+    if pos >= len(src) {
+        return pos
+    }
+    ch := src[pos]
+    if IsLetter(ch) || IsDigit(ch) || ch == UnderscoreByte() {
+        return ScanIdentifierEnd(src, pos + 1)
+    }
+    return pos
+}
+
+func ScanDigitsEnd(src string, pos int) int {
+    if pos >= len(src) {
+        return pos
+    }
+    ch := src[pos]
+    if IsDigit(ch) || ch == UnderscoreByte() {
+        return ScanDigitsEnd(src, pos + 1)
+    }
+    return pos
+}
+
+func ScanQuotedBodyState(src string, pos int, line int, column int, quote byte) ScanAdvanceResult {
+    if pos >= len(src) {
+        return ScanAdvanceResult{
+            Pos: pos,
+            Line: line,
+            Column: column,
+        }
+    }
+    ch := src[pos]
+    if ch == ZeroByte() || ch == quote || ch == NewlineByte() {
+        return ScanAdvanceResult{
+            Pos: pos,
+            Line: line,
+            Column: column,
+        }
+    }
+    if ch == BackslashByte() {
+        nextPos := pos + 1
+        if nextPos >= len(src) {
+            return ScanAdvanceResult{
+                Pos: nextPos,
+                Line: line,
+                Column: column + 1,
+            }
+        }
+        nextCh := src[nextPos]
+        if nextCh == NewlineByte() {
+            return ScanQuotedBodyState(src, nextPos + 1, line + 1, 1, quote)
+        }
+        return ScanQuotedBodyState(src, nextPos + 1, line, column + 2, quote)
+    }
+    return ScanQuotedBodyState(src, pos + 1, line, column + 1, quote)
+}
+
 func SetLastToken(l Lexer, t token.Type) Lexer {
     return l{
         LastToken: t,
@@ -486,15 +555,14 @@ func SetLastToken(l Lexer, t token.Type) Lexer {
 }
 
 func SliceText(src string, start int, end int) string {
-    return SliceTextLoop(src, start, end, 0, "")
-}
-
-func SliceTextLoop(src string, start int, end int, idx int, acc string) string {
-    if idx >= end {
-        return acc
+    if start < 0 {
+        return SliceText(src, 0, end)
     }
-    if idx < start {
-        return SliceTextLoop(src, start, end, idx + 1, acc)
+    if end < start {
+        return ""
     }
-    return SliceTextLoop(src, start, end, idx + 1, acc + string(src[idx]))
+    if end > len(src) {
+        return SliceText(src, start, len(src))
+    }
+    return src[start:end]
 }

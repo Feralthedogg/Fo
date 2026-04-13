@@ -211,15 +211,14 @@ func QuoteString() string {
 }
 
 func GenerateDecls(decls []ast.Decl, enums []EnumInfo, pkg string, bindings []CodegenBinding) string {
+    return strings.Join(CollectGeneratedDecls(decls, enums, pkg, bindings, []string{}), "\n")
+}
+
+func CollectGeneratedDecls(decls []ast.Decl, enums []EnumInfo, pkg string, bindings []CodegenBinding, acc []string) []string {
     if len(decls) == 0 {
-        return ""
+        return acc
     }
-    head := GenerateDecl(decls[0], enums, pkg, bindings)
-    tail := GenerateDecls(decls[1:], enums, pkg, bindings)
-    if tail == "" {
-        return head
-    }
-    return head + "\n" + tail
+    return CollectGeneratedDecls(decls[1:], enums, pkg, bindings, append(acc, GenerateDecl(decls[0], enums, pkg, bindings)))
 }
 
 func GenerateDecl(decl ast.Decl, enums []EnumInfo, pkg string, bindings []CodegenBinding) string {
@@ -260,10 +259,14 @@ func GenerateTypeDecl(decl ast.Decl, enums []EnumInfo) string {
 }
 
 func GenerateMethodLines(methods []ast.MethodSig, indent string) string {
+    return strings.Join(CollectMethodLines(methods, indent, []string{}), "")
+}
+
+func CollectMethodLines(methods []ast.MethodSig, indent string, acc []string) []string {
     if len(methods) == 0 {
-        return ""
+        return acc
     }
-    return indent + GenerateMethodSig(methods[0]) + "\n" + GenerateMethodLines(methods[1:], indent)
+    return CollectMethodLines(methods[1:], indent, append(acc, indent + GenerateMethodSig(methods[0]) + "\n"))
 }
 
 func GenerateMethodSig(method ast.MethodSig) string {
@@ -423,11 +426,15 @@ func GenerateTypeParamNamesOnly(params []ast.TypeParam, idx int) string {
 }
 
 func GenerateFieldLines(fields []ast.FieldDef, indent string) string {
+    return strings.Join(CollectFieldLines(fields, indent, []string{}), "")
+}
+
+func CollectFieldLines(fields []ast.FieldDef, indent string, acc []string) []string {
     if len(fields) == 0 {
-        return ""
+        return acc
     }
-    return indent + GenerateGoName(ast.FieldName(fields[0])) + " " + GenerateTypeExpr(ast.FieldType(fields[0])) + "\n" +
-        GenerateFieldLines(fields[1:], indent)
+    line := indent + GenerateGoName(ast.FieldName(fields[0])) + " " + GenerateTypeExpr(ast.FieldType(fields[0])) + "\n"
+    return CollectFieldLines(fields[1:], indent, append(acc, line))
 }
 
 func GenerateFuncDecl(decl ast.Decl, enums []EnumInfo, pkg string, bindings []CodegenBinding) string {
@@ -1166,14 +1173,14 @@ func GenerateTypeParamConstraint(value Option[ast.TypeExpr]) string {
 }
 
 func GenerateParams(params []ast.FieldDef) string {
+    return strings.Join(CollectGeneratedParams(params, []string{}), ", ")
+}
+
+func CollectGeneratedParams(params []ast.FieldDef, acc []string) []string {
     if len(params) == 0 {
-        return ""
+        return acc
     }
-    head := GenerateParam(params[0])
-    if len(params) == 1 {
-        return head
-    }
-    return head + ", " + GenerateParams(params[1:])
+    return CollectGeneratedParams(params[1:], append(acc, GenerateParam(params[0])))
 }
 
 func GenerateParam(field ast.FieldDef) string {
@@ -1196,13 +1203,14 @@ func GenerateResultSuffix(results []ast.TypeExpr) string {
 }
 
 func GenerateTypeExprs(results []ast.TypeExpr) string {
+    return strings.Join(CollectGeneratedTypeExprs(results, []string{}), ", ")
+}
+
+func CollectGeneratedTypeExprs(results []ast.TypeExpr, acc []string) []string {
     if len(results) == 0 {
-        return ""
+        return acc
     }
-    if len(results) == 1 {
-        return GenerateTypeExpr(results[0])
-    }
-    return GenerateTypeExpr(results[0]) + ", " + GenerateTypeExprs(results[1:])
+    return CollectGeneratedTypeExprs(results[1:], append(acc, GenerateTypeExpr(results[0])))
 }
 
 func GenerateTypeExpr(expr ast.TypeExpr) string {
@@ -1281,17 +1289,21 @@ func GenerateBlock(block ast.BlockStmt, indent string, resultTypes []string, env
 }
 
 func GenerateStatements(stmts []ast.Stmt, indent string, resultTypes []string, env []CodegenBinding, enums []EnumInfo) string {
+    return strings.Join(CollectGeneratedStatements(stmts, indent, resultTypes, env, enums, []string{}), "")
+}
+
+func CollectGeneratedStatements(stmts []ast.Stmt, indent string, resultTypes []string, env []CodegenBinding, enums []EnumInfo, acc []string) []string {
     if len(stmts) == 0 {
-        return ""
+        return acc
     }
     fusedPair := GenerateBindReturnPipelineFusion(stmts, indent, resultTypes, env, enums)
     if HasText(fusedPair) {
-        tail := GenerateStatements(stmts[2:], indent, resultTypes, CodegenEnvAfterStmt(stmts[0], env, enums), enums)
-        return fusedPair + tail
+        nextEnv := CodegenEnvAfterStmt(stmts[0], env, enums)
+        return CollectGeneratedStatements(stmts[2:], indent, resultTypes, nextEnv, enums, append(acc, fusedPair))
     }
     head := GenerateStmt(stmts[0], stmts[1:], indent, resultTypes, env, enums)
-    tail := GenerateStatements(stmts[1:], indent, resultTypes, CodegenEnvAfterStmt(stmts[0], env, enums), enums)
-    return head + tail
+    nextEnv := CodegenEnvAfterStmt(stmts[0], env, enums)
+    return CollectGeneratedStatements(stmts[1:], indent, resultTypes, nextEnv, enums, append(acc, head))
 }
 
 func GenerateStmt(stmt ast.Stmt, tail []ast.Stmt, indent string, resultTypes []string, env []CodegenBinding, enums []EnumInfo) string {
@@ -1413,13 +1425,14 @@ func IsBlankCodegenName(name string) bool {
 }
 
 func GenerateExprs(exprs []ast.Expr, enums []EnumInfo) string {
+    return strings.Join(CollectGeneratedExprs(exprs, enums, []string{}), ", ")
+}
+
+func CollectGeneratedExprs(exprs []ast.Expr, enums []EnumInfo, acc []string) []string {
     if len(exprs) == 0 {
-        return ""
+        return acc
     }
-    if len(exprs) == 1 {
-        return GenerateExpr(exprs[0], enums)
-    }
-    return GenerateExpr(exprs[0], enums) + ", " + GenerateExprs(exprs[1:], enums)
+    return CollectGeneratedExprs(exprs[1:], enums, append(acc, GenerateExpr(exprs[0], enums)))
 }
 
 func GenerateMakeExpr(typ ast.TypeExpr, args []ast.Expr, enums []EnumInfo) string {
@@ -1430,13 +1443,14 @@ func GenerateMakeExpr(typ ast.TypeExpr, args []ast.Expr, enums []EnumInfo) strin
 }
 
 func JoinNameList(items []string, idx int) string {
+    return strings.Join(CollectGeneratedNames(items, idx, []string{}), ", ")
+}
+
+func CollectGeneratedNames(items []string, idx int, acc []string) []string {
     if idx >= len(items) {
-        return ""
+        return acc
     }
-    if idx + 1 >= len(items) {
-        return GenerateGoName(items[idx])
-    }
-    return GenerateGoName(items[idx]) + ", " + JoinNameList(items, idx + 1)
+    return CollectGeneratedNames(items, idx + 1, append(acc, GenerateGoName(items[idx])))
 }
 
 func GenerateBindCopyUpdate(name string, expr ast.Expr, tail []ast.Stmt, indent string, enums []EnumInfo) string {
@@ -2199,25 +2213,27 @@ func GenerateMapLit(typeName string, keyType ast.TypeExpr, valueType ast.TypeExp
 }
 
 func GenerateMapEntries(entries []ast.MapEntry, enums []EnumInfo) string {
+    return strings.Join(CollectMapEntries(entries, enums, []string{}), ", ")
+}
+
+func CollectMapEntries(entries []ast.MapEntry, enums []EnumInfo, acc []string) []string {
     if len(entries) == 0 {
-        return ""
+        return acc
     }
     head := GenerateExpr(entries[0].Key, enums) + ": " + GenerateExpr(entries[0].Value, enums)
-    if len(entries) == 1 {
-        return head
-    }
-    return head + ", " + GenerateMapEntries(entries[1:], enums)
+    return CollectMapEntries(entries[1:], enums, append(acc, head))
 }
 
 func GenerateFieldInits(fields []ast.FieldInit, enums []EnumInfo) string {
+    return strings.Join(CollectFieldInits(fields, enums, []string{}), ", ")
+}
+
+func CollectFieldInits(fields []ast.FieldInit, enums []EnumInfo, acc []string) []string {
     if len(fields) == 0 {
-        return ""
+        return acc
     }
     head := GenerateGoName(ast.FieldInitNameValue(fields[0])) + ": " + GenerateExpr(ast.FieldInitExprValue(fields[0]), enums)
-    if len(fields) == 1 {
-        return head
-    }
-    return head + ", " + GenerateFieldInits(fields[1:], enums)
+    return CollectFieldInits(fields[1:], enums, append(acc, head))
 }
 
 func GenerateSliceLit(typeName string, elemType Option[ast.TypeExpr], elems []ast.Expr, enums []EnumInfo) string {
@@ -2251,10 +2267,14 @@ func GenerateSwitchHead(tag Option[ast.Expr], indent string) string {
 }
 
 func GenerateSwitchCases(cases []ast.CaseClause, indent string, resultTypes []string, env []CodegenBinding, enums []EnumInfo) string {
+    return strings.Join(CollectSwitchCases(cases, indent, resultTypes, env, enums, []string{}), "")
+}
+
+func CollectSwitchCases(cases []ast.CaseClause, indent string, resultTypes []string, env []CodegenBinding, enums []EnumInfo, acc []string) []string {
     if len(cases) == 0 {
-        return ""
+        return acc
     }
-    return GenerateSwitchCase(cases[0], indent, resultTypes, env, enums) + GenerateSwitchCases(cases[1:], indent, resultTypes, env, enums)
+    return CollectSwitchCases(cases[1:], indent, resultTypes, env, enums, append(acc, GenerateSwitchCase(cases[0], indent, resultTypes, env, enums)))
 }
 
 func GenerateSwitchCase(c ast.CaseClause, indent string, resultTypes []string, env []CodegenBinding, enums []EnumInfo) string {
@@ -3034,7 +3054,7 @@ func InferAppliedMapResultType(first ast.Expr, rest []ast.Expr, env []CodegenBin
 }
 
 func BinaryOpReturnsBool(op token.Type) bool {
-    if op == token.EqType() || op == token.LtType() || op == token.GtType() || op == token.LteType() || op == token.GteType() {
+    if op == token.EqType() || op == token.LandType() || op == token.LorType() || op == token.LtType() || op == token.GtType() || op == token.LteType() || op == token.GteType() {
         return true
     }
     return false
@@ -3375,10 +3395,7 @@ func JoinStrings(items []string, idx int) string {
     if idx >= len(items) {
         return ""
     }
-    if idx + 1 >= len(items) {
-        return items[idx]
-    }
-    return items[idx] + ", " + JoinStrings(items, idx + 1)
+    return strings.Join(items[idx:], ", ")
 }
 
 func GenerateGoName(name string) string {

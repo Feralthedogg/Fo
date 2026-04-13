@@ -97,6 +97,20 @@ if x < 0 {
 }
 ```
 
+Logical operators use the familiar Go-like spellings:
+
+```fo
+if ok && ready {
+    return value
+}
+
+if left || right {
+    return value
+}
+
+return !failed
+```
+
 Switch:
 
 ```fo

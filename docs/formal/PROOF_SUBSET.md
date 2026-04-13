@@ -25,6 +25,7 @@ It is the elaborated, monomorphized subset of Fo used by the first mechanized pr
 - local immutable bindings
 - pure function calls
 - unary and binary operators
+  - arithmetic, comparison, and boolean operators including `!`, `&&`, and `||`
 - `if`
 - exhaustive `match`
 - copy-update

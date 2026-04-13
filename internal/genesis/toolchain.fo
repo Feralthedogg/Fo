@@ -188,6 +188,27 @@ func UnknownOutputExpr(cmd Expr) Expr {
     )
 }
 
+func MessagePlanExpr(output Expr) Expr {
+    return PlanExpr(
+        TextExpr("message"),
+        TextExpr("."),
+        EmptyFilesExpr(),
+        output,
+    )
+}
+
+func ProjectResultExpr(output Expr, plan Expr) Expr {
+    return CallExpr("projectResult", []Expr{output, plan})
+}
+
+func ExecResultExpr(output Expr, exec Expr) Expr {
+    return CallExpr("execResult", []Expr{output, exec})
+}
+
+func CommandCaseExpr(name string, result Expr) MatchArm {
+    return MatchArmEntry(TextExpr(name), result)
+}
+
 func InitSummaryExpr() Expr {
     return TextExpr("init planned:\n  fo.mod\n  fo.lock\n  .gitignore")
 }
@@ -364,106 +385,101 @@ func BuildToolchainProgram() Program {
         }),
         Function("planCommand", []string{"cmd", "module"}, []Stmt{
             ReturnStmt(
-                IfExpr(
-                    BinaryExpr("==", VarExpr("cmd"), TextExpr("version")),
-                    CallExpr("projectResult", []Expr{
-                        CallExpr("version", []Expr{}),
-                        PlanExpr(
-                            TextExpr("message"),
-                            TextExpr("."),
-                            EmptyFilesExpr(),
-                            CallExpr("version", []Expr{}),
-                        ),
-                    }),
-                    IfExpr(
-                        BinaryExpr("==", VarExpr("cmd"), TextExpr("help")),
-                        CallExpr("projectResult", []Expr{
-                            CallExpr("help", []Expr{}),
-                            PlanExpr(
-                                TextExpr("message"),
-                                TextExpr("."),
-                                EmptyFilesExpr(),
-                                CallExpr("help", []Expr{}),
+                MatchExpr(
+                    VarExpr("cmd"),
+                    []MatchArm{
+                        CommandCaseExpr(
+                            "version",
+                            ProjectResultExpr(
+                                CallExpr("version", []Expr{}),
+                                MessagePlanExpr(CallExpr("version", []Expr{})),
                             ),
-                        }),
-                        IfExpr(
-                            BinaryExpr("==", VarExpr("cmd"), TextExpr("init")),
-                            CallExpr("projectResult", []Expr{
+                        ),
+                        CommandCaseExpr(
+                            "help",
+                            ProjectResultExpr(
+                                CallExpr("help", []Expr{}),
+                                MessagePlanExpr(CallExpr("help", []Expr{})),
+                            ),
+                        ),
+                        CommandCaseExpr(
+                            "init",
+                            ProjectResultExpr(
                                 InitSummaryExpr(),
                                 CallExpr("initPlan", []Expr{VarExpr("module")}),
-                            }),
-                            IfExpr(
-                                BinaryExpr("==", VarExpr("cmd"), TextExpr("new")),
-                                CallExpr("projectResult", []Expr{
-                                    NewSummaryExpr(),
-                                    CallExpr("newPlan", []Expr{VarExpr("module")}),
-                                }),
-                                IfExpr(
-                                    BinaryExpr("==", VarExpr("cmd"), TextExpr("check")),
-                                    CallExpr("execResult", []Expr{
-                                        TextExpr("check passed"),
-                                        CallExpr("checkExec", []Expr{}),
-                                    }),
-                                    IfExpr(
-                                        BinaryExpr("==", VarExpr("cmd"), TextExpr("build")),
-                                        CallExpr("execResult", []Expr{
-                                            TextExpr(""),
-                                            CallExpr("buildExec", []Expr{MainFoPathExpr()}),
-                                        }),
-                                        IfExpr(
-                                            BinaryExpr("==", VarExpr("cmd"), TextExpr("run")),
-                                            CallExpr("execResult", []Expr{
-                                                EmptyTextExpr(),
-                                                CallExpr("runExec", []Expr{MainFoPathExpr()}),
-                                            }),
-                                            IfExpr(
-                                                BinaryExpr("==", VarExpr("cmd"), TextExpr("test")),
-                                                CallExpr("execResult", []Expr{
-                                                    EmptyTextExpr(),
-                                                    CallExpr("testExec", []Expr{TupleExpr([]Expr{})}),
-                                                }),
-                                                IfExpr(
-                                                    BinaryExpr("==", VarExpr("cmd"), TextExpr("fmt")),
-                                                    CallExpr("execResult", []Expr{
-                                                        EmptyTextExpr(),
-                                                        CallExpr("fmtExec", []Expr{MainFoPathExpr()}),
-                                                    }),
-                                                    IfExpr(
-                                                        BinaryExpr("==", VarExpr("cmd"), TextExpr("format")),
-                                                        CallExpr("formatExec", []Expr{TupleExpr([]Expr{})}),
-                                                        IfExpr(
-                                                        BinaryExpr("==", VarExpr("cmd"), TextExpr("mod-init")),
-                                                        CallExpr("projectResult", []Expr{
-                                                            ModInitSummaryExpr(),
-                                                            CallExpr("modInitPlan", []Expr{VarExpr("module")}),
-                                                        }),
-                                                            IfExpr(
-                                                                BinaryExpr("==", VarExpr("cmd"), TextExpr("mod-tidy")),
-                                                                CallExpr("projectResult", []Expr{
-                                                                    TextExpr("mod tidy planned"),
-                                                                    CallExpr("modTidyPlan", []Expr{VarExpr("module")}),
-                                                                }),
-                                                                IfExpr(
-                                                                    BinaryExpr("==", VarExpr("cmd"), TextExpr("mod-graph")),
-                                                                    CallExpr("projectResult", []Expr{
-                                                                        TextExpr("mod graph planned"),
-                                                                        CallExpr("modGraphPlan", []Expr{VarExpr("module")}),
-                                                                    }),
-                                                        CallExpr("failureResult", []Expr{
-                                                                        UnknownOutputExpr(VarExpr("cmd")),
-                                                                    }),
-                                                                ),
-                                                            ),
-                                                        ),
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
                             ),
                         ),
-                    ),
+                        CommandCaseExpr(
+                            "new",
+                            ProjectResultExpr(
+                                NewSummaryExpr(),
+                                CallExpr("newPlan", []Expr{VarExpr("module")}),
+                            ),
+                        ),
+                        CommandCaseExpr(
+                            "check",
+                            ExecResultExpr(
+                                TextExpr("check passed"),
+                                CallExpr("checkExec", []Expr{}),
+                            ),
+                        ),
+                        CommandCaseExpr(
+                            "build",
+                            ExecResultExpr(
+                                EmptyTextExpr(),
+                                CallExpr("buildExec", []Expr{MainFoPathExpr()}),
+                            ),
+                        ),
+                        CommandCaseExpr(
+                            "run",
+                            ExecResultExpr(
+                                EmptyTextExpr(),
+                                CallExpr("runExec", []Expr{MainFoPathExpr()}),
+                            ),
+                        ),
+                        CommandCaseExpr(
+                            "test",
+                            ExecResultExpr(
+                                EmptyTextExpr(),
+                                CallExpr("testExec", []Expr{TupleExpr([]Expr{})}),
+                            ),
+                        ),
+                        CommandCaseExpr(
+                            "fmt",
+                            ExecResultExpr(
+                                EmptyTextExpr(),
+                                CallExpr("fmtExec", []Expr{MainFoPathExpr()}),
+                            ),
+                        ),
+                        CommandCaseExpr(
+                            "format",
+                            CallExpr("formatExec", []Expr{TupleExpr([]Expr{})}),
+                        ),
+                        CommandCaseExpr(
+                            "mod-init",
+                            ProjectResultExpr(
+                                ModInitSummaryExpr(),
+                                CallExpr("modInitPlan", []Expr{VarExpr("module")}),
+                            ),
+                        ),
+                        CommandCaseExpr(
+                            "mod-tidy",
+                            ProjectResultExpr(
+                                TextExpr("mod tidy planned"),
+                                CallExpr("modTidyPlan", []Expr{VarExpr("module")}),
+                            ),
+                        ),
+                        CommandCaseExpr(
+                            "mod-graph",
+                            ProjectResultExpr(
+                                TextExpr("mod graph planned"),
+                                CallExpr("modGraphPlan", []Expr{VarExpr("module")}),
+                            ),
+                        ),
+                    },
+                    CallExpr("failureResult", []Expr{
+                        UnknownOutputExpr(VarExpr("cmd")),
+                    }),
                 ),
             ),
         }),

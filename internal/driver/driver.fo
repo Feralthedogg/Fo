@@ -38,6 +38,15 @@ func ParseSource(src string, filename string) ParseResult {
 }
 
 func ParsePackage(sources []SourceUnit) ParseResult {
+    if len(sources) == 0 {
+        return ParseResult{
+            File: ast.EmptyFile(),
+            ParseDiag: diagnostic.New(),
+        }
+    }
+    if len(sources) == 1 {
+        return ParseSource(sources[0].Text, sources[0].Filename)
+    }
     return ParsePackageFrom(sources, 0, ast.EmptyFile(), diagnostic.New())
 }
 

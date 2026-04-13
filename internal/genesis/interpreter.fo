@@ -10,6 +10,11 @@ type ExprField struct {
     Value Expr
 }
 
+type MatchArm struct {
+    When Expr
+    Then Expr
+}
+
 type EnvEntry struct {
     Name string
     Value Value
@@ -55,6 +60,7 @@ type Expr enum {
     Tail([]Expr)
     IsEmpty([]Expr)
     If([]Expr, []Expr, []Expr)
+    Match([]Expr, []MatchArm, []Expr)
 }
 
 type EvalResult enum {
@@ -90,6 +96,13 @@ func ExprFieldEntry(name string, value Expr) ExprField {
     return ExprField{
         Name: name,
         Value: value,
+    }
+}
+
+func MatchArmEntry(when Expr, then Expr) MatchArm {
+    return MatchArm{
+        When: when,
+        Then: then,
     }
 }
 
@@ -209,6 +222,10 @@ func IsEmptyExpr(target Expr) Expr {
 
 func IfExpr(cond Expr, yes Expr, no Expr) Expr {
     return If(OneExpr(cond), OneExpr(yes), OneExpr(no))
+}
+
+func MatchExpr(target Expr, arms []MatchArm, fallback Expr) Expr {
+    return Match(OneExpr(target), arms, OneExpr(fallback))
 }
 
 func OkValue(v Value) EvalResult {
@@ -436,6 +453,34 @@ func EvalInProgram(program Program, env []EnvEntry, expr Expr) EvalResult {
         case EvalErr(msg):
             return EvalErr(msg)
         }
+    case Match(targets, arms, fallbacks):
+        if len(targets) == 0 || len(fallbacks) == 0 {
+            return EvalErr("match branch shape")
+        }
+        targetResult := EvalInProgram(program, env, targets[0])
+        match targetResult {
+        case EvalOk(v):
+            return EvalMatchArms(program, env, v, arms, fallbacks[0])
+        case EvalErr(msg):
+            return EvalErr(msg)
+        }
+    }
+}
+
+func EvalMatchArms(program Program, env []EnvEntry, target Value, arms []MatchArm, fallback Expr) EvalResult {
+    if len(arms) == 0 {
+        return EvalInProgram(program, env, fallback)
+    }
+
+    current := EvalInProgram(program, env, arms[0].When)
+    match current {
+    case EvalOk(v):
+        if EqualValues(target, v) {
+            return EvalInProgram(program, env, arms[0].Then)
+        }
+        return EvalMatchArms(program, env, target, arms[1:], fallback)
+    case EvalErr(msg):
+        return EvalErr(msg)
     }
 }
 

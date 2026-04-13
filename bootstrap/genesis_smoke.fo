@@ -24,6 +24,22 @@ func SmokeCore() bool {
         genesis.BoolExpr(true),
         condExpr,
     })
+    matchExpr := genesis.MatchExpr(
+        genesis.TextExpr("run"),
+        []genesis.MatchArm{
+            genesis.MatchArmEntry(genesis.TextExpr("check"), genesis.IntExpr(1)),
+            genesis.MatchArmEntry(genesis.TextExpr("run"), genesis.IntExpr(2)),
+        },
+        genesis.IntExpr(3),
+    )
+    defaultMatchExpr := genesis.MatchExpr(
+        genesis.TextExpr("wat"),
+        []genesis.MatchArm{
+            genesis.MatchArmEntry(genesis.TextExpr("check"), genesis.IntExpr(1)),
+            genesis.MatchArmEntry(genesis.TextExpr("run"), genesis.IntExpr(2)),
+        },
+        genesis.IntExpr(3),
+    )
 
     expectedTuple := genesis.TupleValue([]genesis.Value{
         genesis.BoolValue(true),
@@ -86,6 +102,12 @@ func SmokeCore() bool {
         return false
     }
     if genesis.Expect(env, condExpr, genesis.IntValue(7)) == false {
+        return false
+    }
+    if genesis.Expect(env, matchExpr, genesis.IntValue(2)) == false {
+        return false
+    }
+    if genesis.Expect(env, defaultMatchExpr, genesis.IntValue(3)) == false {
         return false
     }
     if genesis.Expect(env, tupleExpr, expectedTuple) == false {
@@ -257,6 +279,14 @@ func SmokeToolchainParity() bool {
         toolchain,
         env,
         genesis.SelectExpr(genesis.HeadExpr(genesis.TailExpr(genesis.SelectExpr(seedPlan, "files"))), "path"),
+        genesis.TextValue("go.sum"),
+    ) == false {
+        return false
+    }
+    if genesis.ExpectProgram(
+        toolchain,
+        env,
+        genesis.SelectExpr(genesis.HeadExpr(genesis.TailExpr(genesis.TailExpr(genesis.SelectExpr(seedPlan, "files")))), "path"),
         genesis.TextValue("SEED.txt"),
     ) == false {
         return false

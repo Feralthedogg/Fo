@@ -23,6 +23,11 @@ type FileResult struct {
     File ast.File
 }
 
+type ImportsResult struct {
+    Next Parser
+    Imports []ast.ImportDecl
+}
+
 type PackageResult struct {
     Next Parser
     Decl ast.PackageDecl
@@ -41,6 +46,11 @@ type DeclResult struct {
 type BlockResult struct {
     Next Parser
     Block ast.BlockStmt
+}
+
+type BlockStmtsResult struct {
+    Next Parser
+    Stmts []ast.Stmt
 }
 
 type StmtResult struct {
@@ -417,10 +427,19 @@ func (p Parser) ParseFile() FileResult {
     cur := p.Current()
     if cur.Type == token.PackageType() {
         pkg := p.ParsePackageDecl()
-        return pkg.Next.ParseImports(ast.FileWithPackage(file, pkg.Decl))
+        imports := pkg.Next.ParseImportDecls([]ast.ImportDecl{})
+        return imports.Next.ParseDecls(ast.File{
+            Package: Some[ast.PackageDecl](pkg.Decl),
+            Imports: imports.Imports,
+            Decls: file.Decls,
+        })
     }
 
-    return p.ParseImports(file)
+    imports := p.ParseImportDecls([]ast.ImportDecl{})
+    return imports.Next.ParseDecls(ast.File{
+        Imports: imports.Imports,
+        Decls: file.Decls,
+    })
 }
 
 func (p Parser) ParsePackageDecl() PackageResult {
@@ -433,12 +452,24 @@ func (p Parser) ParsePackageDecl() PackageResult {
 }
 
 func (p Parser) ParseImports(file ast.File) FileResult {
+    imports := p.ParseImportDecls(file.Imports)
+    return imports.Next.ParseDecls(ast.File{
+        Package: file.Package,
+        Imports: imports.Imports,
+        Decls: file.Decls,
+    })
+}
+
+func (p Parser) ParseImportDecls(acc []ast.ImportDecl) ImportsResult {
     cur := p.Current()
     if cur.Type == token.ImportType() {
         imp := p.ParseImportDecl()
-        return imp.Next.ParseImports(ast.FileWithImport(file, imp.Decl))
+        return imp.Next.ParseImportDecls(append(acc, imp.Decl))
     }
-    return p.ParseDecls(file)
+    return ImportsResult{
+        Next: p,
+        Imports: acc,
+    }
 }
 
 func (p Parser) ParseImportDecl() ImportResult {
@@ -666,7 +697,7 @@ func (p Parser) ParseTypeParams(acc []ast.TypeParam) TypeParamsResult {
     nextAcc := append(acc, ast.MakeTypeParam(nameTok.Tok.Pos, nameTok.Tok.Literal, constraint.Type))
     nextParser := constraint.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseTypeParams(nextAcc)
+        return nextParser.Advance().ParseTypeParams(nextAcc)
     }
     return nextParser.ParseTypeParams(nextAcc)
 }
@@ -709,7 +740,7 @@ func (p Parser) ParseParamFields(acc []ast.FieldDef) ParamListResult {
         nextAcc := append(acc, field)
         nextParser := elem.Next
         if nextParser.Current().Type == token.CommaType() {
-            return nextParser.Expect(token.CommaType()).Next.ParseParamFields(nextAcc)
+            return nextParser.Advance().ParseParamFields(nextAcc)
         }
         return nextParser.ParseParamFields(nextAcc)
     }
@@ -718,7 +749,7 @@ func (p Parser) ParseParamFields(acc []ast.FieldDef) ParamListResult {
     nextAcc := append(acc, field)
     nextParser := typ.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseParamFields(nextAcc)
+        return nextParser.Advance().ParseParamFields(nextAcc)
     }
     return nextParser.ParseParamFields(nextAcc)
 }
@@ -844,7 +875,7 @@ func (p Parser) ParseTypeExprList(end token.Type, acc []ast.TypeExpr) TypeExprLi
     nextAcc := append(acc, TypeOrAny(typ.Type))
     nextParser := typ.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseTypeExprList(end, nextAcc)
+        return nextParser.Advance().ParseTypeExprList(end, nextAcc)
     }
     return nextParser.ParseTypeExprList(end, nextAcc)
 }
@@ -879,10 +910,9 @@ func (p Parser) ParseNamedType() TypeResult {
     if cur.Type == token.IdentType() {
         next := p.Advance()
         if next.Current().Type == token.DotType() {
-            nameTok := next.Expect(token.DotType()).Next.Expect(token.IdentType())
+            nameTok := next.Advance().Expect(token.IdentType())
             if nameTok.Next.Current().Type == token.LBracketType() {
-                open := nameTok.Next.Expect(token.LBracketType())
-                typeArgs := open.Next.ParseTypeExprList(token.RBracketType(), []ast.TypeExpr{})
+                typeArgs := nameTok.Next.Advance().ParseTypeExprList(token.RBracketType(), []ast.TypeExpr{})
                 return TypeResult{
                     Next: typeArgs.Next,
                     Type: Some[ast.TypeExpr](ast.MakeQualifiedTypeWithArgs(cur.Pos, cur.Literal, nameTok.Tok.Literal, typeArgs.Types)),
@@ -895,8 +925,7 @@ func (p Parser) ParseNamedType() TypeResult {
         }
 
         if next.Current().Type == token.LBracketType() {
-            open := next.Expect(token.LBracketType())
-            typeArgs := open.Next.ParseTypeExprList(token.RBracketType(), []ast.TypeExpr{})
+            typeArgs := next.Advance().ParseTypeExprList(token.RBracketType(), []ast.TypeExpr{})
             return TypeResult{
                 Next: typeArgs.Next,
                 Type: Some[ast.TypeExpr](ast.MakeNamedTypeWithArgs(cur.Pos, cur.Literal, typeArgs.Types)),
@@ -1095,12 +1124,23 @@ func (p Parser) ParseBlock() BlockResult {
 }
 
 func (p Parser) ParseBlockStmts(block ast.BlockStmt) BlockResult {
+    items := p.ParseBlockStmtList(block.Stmts)
+    return BlockResult{
+        Next: items.Next,
+        Block: ast.BlockStmt{
+            Pos: block.Pos,
+            Stmts: items.Stmts,
+        },
+    }
+}
+
+func (p Parser) ParseBlockStmtList(acc []ast.Stmt) BlockStmtsResult {
     cur := p.Current()
     if cur.Type == token.RBraceType() {
         end := p.Expect(token.RBraceType())
-        return BlockResult{
+        return BlockStmtsResult{
             Next: end.Next,
-            Block: block,
+            Stmts: acc,
         }
     }
     if cur.Type == token.EOFType() {
@@ -1114,18 +1154,18 @@ func (p Parser) ParseBlockStmts(block ast.BlockStmt) BlockResult {
                 "Add the missing closing '}' for the surrounding block.",
             ),
         }
-        return BlockResult{
+        return BlockStmtsResult{
             Next: next,
-            Block: block,
+            Stmts: acc,
         }
     }
 
     res := p.ParseStmt()
     if isNone[ast.Stmt](res.Stmt) {
-        return res.Next.ParseBlockStmts(block)
+        return res.Next.ParseBlockStmtList(acc)
     }
     stmt := unwrapOr[ast.Stmt](res.Stmt, ast.MakeExprStmt(ast.ZeroPos(), ast.MakeIdent(ast.ZeroPos(), "_")))
-    return res.Next.ParseBlockStmts(ast.BlockWithStmt(block, stmt))
+    return res.Next.ParseBlockStmtList(append(acc, stmt))
 }
 
 func (p Parser) ParseStmt() StmtResult {
@@ -1343,7 +1383,7 @@ func (p Parser) ParseStructPatternFields(acc []ast.FieldPattern) StructPatternFi
     nextAcc := append(acc, ast.MakeFieldPattern(nameTok.Tok.Literal, pat.Pattern))
     nextParser := pat.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseStructPatternFields(nextAcc)
+        return nextParser.Advance().ParseStructPatternFields(nextAcc)
     }
     return nextParser.ParseStructPatternFields(nextAcc)
 }
@@ -1384,7 +1424,7 @@ func (p Parser) ParsePatterns(end token.Type, acc []ast.Pattern) PatternListResu
     nextAcc := append(acc, pat.Pattern)
     nextParser := pat.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParsePatterns(end, nextAcc)
+        return nextParser.Advance().ParsePatterns(end, nextAcc)
     }
     return nextParser.ParsePatterns(end, nextAcc)
 }
@@ -1549,7 +1589,7 @@ func (p Parser) ParseBindNames(acc []string) BindNamesResult {
     nextAcc := append(acc, nameTok.Tok.Literal)
     nextParser := nameTok.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseBindNames(nextAcc)
+        return nextParser.Advance().ParseBindNames(nextAcc)
     }
     return BindNamesResult{
         Next: nextParser,
@@ -1631,19 +1671,19 @@ func (p Parser) ParsePipelineTailForBlock(left ast.Expr) ExprResult {
 }
 
 func (p Parser) ParseLogicalOr() ExprResult {
-    left := p.ParseComparison()
+    left := p.ParseLogicalAnd()
     return left.Next.ParseLogicalOrTail(left.Expr)
 }
 
 func (p Parser) ParseLogicalOrForBlock() ExprResult {
-    left := p.ParseComparisonForBlock()
+    left := p.ParseLogicalAndForBlock()
     return left.Next.ParseLogicalOrTailForBlock(left.Expr)
 }
 
 func (p Parser) ParseLogicalOrTail(left ast.Expr) ExprResult {
     cur := p.Current()
     if cur.Type == token.LorType() {
-        right := p.Advance().ParseComparison()
+        right := p.Advance().ParseLogicalAnd()
         expr := ast.MakeBinaryExpr(cur.Pos, cur.Type, left, right.Expr)
         return right.Next.ParseLogicalOrTail(expr)
     }
@@ -1656,9 +1696,45 @@ func (p Parser) ParseLogicalOrTail(left ast.Expr) ExprResult {
 func (p Parser) ParseLogicalOrTailForBlock(left ast.Expr) ExprResult {
     cur := p.Current()
     if cur.Type == token.LorType() {
-        right := p.Advance().ParseComparisonForBlock()
+        right := p.Advance().ParseLogicalAndForBlock()
         expr := ast.MakeBinaryExpr(cur.Pos, cur.Type, left, right.Expr)
         return right.Next.ParseLogicalOrTailForBlock(expr)
+    }
+    return ExprResult{
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) ParseLogicalAnd() ExprResult {
+    left := p.ParseComparison()
+    return left.Next.ParseLogicalAndTail(left.Expr)
+}
+
+func (p Parser) ParseLogicalAndForBlock() ExprResult {
+    left := p.ParseComparisonForBlock()
+    return left.Next.ParseLogicalAndTailForBlock(left.Expr)
+}
+
+func (p Parser) ParseLogicalAndTail(left ast.Expr) ExprResult {
+    cur := p.Current()
+    if cur.Type == token.LandType() {
+        right := p.Advance().ParseComparison()
+        expr := ast.MakeBinaryExpr(cur.Pos, cur.Type, left, right.Expr)
+        return right.Next.ParseLogicalAndTail(expr)
+    }
+    return ExprResult{
+        Next: p,
+        Expr: left,
+    }
+}
+
+func (p Parser) ParseLogicalAndTailForBlock(left ast.Expr) ExprResult {
+    cur := p.Current()
+    if cur.Type == token.LandType() {
+        right := p.Advance().ParseComparisonForBlock()
+        expr := ast.MakeBinaryExpr(cur.Pos, cur.Type, left, right.Expr)
+        return right.Next.ParseLogicalAndTailForBlock(expr)
     }
     return ExprResult{
         Next: p,
@@ -1853,9 +1929,11 @@ type GenericCallResult struct {
 func (p Parser) ParsePostfixTail(left ast.Expr) ExprResult {
     cur := p.Current()
     if cur.Type == token.LBracketType() {
-        generic := p.TryParseGenericCall(left)
-        if generic.Ok {
-            return generic.Next.ParsePostfixTail(generic.Expr)
+        if p.LooksLikeGenericCall() {
+            generic := p.TryParseGenericCall(left)
+            if generic.Ok {
+                return generic.Next.ParsePostfixTail(generic.Expr)
+            }
         }
     }
     if cur.Type == token.DotType() {
@@ -1922,9 +2000,11 @@ func (p Parser) ParsePostfixTail(left ast.Expr) ExprResult {
 func (p Parser) ParsePostfixTailForBlock(left ast.Expr) ExprResult {
     cur := p.Current()
     if cur.Type == token.LBracketType() {
-        generic := p.TryParseGenericCall(left)
-        if generic.Ok {
-            return generic.Next.ParsePostfixTailForBlock(generic.Expr)
+        if p.LooksLikeGenericCall() {
+            generic := p.TryParseGenericCall(left)
+            if generic.Ok {
+                return generic.Next.ParsePostfixTailForBlock(generic.Expr)
+            }
         }
     }
     if cur.Type == token.DotType() {
@@ -2012,6 +2092,36 @@ func (p Parser) IsStructLiteralStart() bool {
     return false
 }
 
+func (p Parser) LooksLikeGenericCall() bool {
+    return p.HasGenericCallSuffix(p.Index + 1, 0)
+}
+
+func (p Parser) HasGenericCallSuffix(idx int, depth int) bool {
+    if idx >= len(p.Tokens) {
+        return false
+    }
+    cur := p.Tokens[idx]
+    if cur.Type == token.LBracketType() || cur.Type == token.LParenType() || cur.Type == token.LBraceType() {
+        return p.HasGenericCallSuffix(idx + 1, depth + 1)
+    }
+    if cur.Type == token.RParenType() || cur.Type == token.RBraceType() {
+        if depth == 0 {
+            return false
+        }
+        return p.HasGenericCallSuffix(idx + 1, depth - 1)
+    }
+    if cur.Type == token.RBracketType() {
+        if depth == 0 {
+            if idx + 1 >= len(p.Tokens) {
+                return false
+            }
+            return p.Tokens[idx + 1].Type == token.LParenType()
+        }
+        return p.HasGenericCallSuffix(idx + 1, depth - 1)
+    }
+    return p.HasGenericCallSuffix(idx + 1, depth)
+}
+
 func (p Parser) LooksLikeMapLiteralEntries() bool {
     return p.HasTopLevelColon(p.Index + 1, 0)
 }
@@ -2072,7 +2182,7 @@ func (p Parser) ParseArgs(acc []ast.Expr) ArgsResult {
     nextAcc := append(acc, expr.Expr)
     nextParser := expr.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseArgs(nextAcc)
+        return nextParser.Advance().ParseArgs(nextAcc)
     }
     return nextParser.ParseArgs(nextAcc)
 }
@@ -2148,7 +2258,7 @@ func (p Parser) ParseStructLiteralFields(acc []ast.FieldInit) StructLiteralField
     nextAcc := append(acc, ast.MakeFieldInit(nameTok.Tok.Literal, expr.Expr))
     nextParser := expr.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseStructLiteralFields(nextAcc)
+        return nextParser.Advance().ParseStructLiteralFields(nextAcc)
     }
     return nextParser.ParseStructLiteralFields(nextAcc)
 }
@@ -2178,7 +2288,7 @@ func (p Parser) ParseMapLiteralEntries(acc []ast.MapEntry) MapLiteralEntriesResu
     nextAcc := append(acc, ast.MakeMapEntry(key.Expr, value.Expr))
     nextParser := value.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseMapLiteralEntries(nextAcc)
+        return nextParser.Advance().ParseMapLiteralEntries(nextAcc)
     }
     return nextParser.ParseMapLiteralEntries(nextAcc)
 }
@@ -2198,7 +2308,7 @@ func (p Parser) ParseCopyUpdateFields(acc []ast.FieldUpdate) CopyUpdateFieldsRes
     nextAcc := append(acc, ast.MakeFieldUpdate(path.Path, expr.Expr))
     nextParser := expr.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseCopyUpdateFields(nextAcc)
+        return nextParser.Advance().ParseCopyUpdateFields(nextAcc)
     }
     return nextParser.ParseCopyUpdateFields(nextAcc)
 }
@@ -2213,7 +2323,7 @@ func (p Parser) ParseFieldPath(acc []string) FieldPathResult {
     nextAcc := append(acc, nameTok.Tok.Literal)
     nextParser := nameTok.Next
     if nextParser.Current().Type == token.DotType() {
-        return nextParser.Expect(token.DotType()).Next.ParseFieldPath(nextAcc)
+        return nextParser.Advance().ParseFieldPath(nextAcc)
     }
     return FieldPathResult{
         Next: nextParser,
@@ -2228,12 +2338,37 @@ type IndexOrSliceResult struct {
 
 func (p Parser) ParseIndexOrSlice(left ast.Expr) IndexOrSliceResult {
     open := p.Expect(token.LBracketType())
-    first := open.Next.ParseExpr()
-    if first.Next.Current().Type == token.ColonType() {
-        close := first.Next.Expect(token.ColonType()).Next.Expect(token.RBracketType())
+    if open.Next.Current().Type == token.ColonType() {
+        afterColon := open.Next.Advance()
+        if afterColon.Current().Type == token.RBracketType() {
+            close := afterColon.Expect(token.RBracketType())
+            return IndexOrSliceResult{
+                Next: close.Next,
+                Expr: ast.MakeSliceExpr(open.Tok.Pos, left, None[ast.Expr](), None[ast.Expr]()),
+            }
+        }
+        high := afterColon.ParseExpr()
+        close := high.Next.Expect(token.RBracketType())
         return IndexOrSliceResult{
             Next: close.Next,
-            Expr: ast.MakeSliceExpr(open.Tok.Pos, left, Some[ast.Expr](first.Expr), None[ast.Expr]()),
+            Expr: ast.MakeSliceExpr(open.Tok.Pos, left, None[ast.Expr](), Some[ast.Expr](high.Expr)),
+        }
+    }
+    first := open.Next.ParseExpr()
+    if first.Next.Current().Type == token.ColonType() {
+        afterColon := first.Next.Advance()
+        if afterColon.Current().Type == token.RBracketType() {
+            close := afterColon.Expect(token.RBracketType())
+            return IndexOrSliceResult{
+                Next: close.Next,
+                Expr: ast.MakeSliceExpr(open.Tok.Pos, left, Some[ast.Expr](first.Expr), None[ast.Expr]()),
+            }
+        }
+        high := afterColon.ParseExpr()
+        close := high.Next.Expect(token.RBracketType())
+        return IndexOrSliceResult{
+            Next: close.Next,
+            Expr: ast.MakeSliceExpr(open.Tok.Pos, left, Some[ast.Expr](first.Expr), Some[ast.Expr](high.Expr)),
         }
     }
     close := first.Next.Expect(token.RBracketType())
@@ -2245,18 +2380,6 @@ func (p Parser) ParseIndexOrSlice(left ast.Expr) IndexOrSliceResult {
 
 func (p Parser) ParsePrimary() ExprResult {
     cur := p.Current()
-    next := p{
-        Diag: p.Diag.ErrorDetailedSuggested(
-            diagnostic.SyntaxCategory(),
-            cur.Pos,
-            "FSYNTAX005",
-            "expected expression, found '" + token.TypeString(cur.Type) + "'",
-            ExpressionStartDetail(cur),
-            SuggestExpressionStart(cur),
-            ExpressionStartHint(cur),
-        ),
-    }
-    advanced := next.Advance()
     if cur.Type == token.IdentType() {
         if cur.Literal == "make" {
             if p.Peek().Type == token.LParenType() {
@@ -2302,8 +2425,19 @@ func (p Parser) ParsePrimary() ExprResult {
             return p.ParseSliceLiteral()
         }
     }
+    next := p{
+        Diag: p.Diag.ErrorDetailedSuggested(
+            diagnostic.SyntaxCategory(),
+            cur.Pos,
+            "FSYNTAX005",
+            "expected expression, found '" + token.TypeString(cur.Type) + "'",
+            ExpressionStartDetail(cur),
+            SuggestExpressionStart(cur),
+            ExpressionStartHint(cur),
+        ),
+    }
     return ExprResult{
-        Next: advanced,
+        Next: next.Advance(),
         Expr: ast.MakeIdent(cur.Pos, "<error>"),
     }
 }
@@ -2355,7 +2489,7 @@ func (p Parser) ParseParenOrTuple() ExprResult {
 
     first := open.Next.ParseExpr()
     if first.Next.Current().Type == token.CommaType() {
-        elems := first.Next.Expect(token.CommaType()).Next.ParseTupleElems([]ast.Expr{first.Expr})
+        elems := first.Next.Advance().ParseTupleElems([]ast.Expr{first.Expr})
         return ExprResult{
             Next: elems.Next,
             Expr: ast.MakeTupleLit(open.Tok.Pos, elems.Exprs),
@@ -2382,7 +2516,7 @@ func (p Parser) ParseTupleElems(acc []ast.Expr) ExprListResult {
     nextAcc := append(acc, expr.Expr)
     nextParser := expr.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseTupleElems(nextAcc)
+        return nextParser.Advance().ParseTupleElems(nextAcc)
     }
     return nextParser.ParseTupleElems(nextAcc)
 }
@@ -2417,7 +2551,7 @@ func (p Parser) ParseMakeArgs(acc []ast.Expr) ExprListResult {
     nextAcc := append(acc, expr.Expr)
     nextParser := expr.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseMakeArgs(nextAcc)
+        return nextParser.Advance().ParseMakeArgs(nextAcc)
     }
     return nextParser.ParseMakeArgs(nextAcc)
 }
@@ -2435,7 +2569,7 @@ func (p Parser) ParseExprList(acc []ast.Expr) ExprListResult {
     nextAcc := append(acc, expr.Expr)
     nextParser := expr.Next
     if nextParser.Current().Type == token.CommaType() {
-        return nextParser.Expect(token.CommaType()).Next.ParseExprList(nextAcc)
+        return nextParser.Advance().ParseExprList(nextAcc)
     }
     return nextParser.ParseExprList(nextAcc)
 }

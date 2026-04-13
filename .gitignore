@@ -39,6 +39,8 @@ examples/*.go
 internal/*/*.go
 internal/*/*/*.go
 stdlib/fo/*.go
+!internal/checker/localindex_generated.go
+!internal/checker/stdlibindex_generated.go
 
 # Proof / tool outputs
 proof/**/*.olean

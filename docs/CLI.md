@@ -72,6 +72,8 @@ fo check ./...
 
 Multiple explicit `.fo` arguments are supported for `check`.
 
+The CLI cache keeps parse/check/codegen results separated by both source content and the currently running compiler binary. Rebuilding or promoting the compiler does not silently reuse stale cache entries from an older binary.
+
 ## `run`
 
 `run` executes generated code through the host Go toolchain.
@@ -112,6 +114,7 @@ Common repository workflow:
 
 ```sh
 perl scripts/build-selfhosted-cli.sh
+perl scripts/promote-selfhosted-cli.sh
 ./build/fo-selfhosted check ./cmd/fohost
 ./build/fo-selfhosted build ./cmd/fohost
 ```

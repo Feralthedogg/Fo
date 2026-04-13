@@ -17,6 +17,7 @@ Scope:
 - source/target semantics are defined in the proof files
 - the first mechanized target is the pure monomorphized subset
 - runtime bridge behavior, workspace orchestration, and host I/O are not the primary proof surface
+- self-hosted rebuild workflows, cache invalidation behavior, and seed promotion are operational evidence, not mechanized theorem claims
 
 Current repository claim discipline:
 
@@ -65,5 +66,6 @@ Operationally:
 - `scripts/check-formal.sh` runs both formal check tracks
 - `scripts/check-formal-lean.sh` runs the Lean checks
 - `scripts/check-formal-coq.sh` runs the Coq checks
+- those scripts require the prover toolchains to be installed locally and visible on `PATH`
 
 If more formal detail is needed later, it should be reconstructed from the proof tree itself rather than re-expanding the docs set into many parallel markdown summaries.

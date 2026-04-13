@@ -7,6 +7,7 @@ Fo is a Fo-first self-hosting transpiler workspace.
 - `build/fo` is the current local compiler binary.
 - `build/fo-selfhosted` is the rebuilt Fo-written compiler binary.
 - `cmd/`, `internal/`, and `stdlib/fo/` contain the active compiler and stdlib sources.
+- `proof/` contains the active Lean and Coq mechanization trees.
 - `Legacy/` contains archived older bootstrap material that is no longer part of the active workflow.
 
 ## Docs
@@ -22,6 +23,12 @@ Build the self-hosted compiler:
 
 ```sh
 perl scripts/build-selfhosted-cli.sh
+```
+
+Promote the rebuilt compiler to the default local seed:
+
+```sh
+perl scripts/promote-selfhosted-cli.sh
 ```
 
 Check the compiler package:
@@ -45,6 +52,7 @@ make clean
 ## Repository Notes
 
 - Active caches live under `.fo-cache` by default and can be relocated with `FO_CACHE_ROOT`.
+- Parse/check/codegen caches are scoped by both source fingerprints and the active compiler binary fingerprint so stale results are not reused across compiler upgrades.
 - Active release and CI workflows live under `.github/workflows/`.
 - Release builds publish platform binaries, installer scripts, checksums, source tarballs, and a Windows `.msi`.
 - The repository keeps active checked-in generated Go out of the main source tree; runtime Go is materialized on demand during build workflows.
@@ -59,3 +67,5 @@ Useful local checks:
 - `perl scripts/check-genesis-bootstrap-candidate.sh`
 - `perl scripts/check-canonical-go-core.sh`
 - `perl scripts/check-formal.sh`
+
+`check-formal.sh` expects the local theorem prover toolchains to be installed and available on `PATH` such as `lean` and `coqc`.

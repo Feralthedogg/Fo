@@ -76,7 +76,7 @@ clean-cache:
 
 clean-generated:
 	@printf '%s\n' 'Removing generated Go artifacts'
-	@$(PERL_REMOVE) $(foreach path,$(GENERATED_GO_PATHS),'$(path)')
+	@$(PERL) -e 'use strict; use warnings; use File::Path qw(remove_tree); my %keep = map { $$_ => 1 } qw(internal/checker/localindex_generated.go internal/checker/stdlibindex_generated.go); my %seen; for my $$pattern (@ARGV) { for my $$path (glob($$pattern)) { $$path =~ s{^\./}{}; next if $$keep{$$path}; next if $$seen{$$path}++; if (-d $$path && !-l $$path) { remove_tree($$path); next; } unlink $$path if -e $$path || -l $$path; } }' -- $(foreach path,$(GENERATED_GO_PATHS),'$(path)')
 
 clean:
 	@$(MAKE) --no-print-directory clean-cache

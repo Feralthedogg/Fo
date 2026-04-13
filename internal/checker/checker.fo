@@ -112,21 +112,32 @@ type TypeBinding struct {
     TypeName string
 }
 
+type SubsequenceMemoEntry struct {
+    LeftIdx int
+    RightIdx int
+    Value int
+}
+
+type SubsequenceMemoResult struct {
+    Value int
+    Memo []SubsequenceMemoEntry
+}
+
 func Check(file ast.File) diagnostic.Diagnostics {
     return CheckWithBase(file, diagnostic.New())
 }
 
 func CheckWithBase(file ast.File, base diagnostic.Diagnostics) diagnostic.Diagnostics {
+    PreloadImportedPackages(file.Imports, 0)
     imports := CollectImportEntries(file.Imports, 0, []NameEntry{})
     importTypes := CollectImportTypeEntries(file.Imports, 0, []TypeEntry{})
     externs := EffectiveExternNames(file)
     enums := CollectEnums(file.Decls, 0, []EnumInfo{})
     structs := ConcatStructInfos(CollectStructs(file.Decls, 0, []StructInfo{}), StdlibStructInfos(), 0)
     interfaces := CollectInterfaces(file.Decls, 0, []InterfaceInfo{})
-    funcs := CollectFuncs(file.Decls, 0, []FuncInfo{})
-    constructors := CollectConstructors(file.Decls, 0, []FuncInfo{})
+    funcs := ConcatFuncInfos(CollectFuncs(file.Decls, 0, []FuncInfo{}), CollectConstructors(file.Decls, 0, []FuncInfo{}))
     methods := CollectMethods(file.Decls, 0, []MethodInfo{})
-    return CheckDecls(file.Decls, []NameEntry{}, imports, importTypes, base, externs, enums, structs, interfaces, ConcatFuncInfos(funcs, constructors), methods)
+    return CheckDecls(file.Decls, []NameEntry{}, imports, importTypes, base, externs, enums, structs, interfaces, funcs, methods)
 }
 
 func PreloadImportedPackages(imports []ast.ImportDecl, idx int) {
@@ -1591,17 +1602,17 @@ func FuncTypeParamCloseIndex(typeName string, idx int, depth int) int {
     return FuncTypeParamCloseIndex(typeName, idx + 1, depth)
 }
 
-func SliceString(value string, start int, end int, idx int, acc string) string {
-    if idx >= end {
-        return acc
+func SliceString(value string, start int, end int) string {
+    if start < 0 {
+        return SliceString(value, 0, end)
     }
-    if idx >= len(value) {
-        return acc
+    if end < start {
+        return ""
     }
-    if idx < start {
-        return SliceString(value, start, end, idx + 1, acc)
+    if end > len(value) {
+        return SliceString(value, start, len(value))
     }
-    return SliceString(value, start, end, idx + 1, acc + string(value[idx]))
+    return value[start:end]
 }
 
 func FuncTypeParamTypeNames(typeName string) []string {
@@ -1612,11 +1623,11 @@ func FuncTypeParamTypeNames(typeName string) []string {
     if close < 0 {
         return []string{}
     }
-    text := strings.TrimSpace(SliceString(typeName, 5, close, 0, ""))
+    text := strings.TrimSpace(SliceString(typeName, 5, close))
     if text == "" {
         return []string{}
     }
-    return SplitTopLevelComma(text, 0, 0, "", []string{})
+    return SplitTopLevelComma(text)
 }
 
 func FuncTypeResultTypeNames(typeName string) []string {
@@ -1627,7 +1638,7 @@ func FuncTypeResultTypeNames(typeName string) []string {
     if close < 0 {
         return []string{}
     }
-    text := strings.TrimSpace(SliceString(typeName, close + 1, len(typeName), 0, ""))
+    text := strings.TrimSpace(SliceString(typeName, close + 1, len(typeName)))
     if text == "" {
         return []string{}
     }
@@ -1637,20 +1648,34 @@ func FuncTypeResultTypeNames(typeName string) []string {
     return []string{text}
 }
 
-func JoinNormalizedTypeNames(items []string, idx int) string {
+func JoinNormalizedTypeNames(items []string) string {
+    return strings.Join(NormalizeInteropTypeNames(items, 0, []string{}), ", ")
+}
+
+func NormalizeInteropTypeNames(items []string, idx int, acc []string) []string {
     if idx >= len(items) {
-        return ""
+        return acc
     }
-    head := NormalizeInteropTypeName(items[idx])
-    if idx + 1 >= len(items) {
-        return head
-    }
-    return head + ", " + JoinNormalizedTypeNames(items, idx + 1)
+    return NormalizeInteropTypeNames(items, idx + 1, append(acc, NormalizeInteropTypeName(items[idx])))
+}
+
+func IsPreludeInteropBaseType(short string) bool {
+    return short == "Option" || short == "Result" || short == "Unit" || short == "Ordering" || short == "IOResult" || short == "StringResult" || short == "UnitResult" || short == "StringsResult" || short == "Cmd" || short == "Task" || short == "TaskResult" || short == "Pair"
 }
 
 func NormalizeInteropBaseType(typeName string) string {
     if strings.HasPrefix(typeName, "base.") {
-        return "fo." + QualifiedTypeShortName(typeName)
+        short := QualifiedTypeShortName(typeName)
+        if IsPreludeInteropBaseType(short) {
+            return short
+        }
+        return "fo." + short
+    }
+    if strings.HasPrefix(typeName, "fo.") {
+        short := QualifiedTypeShortName(typeName)
+        if IsPreludeInteropBaseType(short) {
+            return short
+        }
     }
     return typeName
 }
@@ -1661,14 +1686,14 @@ func NormalizeInteropFuncType(typeName string) string {
     }
     params := FuncTypeParamTypeNames(typeName)
     results := FuncTypeResultTypeNames(typeName)
-    head := "func(" + JoinNormalizedTypeNames(params, 0) + ")"
+    head := "func(" + JoinNormalizedTypeNames(params) + ")"
     if len(results) == 0 {
         return head
     }
     if len(results) == 1 {
         return head + " " + NormalizeInteropTypeName(results[0])
     }
-    return head + " (" + JoinNormalizedTypeNames(results, 0) + ")"
+    return head + " (" + JoinNormalizedTypeNames(results) + ")"
 }
 
 func NormalizeInteropTypeName(typeName string) string {
@@ -1694,7 +1719,7 @@ func NormalizeInteropTypeName(typeName string) string {
         return "map[" + NormalizeInteropTypeName(MapKeyTypeName(typeName)) + "]" + NormalizeInteropTypeName(MapValueTypeName(typeName))
     }
     if HasTupleEnvelope(typeName) {
-        return "(" + JoinNormalizedTypeNames(ParseTupleTypeNames(typeName), 0) + ")"
+        return "(" + JoinNormalizedTypeNames(ParseTupleTypeNames(typeName)) + ")"
     }
     if HasFuncType(typeName) {
         return NormalizeInteropFuncType(typeName)
@@ -1704,7 +1729,7 @@ func NormalizeInteropTypeName(typeName string) string {
     if len(args) == 0 {
         return base
     }
-    return base + "[" + JoinNormalizedTypeNames(args, 0) + "]"
+    return base + "[" + JoinNormalizedTypeNames(args) + "]"
 }
 
 func InferExprTypeName(expr ast.Expr) string {
@@ -1761,7 +1786,7 @@ func InferExprTypeName(expr ast.Expr) string {
     }
     if ast.ExprIsBinary(expr) {
         op := ast.ExprBinaryOp(expr)
-        if op == token.EqType() || op == token.LtType() || op == token.GtType() || op == token.LteType() || op == token.GteType() {
+        if op == token.EqType() || op == token.LandType() || op == token.LorType() || op == token.LtType() || op == token.GtType() || op == token.LteType() || op == token.GteType() {
             return "bool"
         }
         left := InferExprTypeName(ast.ExprBinaryLeft(expr))
@@ -1894,6 +1919,10 @@ func FieldTypeForStruct(typeName string, fieldName string, structs []StructInfo)
     normalized := NormalizeStructLikeType(typeName)
     info := FindStructInfo(structs, normalized)
     if isNone[StructInfo](info) {
+        liveFieldType := LiveAnyStructFieldType(normalized, fieldName)
+        if !(liveFieldType == "") {
+            return liveFieldType
+        }
         return StdlibStructFieldType(normalized, fieldName)
     }
     item := unwrapOr[StructInfo](info, EmptyStructInfo())
@@ -1947,17 +1976,10 @@ func HasSlicePrefix(typeName string) bool {
 }
 
 func TrimSlicePrefix(typeName string) string {
-    return TrimSlicePrefixLoop(typeName, 0, "")
-}
-
-func TrimSlicePrefixLoop(typeName string, idx int, acc string) string {
-    if idx >= len(typeName) {
-        return acc
+    if len(typeName) <= 2 {
+        return ""
     }
-    if idx < 2 {
-        return TrimSlicePrefixLoop(typeName, idx + 1, acc)
-    }
-    return TrimSlicePrefixLoop(typeName, idx + 1, acc + string(typeName[idx]))
+    return typeName[2:len(typeName)]
 }
 
 func ParseTupleTypeNames(typeName string) []string {
@@ -1984,20 +2006,10 @@ func HasTupleEnvelope(typeName string) bool {
 }
 
 func TrimTupleEnvelope(typeName string) string {
-    return TrimTupleEnvelopeLoop(typeName, 0, "")
-}
-
-func TrimTupleEnvelopeLoop(typeName string, idx int, acc string) string {
-    if idx >= len(typeName) {
-        return acc
+    if len(typeName) <= 2 {
+        return ""
     }
-    if idx == 0 {
-        return TrimTupleEnvelopeLoop(typeName, idx + 1, acc)
-    }
-    if idx + 1 == len(typeName) {
-        return acc
-    }
-    return TrimTupleEnvelopeLoop(typeName, idx + 1, acc + string(typeName[idx]))
+    return typeName[1 : len(typeName)-1]
 }
 
 func ParseTupleTypeNamesLoop(items []string, idx int, acc []string) []string {
@@ -2270,6 +2282,10 @@ func TypeImplementsInterface(typeName string, interfaceName string, interfaces [
     builtin := BuiltinInterfaceMethods(interfaceName)
     if len(builtin) > 0 {
         return HasMethodInfos(typeName, builtin, methods, 0)
+    }
+    live := LiveAnyInterfaceMethods(interfaceName)
+    if len(live) > 0 {
+        return HasMethodInfos(typeName, live, methods, 0)
     }
     stdlib := StdlibInterfaceMethods(interfaceName)
     if len(stdlib) == 0 {
@@ -2643,7 +2659,9 @@ func InferExprTypeNameFromEnv(expr ast.Expr, env []TypeEntry, enums []EnumInfo, 
                 return ""
             }
             if IsPackageRefType(recvType) {
-                info := ResolvePackageFuncSig(PackageRefPath(recvType), ast.ExprSelectorField(fn), len(ast.ExprCallArgs(expr)))
+                path := PackageRefPath(recvType)
+                name := ast.ExprSelectorField(fn)
+                info := ResolvePackageFuncSig(path, name, len(ast.ExprCallArgs(expr)))
                 if isNone[FuncInfo](info) {
                     return ""
                 }
@@ -2682,7 +2700,7 @@ func PackageRefPath(typeName string) string {
 }
 
 func PackagePathForQualifiedType(typeName string, env []TypeEntry) string {
-    qualifier := QualifiedTypeQualifier(typeName, 0, "")
+    qualifier := QualifiedTypeQualifier(typeName)
     if qualifier == "" {
         return ""
     }
@@ -2702,26 +2720,26 @@ func PackagePathForQualifier(qualifier string, env []TypeEntry, idx int) string 
 }
 
 func QualifiedTypeShortName(typeName string) string {
-    return QualifiedTypeSuffix(typeName, len(typeName) - 1, "")
+    return QualifiedTypeSuffix(typeName)
 }
 
 func QualifiedTypeBaseName(typeName string) string {
     normalized := NormalizeStructLikeType(typeName)
     bracket := FirstBracketIndex(normalized, 0)
     if bracket >= 0 {
-        return QualifiedTypeShortName(PrefixString(normalized, bracket, 0, ""))
+        return QualifiedTypeShortName(PrefixString(normalized, bracket))
     }
     return QualifiedTypeShortName(normalized)
 }
 
-func PrefixString(value string, limit int, idx int, acc string) string {
-    if idx >= limit {
-        return acc
+func PrefixString(value string, limit int) string {
+    if limit <= 0 {
+        return ""
     }
-    if idx >= len(value) {
-        return acc
+    if limit >= len(value) {
+        return value
     }
-    return PrefixString(value, limit, idx + 1, acc + string(value[idx]))
+    return value[0:limit]
 }
 
 func CanonicalStructTypeName(typeName string) string {
@@ -2766,24 +2784,262 @@ func CanonicalTypeNameWithEnv(typeName string, env []TypeEntry) string {
     return typeName
 }
 
-func QualifiedTypeQualifier(typeName string, idx int, acc string) string {
-    if idx >= len(typeName) {
-        return ""
+func LiveAnyPreload(path string) {
+    if IsStdlibImportPath(path) {
+        return
     }
-    if typeName[idx] == "."[0] {
-        return acc
-    }
-    return QualifiedTypeQualifier(typeName, idx + 1, acc + string(typeName[idx]))
+    LiveEnsurePackage(path)
 }
 
-func QualifiedTypeSuffix(typeName string, idx int, acc string) string {
+func LiveEnsurePackage(path string) {
+    return
+}
+
+func LiveKnownTypeNames() []string {
+    return localKnownTypeNames()
+}
+
+func LiveKnownTypeOwner(typeName string) string {
+    return localKnownTypeOwner(typeName)
+}
+
+func LivePackageFunctionNames(path string) []string {
+    return localPackageFunctionNames(path)
+}
+
+func LivePackageMemberNames(path string) []string {
+    return localPackageMemberNames(path)
+}
+
+func LivePackageMemberType(path string, name string) string {
+    return localPackageMemberType(path, name)
+}
+
+func LivePackageFuncPrototype(path string, name string) Option[FuncInfo] {
+    return localPackageFuncPrototype(path, name)
+}
+
+func LivePackageFuncSig(path string, name string, argCount int) Option[FuncInfo] {
+    return localPackageFuncSig(path, name, argCount)
+}
+
+func LiveMethodNames(receiverType string) []string {
+    return localMethodNames(receiverType)
+}
+
+func LiveMethodPrototype(receiverType string, name string) Option[FuncInfo] {
+    return localMethodPrototype(receiverType, name)
+}
+
+func LiveMethodSig(receiverType string, name string, argCount int) Option[FuncInfo] {
+    return localMethodSig(receiverType, name, argCount)
+}
+
+func LiveStructFieldNames(typeName string) []string {
+    return localStructFieldNames(typeName)
+}
+
+func LiveStructFieldType(typeName string, fieldName string) string {
+    return localStructFieldType(typeName, fieldName)
+}
+
+func LiveInterfaceMethods(interfaceType string) []FuncInfo {
+    return localInterfaceMethods(interfaceType)
+}
+
+func LiveNamedUnderlyingType(typeName string) string {
+    return localNamedUnderlyingType(typeName)
+}
+
+func NormalizeResolvedFuncInfo(info FuncInfo) FuncInfo {
+    return MakeSimpleFuncInfo(
+        info.Name,
+        info.ParamNames,
+        NormalizeInteropTypeNames(info.ParamTypes, 0, []string{}),
+        NormalizeInteropTypeNames(info.ResultTypes, 0, []string{}),
+    )
+}
+
+func NormalizeResolvedFuncInfoOption(info Option[FuncInfo]) Option[FuncInfo] {
+    if isNone[FuncInfo](info) {
+        return None[FuncInfo]()
+    }
+    return Some[FuncInfo](NormalizeResolvedFuncInfo(unwrapOr[FuncInfo](info, EmptyFuncInfo())))
+}
+
+func NormalizeResolvedFuncInfos(items []FuncInfo, idx int, acc []FuncInfo) []FuncInfo {
+    if idx >= len(items) {
+        return acc
+    }
+    return NormalizeResolvedFuncInfos(items, idx + 1, append(acc, NormalizeResolvedFuncInfo(items[idx])))
+}
+
+func LiveAnyPackageFunctionNames(path string) []string {
+    if IsStdlibImportPath(path) {
+        return []string{}
+    }
+    LiveEnsurePackage(path)
+    return LivePackageFunctionNames(path)
+}
+
+func LiveAnyPackageMemberNames(path string) []string {
+    if IsStdlibImportPath(path) {
+        return []string{}
+    }
+    LiveEnsurePackage(path)
+    return LivePackageMemberNames(path)
+}
+
+func LiveAnyPackageMemberType(path string, name string) string {
+    if IsStdlibImportPath(path) {
+        return ""
+    }
+    LiveEnsurePackage(path)
+    return NormalizeInteropTypeName(LivePackageMemberType(path, name))
+}
+
+func LiveAnyPackageFuncPrototype(path string, name string) Option[FuncInfo] {
+    if IsStdlibImportPath(path) {
+        return None[FuncInfo]()
+    }
+    LiveEnsurePackage(path)
+    return NormalizeResolvedFuncInfoOption(LivePackageFuncPrototype(path, name))
+}
+
+func LiveAnyPackageFuncSig(path string, name string, argCount int) Option[FuncInfo] {
+    if IsStdlibImportPath(path) {
+        return None[FuncInfo]()
+    }
+    LiveEnsurePackage(path)
+    return NormalizeResolvedFuncInfoOption(LivePackageFuncSig(path, name, argCount))
+}
+
+func LiveAnyMethodNames(receiverType string) []string {
+    return LiveMethodNames(LiveCanonicalReceiverType(receiverType))
+}
+
+func LiveAnyMethodPrototype(receiverType string, name string) Option[FuncInfo] {
+    return NormalizeResolvedFuncInfoOption(LiveMethodPrototype(LiveCanonicalReceiverType(receiverType), name))
+}
+
+func LiveAnyMethodSig(receiverType string, name string, argCount int) Option[FuncInfo] {
+    return NormalizeResolvedFuncInfoOption(LiveMethodSig(LiveCanonicalReceiverType(receiverType), name, argCount))
+}
+
+func LiveAnyStructFieldNames(typeName string) []string {
+    return LiveStructFieldNames(LiveCanonicalTypeOrSelf(typeName))
+}
+
+func LiveAnyStructFieldType(typeName string, fieldName string) string {
+    return NormalizeInteropTypeName(LiveStructFieldType(LiveCanonicalTypeOrSelf(typeName), fieldName))
+}
+
+func LiveAnyHasStructType(typeName string) bool {
+    return len(LiveAnyStructFieldNames(typeName)) > 0
+}
+
+func LiveAnyInterfaceMethods(interfaceType string) []FuncInfo {
+    return NormalizeResolvedFuncInfos(LiveInterfaceMethods(LiveCanonicalTypeOrSelf(interfaceType)), 0, []FuncInfo{})
+}
+
+func LiveAnyNamedUnderlyingType(typeName string) string {
+    return NormalizeInteropTypeName(LiveNamedUnderlyingType(LiveCanonicalTypeOrSelf(typeName)))
+}
+
+func LiveAnyCanonicalTypeName(typeName string) string {
+    return LiveEnsureCanonicalType(typeName)
+}
+
+func LiveCanonicalTypeOrSelf(typeName string) string {
+    canonical := LiveEnsureCanonicalType(typeName)
+    if canonical == "" {
+        return typeName
+    }
+    return canonical
+}
+
+func LiveCanonicalReceiverType(typeName string) string {
+    if strings.HasPrefix(typeName, "*") {
+        canonical := LiveEnsureCanonicalType(strings.TrimPrefix(typeName, "*"))
+        if canonical == "" {
+            return typeName
+        }
+        return "*" + canonical
+    }
+    return LiveCanonicalTypeOrSelf(typeName)
+}
+
+func LiveEnsureCanonicalType(typeName string) string {
+    canonical := LiveCanonicalKnownType(typeName)
+    if canonical == "" {
+        return ""
+    }
+    owner := LiveKnownTypeOwner(canonical)
+    if !(owner == "") {
+        if !IsStdlibImportPath(owner) {
+            LiveEnsurePackage(owner)
+        }
+    }
+    return canonical
+}
+
+func LiveCanonicalKnownType(typeName string) string {
+    key := LiveNormalizeOwnerType(typeName)
+    if !(LiveKnownTypeOwner(key) == "") {
+        return key
+    }
+    dot := strings.LastIndex(key, ".")
+    if dot < 0 {
+        return ""
+    }
+    suffix := SliceString(key, dot, len(key))
+    return LiveUniqueKnownTypeWithSuffix(suffix, LiveKnownTypeNames(), 0, "", false)
+}
+
+func LiveUniqueKnownTypeWithSuffix(suffix string, names []string, idx int, found string, ambiguous bool) string {
+    if idx >= len(names) {
+        if ambiguous {
+            return ""
+        }
+        return found
+    }
+    current := names[idx]
+    if strings.HasSuffix(current, suffix) {
+        if found == "" {
+            return LiveUniqueKnownTypeWithSuffix(suffix, names, idx + 1, current, ambiguous)
+        }
+        if !(found == current) {
+            return LiveUniqueKnownTypeWithSuffix(suffix, names, idx + 1, found, true)
+        }
+    }
+    return LiveUniqueKnownTypeWithSuffix(suffix, names, idx + 1, found, ambiguous)
+}
+
+func LiveNormalizeOwnerType(typeName string) string {
+    if strings.HasPrefix(typeName, "*") {
+        return LiveNormalizeOwnerType(strings.TrimPrefix(typeName, "*"))
+    }
+    idx := strings.Index(typeName, "[")
+    if idx >= 0 {
+        return PrefixString(typeName, idx)
+    }
+    return typeName
+}
+
+func QualifiedTypeQualifier(typeName string) string {
+    idx := strings.Index(typeName, ".")
     if idx < 0 {
-        return acc
+        return ""
     }
-    if typeName[idx] == "."[0] {
-        return acc
+    return PrefixString(typeName, idx)
+}
+
+func QualifiedTypeSuffix(typeName string) string {
+    idx := strings.LastIndex(typeName, ".")
+    if idx < 0 {
+        return typeName
     }
-    return QualifiedTypeSuffix(typeName, idx - 1, string(typeName[idx]) + acc)
+    return SliceString(typeName, idx + 1, len(typeName))
 }
 
 func BindExplicitTypeArgsForInfo(info FuncInfo, typeArgs []ast.TypeExpr) []TypeBinding {
@@ -3050,17 +3306,11 @@ func BaseTypeName(typeName string) string {
     if HasSlicePrefix(typeName) || HasMapPrefix(typeName) || HasTupleEnvelope(typeName) || typeName == "func" {
         return typeName
     }
-    return BaseTypeNameLoop(typeName, 0, "")
-}
-
-func BaseTypeNameLoop(typeName string, idx int, acc string) string {
-    if idx >= len(typeName) {
-        return acc
+    idx := FirstBracketIndex(typeName, 0)
+    if idx < 0 {
+        return typeName
     }
-    if typeName[idx] == "["[0] {
-        return acc
-    }
-    return BaseTypeNameLoop(typeName, idx + 1, acc + string(typeName[idx]))
+    return PrefixString(typeName, idx)
 }
 
 func ParseNamedTypeArgs(typeName string) []string {
@@ -3074,7 +3324,7 @@ func ParseNamedTypeArgs(typeName string) []string {
     if start < 0 {
         return []string{}
     }
-    return SplitTopLevelComma(TrimOuterBrackets(typeName, start), 0, 0, "", []string{})
+    return SplitTopLevelComma(TrimOuterBrackets(typeName, start))
 }
 
 func FirstBracketIndex(value string, idx int) int {
@@ -3088,42 +3338,41 @@ func FirstBracketIndex(value string, idx int) int {
 }
 
 func TrimOuterBrackets(value string, start int) string {
-    return TrimOuterBracketsLoop(value, 0, start, "")
+    if start + 1 >= len(value) {
+        return ""
+    }
+    return SliceString(value, start + 1, len(value) - 1)
 }
 
-func TrimOuterBracketsLoop(value string, idx int, start int, acc string) string {
-    if idx >= len(value) {
-        return acc
-    }
-    if idx <= start {
-        return TrimOuterBracketsLoop(value, idx + 1, start, acc)
-    }
-    if idx + 1 == len(value) {
-        return acc
-    }
-    return TrimOuterBracketsLoop(value, idx + 1, start, acc + string(value[idx]))
+func SplitTopLevelComma(value string) []string {
+    return SplitTopLevelCommaLoop(value, 0, 0, 0, []string{})
 }
 
-func SplitTopLevelComma(value string, idx int, depth int, current string, acc []string) []string {
+func SplitTopLevelCommaLoop(value string, idx int, start int, depth int, acc []string) []string {
     if idx >= len(value) {
-        if strings.TrimSpace(current) == "" {
+        tail := strings.TrimSpace(SliceString(value, start, len(value)))
+        if tail == "" {
             return acc
         }
-        return append(acc, strings.TrimSpace(current))
+        return append(acc, tail)
     }
     ch := value[idx]
     if ch == "["[0] || ch == "("[0] {
-        return SplitTopLevelComma(value, idx + 1, depth + 1, current + string(ch), acc)
+        return SplitTopLevelCommaLoop(value, idx + 1, start, depth + 1, acc)
     }
     if ch == "]"[0] || ch == ")"[0] {
-        return SplitTopLevelComma(value, idx + 1, depth - 1, current + string(ch), acc)
+        return SplitTopLevelCommaLoop(value, idx + 1, start, depth - 1, acc)
     }
     if ch == ","[0] {
         if depth == 0 {
-            return SplitTopLevelComma(value, idx + 1, depth, "", append(acc, strings.TrimSpace(current)))
+            head := strings.TrimSpace(SliceString(value, start, idx))
+            if head == "" {
+                return SplitTopLevelCommaLoop(value, idx + 1, idx + 1, depth, acc)
+            }
+            return SplitTopLevelCommaLoop(value, idx + 1, idx + 1, depth, append(acc, head))
         }
     }
-    return SplitTopLevelComma(value, idx + 1, depth, current + string(ch), acc)
+    return SplitTopLevelCommaLoop(value, idx + 1, start, depth, acc)
 }
 
 func HasMapPrefix(typeName string) bool {
@@ -3139,45 +3388,31 @@ func MapValueTypeName(typeName string) string {
 }
 
 func ParseMapTypeName(typeName string, wantKey bool) string {
-    return ParseMapTypeNameLoop(typeName, 4, 0, wantKey, "")
+    close := MapKeyCloseIndex(typeName, 4, 0)
+    if close < 0 {
+        return ""
+    }
+    if wantKey {
+        return strings.TrimSpace(SliceString(typeName, 4, close))
+    }
+    return strings.TrimSpace(SliceString(typeName, close + 1, len(typeName)))
 }
 
-func ParseMapTypeNameLoop(typeName string, idx int, depth int, wantKey bool, acc string) string {
+func MapKeyCloseIndex(typeName string, idx int, depth int) int {
     if idx >= len(typeName) {
-        return strings.TrimSpace(acc)
+        return -1
     }
     ch := typeName[idx]
-    if wantKey {
-        if ch == "["[0] {
-            return ParseMapTypeNameLoop(typeName, idx + 1, depth + 1, wantKey, acc + string(ch))
-        }
-        if ch == "]"[0] {
-            if depth == 0 {
-                return strings.TrimSpace(acc)
-            }
-            return ParseMapTypeNameLoop(typeName, idx + 1, depth - 1, wantKey, acc + string(ch))
-        }
-        return ParseMapTypeNameLoop(typeName, idx + 1, depth, wantKey, acc + string(ch))
+    if ch == "["[0] {
+        return MapKeyCloseIndex(typeName, idx + 1, depth + 1)
     }
     if ch == "]"[0] {
         if depth == 0 {
-            return strings.TrimSpace(MapValueTail(typeName, idx + 1, ""))
+            return idx
         }
+        return MapKeyCloseIndex(typeName, idx + 1, depth - 1)
     }
-    if ch == "["[0] {
-        return ParseMapTypeNameLoop(typeName, idx + 1, depth + 1, wantKey, acc)
-    }
-    if ch == "]"[0] {
-        return ParseMapTypeNameLoop(typeName, idx + 1, depth - 1, wantKey, acc)
-    }
-    return ParseMapTypeNameLoop(typeName, idx + 1, depth, wantKey, acc)
-}
-
-func MapValueTail(typeName string, idx int, acc string) string {
-    if idx >= len(typeName) {
-        return acc
-    }
-    return MapValueTail(typeName, idx + 1, acc + string(typeName[idx]))
+    return MapKeyCloseIndex(typeName, idx + 1, depth)
 }
 
 func TupleExprTypeNameFromEnv(items []ast.Expr, idx int, acc []string, env []TypeEntry, enums []EnumInfo, structs []StructInfo, funcs []FuncInfo, methods []MethodInfo) string {
@@ -3239,6 +3474,10 @@ func StructFieldNames(typeName string, structs []StructInfo) []string {
     normalized := NormalizeStructLikeType(typeName)
     info := FindStructInfo(structs, normalized)
     if isNone[StructInfo](info) {
+        liveNames := LiveAnyStructFieldNames(normalized)
+        if len(liveNames) > 0 {
+            return liveNames
+        }
         return StdlibStructFieldNames(normalized)
     }
     item := unwrapOr[StructInfo](info, EmptyStructInfo())
@@ -3596,19 +3835,72 @@ func TailEquals(left string, right string, idx int) bool {
     return TailEquals(left, right, idx + 1)
 }
 
-func SubsequenceLength(left string, right string, leftIdx int, rightIdx int) int {
+func LookupSubsequenceMemo(memo []SubsequenceMemoEntry, leftIdx int, rightIdx int, idx int) int {
+    if idx >= len(memo) {
+        return -1
+    }
+    if memo[idx].LeftIdx == leftIdx {
+        if memo[idx].RightIdx == rightIdx {
+            return memo[idx].Value
+        }
+    }
+    return LookupSubsequenceMemo(memo, leftIdx, rightIdx, idx + 1)
+}
+
+func SubsequenceLengthMemo(left string, right string, leftIdx int, rightIdx int, memo []SubsequenceMemoEntry) SubsequenceMemoResult {
+    cached := LookupSubsequenceMemo(memo, leftIdx, rightIdx, 0)
+    if cached >= 0 {
+        return SubsequenceMemoResult{
+            Value: cached,
+            Memo: memo,
+        }
+    }
     if leftIdx >= len(left) || rightIdx >= len(right) {
-        return 0
+        return SubsequenceMemoResult{
+            Value: 0,
+            Memo: append(memo, SubsequenceMemoEntry{
+                LeftIdx: leftIdx,
+                RightIdx: rightIdx,
+                Value: 0,
+            }),
+        }
     }
     if left[leftIdx] == right[rightIdx] {
-        return 1 + SubsequenceLength(left, right, leftIdx + 1, rightIdx + 1)
+        next := SubsequenceLengthMemo(left, right, leftIdx + 1, rightIdx + 1, memo)
+        value := 1 + next.Value
+        return SubsequenceMemoResult{
+            Value: value,
+            Memo: append(next.Memo, SubsequenceMemoEntry{
+                LeftIdx: leftIdx,
+                RightIdx: rightIdx,
+                Value: value,
+            }),
+        }
     }
-    skipRight := SubsequenceLength(left, right, leftIdx, rightIdx + 1)
-    skipLeft := SubsequenceLength(left, right, leftIdx + 1, rightIdx)
-    if skipRight > skipLeft {
-        return skipRight
+    skipRight := SubsequenceLengthMemo(left, right, leftIdx, rightIdx + 1, memo)
+    skipLeft := SubsequenceLengthMemo(left, right, leftIdx + 1, rightIdx, skipRight.Memo)
+    if skipRight.Value > skipLeft.Value {
+        return SubsequenceMemoResult{
+            Value: skipRight.Value,
+            Memo: append(skipLeft.Memo, SubsequenceMemoEntry{
+                LeftIdx: leftIdx,
+                RightIdx: rightIdx,
+                Value: skipRight.Value,
+            }),
+        }
     }
-    return skipLeft
+    return SubsequenceMemoResult{
+        Value: skipLeft.Value,
+        Memo: append(skipLeft.Memo, SubsequenceMemoEntry{
+            LeftIdx: leftIdx,
+            RightIdx: rightIdx,
+            Value: skipLeft.Value,
+        }),
+    }
+}
+
+func SubsequenceLength(left string, right string, leftIdx int, rightIdx int) int {
+    return SubsequenceLengthMemo(left, right, leftIdx, rightIdx, []SubsequenceMemoEntry{}).Value
 }
 
 func MaybeSuggestionText(value string) string {
@@ -3921,7 +4213,7 @@ func CheckStructLiteralExpr(expr ast.Expr, diag diagnostic.Diagnostics, env []Ty
         if len(ast.ExprStructLitFields(expr)) == 0 {
             underlying := StdlibNamedUnderlyingType(canonicalType)
             if underlying == "" {
-                if HasMapPrefix(LiveNamedUnderlyingType(canonicalType)) || HasSlicePrefix(LiveNamedUnderlyingType(canonicalType)) {
+                if HasMapPrefix(LiveAnyNamedUnderlyingType(canonicalType)) || HasSlicePrefix(LiveAnyNamedUnderlyingType(canonicalType)) {
                     return checked
                 }
             }
@@ -4328,12 +4620,55 @@ func ArgumentLabel(info FuncInfo, idx int) string {
 
 func ResolveFuncSig(funcs []FuncInfo, name string) Option[FuncInfo] {
     if len(funcs) == 0 {
-        return None[FuncInfo]()
+        return ResolveCompanionFuncSig(name)
     }
     if funcs[0].Name == name {
         return Some[FuncInfo](funcs[0])
     }
     return ResolveFuncSig(funcs[1:], name)
+}
+
+func ResolveCompanionFuncSig(name string) Option[FuncInfo] {
+    if name == "PackageFunctionNames" || name == "PackageMemberNames" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"path"}, []string{"string"}, []string{"[]string"}))
+    }
+    if name == "localPackageFunctionNames" || name == "localPackageMemberNames" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"path"}, []string{"string"}, []string{"[]string"}))
+    }
+    if name == "MethodNames" || name == "GeneratedStructFieldNames" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"typeName"}, []string{"string"}, []string{"[]string"}))
+    }
+    if name == "localMethodNames" || name == "localStructFieldNames" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"typeName"}, []string{"string"}, []string{"[]string"}))
+    }
+    if name == "localKnownTypeNames" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{}, []string{}, []string{"[]string"}))
+    }
+    if name == "PackageMemberType" || name == "GeneratedStructFieldType" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"typeName", "name"}, []string{"string", "string"}, []string{"string"}))
+    }
+    if name == "localPackageMemberType" || name == "localStructFieldType" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"typeName", "name"}, []string{"string", "string"}, []string{"string"}))
+    }
+    if name == "NamedUnderlyingType" || name == "localKnownTypeOwner" || name == "localNamedUnderlyingType" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"typeName"}, []string{"string"}, []string{"string"}))
+    }
+    if name == "PackageFuncPrototype" || name == "localPackageFuncPrototype" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"path", "name"}, []string{"string", "string"}, []string{"Option[FuncInfo]"}))
+    }
+    if name == "PackageFuncSig" || name == "localPackageFuncSig" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"path", "name", "argCount"}, []string{"string", "string", "int"}, []string{"Option[FuncInfo]"}))
+    }
+    if name == "MethodPrototype" || name == "localMethodPrototype" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"receiverType", "name"}, []string{"string", "string"}, []string{"Option[FuncInfo]"}))
+    }
+    if name == "MethodSig" || name == "localMethodSig" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"receiverType", "name", "argCount"}, []string{"string", "string", "int"}, []string{"Option[FuncInfo]"}))
+    }
+    if name == "InterfaceMethods" || name == "localInterfaceMethods" {
+        return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"interfaceType"}, []string{"string"}, []string{"[]FuncInfo"}))
+    }
+    return None[FuncInfo]()
 }
 
 func ResolveMethodSig(methods []MethodInfo, receiverType string, name string) Option[FuncInfo] {
@@ -4356,6 +4691,10 @@ func ResolveAnyMethodSig(methods []MethodInfo, receiverType string, name string,
     if !isNone[FuncInfo](info) {
         return info
     }
+    live := LiveAnyMethodSig(receiverType, name, argCount)
+    if !isNone[FuncInfo](live) {
+        return live
+    }
     generated := StdlibGeneratedMethodSig(receiverType, name, argCount)
     if !isNone[FuncInfo](generated) {
         return generated
@@ -4377,6 +4716,10 @@ func ResolveAnyMethodSig(methods []MethodInfo, receiverType string, name string,
         pointerInfo := ResolveMethodSig(methods, pointerType, name)
         if !isNone[FuncInfo](pointerInfo) {
             return pointerInfo
+        }
+        pointerLive := LiveAnyMethodSig(pointerType, name, argCount)
+        if !isNone[FuncInfo](pointerLive) {
+            return pointerLive
         }
         pointerGenerated := StdlibGeneratedMethodSig(pointerType, name, argCount)
         if !isNone[FuncInfo](pointerGenerated) {
@@ -7256,7 +7599,8 @@ func ReceiverStdlibMethodNames(receiverType string) []string {
 }
 
 func ReceiverAllMethodNames(receiverType string, methods []MethodInfo) []string {
-    return ConcatUniqueStrings(ReceiverMethodNames(receiverType, methods), ReceiverStdlibMethodNames(receiverType), 0)
+    names := ConcatUniqueStrings(ReceiverMethodNames(receiverType, methods), LiveAnyMethodNames(receiverType), 0)
+    return ConcatUniqueStrings(names, ReceiverStdlibMethodNames(receiverType), 0)
 }
 
 func ResolvePackageFuncSig(path string, name string, argCount int) Option[FuncInfo] {
@@ -7276,120 +7620,6 @@ func ResolvePackageFuncSig(path string, name string, argCount int) Option[FuncIn
         prototype := StdlibGeneratedPackageFuncPrototype(path, name)
         if !isNone[FuncInfo](prototype) {
             return prototype
-        }
-    }
-    if path == "fmt" {
-        sig := ResolveFmtFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "os" {
-        sig := ResolveOsFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "strings" {
-        sig := ResolveStringsFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "path/filepath" {
-        sig := ResolveFilepathFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "os/exec" {
-        sig := ResolveExecFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/sha256" {
-        sig := ResolveSha256FuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/aes" {
-        sig := ResolveAESFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/des" {
-        sig := ResolveDESFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/cipher" {
-        sig := ResolveCipherFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/x509" {
-        sig := ResolveX509FuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/x509/pkix" {
-        sig := ResolvePKIXFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/tls" {
-        sig := ResolveTLSFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/elliptic" {
-        sig := ResolveEllipticFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/ecdsa" {
-        sig := ResolveECDSAFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "crypto/rsa" {
-        sig := ResolveRSAFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "bytes" {
-        sig := ResolveBytesFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "time" {
-        sig := ResolveTimeFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "encoding/json" {
-        sig := ResolveJSONFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
-        }
-    }
-    if path == "encoding/binary" {
-        sig := ResolveBinaryFuncSig(name, argCount)
-        if !isNone[FuncInfo](sig) {
-            return sig
         }
     }
     if IsStdlibImportPath(path) {
@@ -7504,166 +7734,6 @@ func StdlibFirstSegment(path string, idx int, acc string) string {
     return StdlibFirstSegment(path, idx + 1, acc + string(path[idx]))
 }
 
-func ResolveFmtFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "Fprintln" || name == "Fprint" {
-        if argCount >= 1 {
-            return Some[FuncInfo](VariadicFuncInfo(name, []string{"w"}, []string{"any"}, "any", argCount, []string{}))
-        }
-    }
-    if name == "Sprintf" {
-        if argCount >= 1 {
-            return Some[FuncInfo](VariadicFuncInfo(name, []string{"format"}, []string{"string"}, "any", argCount, []string{"string"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveOsFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "Exit" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"code"}, []string{"int"}, []string{}))
-        }
-    }
-    if name == "Getwd" {
-        if argCount == 0 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{}, []string{}, []string{"string", "error"}))
-        }
-    }
-    if name == "ReadFile" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"name"}, []string{"string"}, []string{"[]byte", "error"}))
-        }
-    }
-    if name == "ReadDir" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"name"}, []string{"string"}, []string{"[]os.DirEntry", "error"}))
-        }
-    }
-    if name == "Stat" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"name"}, []string{"string"}, []string{"os.FileInfo", "error"}))
-        }
-    }
-    if name == "Getenv" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"key"}, []string{"string"}, []string{"string"}))
-        }
-    }
-    if name == "Executable" {
-        if argCount == 0 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{}, []string{}, []string{"string", "error"}))
-        }
-    }
-    if name == "Environ" {
-        if argCount == 0 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{}, []string{}, []string{"[]string"}))
-        }
-    }
-    if name == "Remove" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"name"}, []string{"string"}, []string{"error"}))
-        }
-    }
-    if name == "RemoveAll" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"path"}, []string{"string"}, []string{"error"}))
-        }
-    }
-    if name == "MkdirAll" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"path", "perm"}, []string{"string", "int"}, []string{"error"}))
-        }
-    }
-    if name == "Create" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"name"}, []string{"string"}, []string{"*os.File", "error"}))
-        }
-    }
-    if name == "Open" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"name"}, []string{"string"}, []string{"*os.File", "error"}))
-        }
-    }
-    if name == "OpenFile" {
-        if argCount == 3 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"name", "flag", "perm"}, []string{"string", "int", "int"}, []string{"*os.File", "error"}))
-        }
-    }
-    if name == "DirFS" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"dir"}, []string{"string"}, []string{"fs.FS"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveStringsFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "NewReader" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"s"}, []string{"string"}, []string{"*strings.Reader"}))
-        }
-    }
-    if name == "Contains" || name == "HasSuffix" || name == "HasPrefix" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"s", "substr"}, []string{"string", "string"}, []string{"bool"}))
-        }
-    }
-    if name == "Split" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"s", "sep"}, []string{"string", "string"}, []string{"[]string"}))
-        }
-    }
-    if name == "Repeat" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"s", "count"}, []string{"string", "int"}, []string{"string"}))
-        }
-    }
-    if name == "TrimSpace" || name == "ToLower" || name == "ToUpper" || name == "TrimPrefix" || name == "TrimSuffix" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"s"}, []string{"string"}, []string{"string"}))
-        }
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"s", "cutset"}, []string{"string", "string"}, []string{"string"}))
-        }
-    }
-    if name == "ReplaceAll" {
-        if argCount == 3 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"s", "old", "new"}, []string{"string", "string", "string"}, []string{"string"}))
-        }
-    }
-    if name == "Fields" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"s"}, []string{"string"}, []string{"[]string"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveFilepathFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "Rel" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"basepath", "targpath"}, []string{"string", "string"}, []string{"string", "error"}))
-        }
-    }
-    if name == "ToSlash" || name == "IsAbs" || name == "Clean" || name == "Base" || name == "Dir" {
-        if argCount == 1 {
-            result := FilepathUnaryResultType(name)
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"path"}, []string{"string"}, []string{result}))
-        }
-    }
-    if name == "Abs" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"path"}, []string{"string"}, []string{"string", "error"}))
-        }
-    }
-    if name == "Join" {
-        if argCount >= 1 {
-            return Some[FuncInfo](VariadicFuncInfo(name, []string{"elem"}, []string{"string"}, "string", argCount, []string{"string"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
 func ResolveMathFuncSig(name string, argCount int) Option[FuncInfo] {
     if name == "Abs" || name == "Sqrt" {
         if argCount == 1 {
@@ -7682,20 +7752,6 @@ func ResolveMathBitsFuncSig(name string, argCount int) Option[FuncInfo] {
     if name == "Len" || name == "OnesCount" {
         if argCount == 1 {
             return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"x"}, []string{"uint"}, []string{"int"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveExecFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "LookPath" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"file"}, []string{"string"}, []string{"string", "error"}))
-        }
-    }
-    if name == "Command" {
-        if argCount >= 1 {
-            return Some[FuncInfo](VariadicFuncInfo(name, []string{"name"}, []string{"string"}, "string", argCount, []string{"exec.Cmd"}))
         }
     }
     return None[FuncInfo]()
@@ -7745,15 +7801,6 @@ func ResolveStdlibCommonMethodSig(name string, argCount int) Option[FuncInfo] {
     return None[FuncInfo]()
 }
 
-func ResolveSha256FuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "Sum256" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"data"}, []string{"[]byte"}, []string{"any"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
 func ResolveMD5FuncSig(name string, argCount int) Option[FuncInfo] {
     if name == "New" {
         if argCount == 0 {
@@ -7763,43 +7810,6 @@ func ResolveMD5FuncSig(name string, argCount int) Option[FuncInfo] {
     if name == "Sum" {
         if argCount == 1 {
             return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"data"}, []string{"[]byte"}, []string{"any"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveAESFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "NewCipher" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"key"}, []string{"[]byte"}, []string{"cipher.Block", "error"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveDESFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "NewCipher" || name == "NewTripleDESCipher" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"key"}, []string{"[]byte"}, []string{"cipher.Block", "error"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveCipherFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "NewGCM" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"cipher"}, []string{"cipher.Block"}, []string{"cipher.AEAD", "error"}))
-        }
-    }
-    if name == "NewGCMWithNonceSize" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"cipher", "size"}, []string{"cipher.Block", "int"}, []string{"cipher.AEAD", "error"}))
-        }
-    }
-    if name == "NewGCMWithTagSize" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"cipher", "tagSize"}, []string{"cipher.Block", "int"}, []string{"cipher.AEAD", "error"}))
         }
     }
     return None[FuncInfo]()
@@ -7837,92 +7847,6 @@ func ResolveHMACFuncSig(name string, argCount int) Option[FuncInfo] {
     if name == "New" {
         if argCount == 2 {
             return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"h", "key"}, []string{"func", "[]byte"}, []string{"hash.Hash"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveBytesFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "NewBufferString" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"s"}, []string{"string"}, []string{"*bytes.Buffer"}))
-        }
-    }
-    if name == "NewBuffer" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"buf"}, []string{"[]byte"}, []string{"*bytes.Buffer"}))
-        }
-    }
-    if name == "NewReader" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"b"}, []string{"[]byte"}, []string{"*bytes.Reader"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveTimeFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "Now" {
-        if argCount == 0 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{}, []string{}, []string{"time.Time"}))
-        }
-    }
-    if name == "Parse" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"layout", "value"}, []string{"string", "string"}, []string{"time.Time", "error"}))
-        }
-    }
-    if name == "Unix" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"sec", "nsec"}, []string{"int", "int"}, []string{"time.Time"}))
-        }
-    }
-    if name == "Since" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"t"}, []string{"time.Time"}, []string{"time.Duration"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveJSONFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "Marshal" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"v"}, []string{"any"}, []string{"[]byte", "error"}))
-        }
-    }
-    if name == "Unmarshal" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"data", "v"}, []string{"[]byte", "any"}, []string{"error"}))
-        }
-    }
-    if name == "NewEncoder" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"w"}, []string{"any"}, []string{"*json.Encoder"}))
-        }
-    }
-    if name == "NewDecoder" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"r"}, []string{"any"}, []string{"*json.Decoder"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveBinaryFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "Read" || name == "Write" {
-        if argCount == 3 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"r", "order", "data"}, []string{"io.Reader", "binary.ByteOrder", "any"}, []string{"error"}))
-        }
-    }
-    if name == "Size" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"v"}, []string{"any"}, []string{"int"}))
-        }
-    }
-    if name == "Uvarint" || name == "Varint" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"buf"}, []string{"[]byte"}, []string{"int", "int"}))
         }
     }
     return None[FuncInfo]()
@@ -9583,67 +9507,6 @@ func ResolveCryptoRandFuncSig(name string, argCount int) Option[FuncInfo] {
     return None[FuncInfo]()
 }
 
-func ResolveX509FuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "NewCertPool" {
-        if argCount == 0 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{}, []string{}, []string{"*x509.CertPool"}))
-        }
-    }
-    if name == "SystemCertPool" {
-        if argCount == 0 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{}, []string{}, []string{"*x509.CertPool", "error"}))
-        }
-    }
-    if name == "ParseCertificate" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"asn1Data"}, []string{"[]byte"}, []string{"*x509.Certificate", "error"}))
-        }
-    }
-    if name == "ParseCertificates" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"asn1Data"}, []string{"[]byte"}, []string{"[]*x509.Certificate", "error"}))
-        }
-    }
-    if name == "CreateCertificate" {
-        if argCount == 5 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"rand", "template", "parent", "pub", "priv"}, []string{"io.Reader", "*x509.Certificate", "*x509.Certificate", "any", "any"}, []string{"[]byte", "error"}))
-        }
-    }
-    if name == "ParsePKIXPublicKey" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"derBytes"}, []string{"[]byte"}, []string{"any", "error"}))
-        }
-    }
-    if name == "MarshalPKIXPublicKey" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"pub"}, []string{"any"}, []string{"[]byte", "error"}))
-        }
-    }
-    if name == "CreateCertificateRequest" {
-        if argCount == 3 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"rand", "template", "priv"}, []string{"io.Reader", "*x509.CertificateRequest", "any"}, []string{"[]byte", "error"}))
-        }
-    }
-    if name == "ParseCertificateRequest" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"asn1Data"}, []string{"[]byte"}, []string{"*x509.CertificateRequest", "error"}))
-        }
-    }
-    if name == "ParseRevocationList" {
-        if argCount == 1 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"der"}, []string{"[]byte"}, []string{"*x509.RevocationList", "error"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolvePKIXFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "" {
-        return None[FuncInfo]()
-    }
-    return None[FuncInfo]()
-}
-
 func ResolveBase85FuncSig(name string, argCount int) Option[FuncInfo] {
     if name == "Encode" {
         if argCount == 2 {
@@ -9681,65 +9544,6 @@ func ResolveTabwriterFuncSig(name string, argCount int) Option[FuncInfo] {
     if name == "NewWriter" {
         if argCount == 6 {
             return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"output", "minwidth", "tabwidth", "padding", "padchar", "flags"}, []string{"io.Writer", "int", "int", "int", "byte", "int"}, []string{"*tabwriter.Writer"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveTLSFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "X509KeyPair" || name == "LoadX509KeyPair" {
-        if argCount == 2 {
-            if name == "LoadX509KeyPair" {
-                return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"certFile", "keyFile"}, []string{"string", "string"}, []string{"tls.Certificate", "error"}))
-            }
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"certPEMBlock", "keyPEMBlock"}, []string{"[]byte", "[]byte"}, []string{"tls.Certificate", "error"}))
-        }
-    }
-    if name == "Client" || name == "Server" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"conn", "config"}, []string{"net.Conn", "*tls.Config"}, []string{"*tls.Conn"}))
-        }
-    }
-    if name == "Dial" {
-        if argCount == 3 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"network", "addr", "config"}, []string{"string", "string", "*tls.Config"}, []string{"*tls.Conn", "error"}))
-        }
-    }
-    if name == "DialWithDialer" {
-        if argCount == 4 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"dialer", "network", "addr", "config"}, []string{"*net.Dialer", "string", "string", "*tls.Config"}, []string{"*tls.Conn", "error"}))
-        }
-    }
-    if name == "Listen" {
-        if argCount == 3 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"network", "laddr", "config"}, []string{"string", "string", "*tls.Config"}, []string{"net.Listener", "error"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveEllipticFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "P224" || name == "P256" || name == "P384" || name == "P521" {
-        if argCount == 0 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{}, []string{}, []string{"elliptic.Curve"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveECDSAFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "GenerateKey" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"c", "rand"}, []string{"elliptic.Curve", "io.Reader"}, []string{"*ecdsa.PrivateKey", "error"}))
-        }
-    }
-    return None[FuncInfo]()
-}
-
-func ResolveRSAFuncSig(name string, argCount int) Option[FuncInfo] {
-    if name == "GenerateKey" {
-        if argCount == 2 {
-            return Some[FuncInfo](MakeSimpleFuncInfo(name, []string{"random", "bits"}, []string{"io.Reader", "int"}, []string{"*rsa.PrivateKey", "error"}))
         }
     }
     return None[FuncInfo]()
@@ -9794,13 +9598,6 @@ func ResolveCookieJarFuncSig(name string, argCount int) Option[FuncInfo] {
         }
     }
     return None[FuncInfo]()
-}
-
-func FilepathUnaryResultType(name string) string {
-    if name == "IsAbs" {
-        return "bool"
-    }
-    return "string"
 }
 
 func MakeSimpleFuncInfo(name string, paramNames []string, paramTypes []string, resultTypes []string) FuncInfo {
@@ -10087,98 +9884,50 @@ func StdlibGeneratedSentinelBegin() string {
 }
 
 func StdlibPackageFunctionNames(path string) []string {
-    live := LivePackageFunctionNames(path)
-    if len(live) > 0 {
-        return live
-    }
     return PackageFunctionNames(path)
 }
 
 func StdlibGeneratedPackageFuncPrototype(path string, name string) Option[FuncInfo] {
-    live := LivePackageFuncPrototype(path, name)
-    if !isNone[FuncInfo](live) {
-        return live
-    }
     return PackageFuncPrototype(path, name)
 }
 
 func StdlibGeneratedPackageFuncSig(path string, name string, argCount int) Option[FuncInfo] {
-    live := LivePackageFuncSig(path, name, argCount)
-    if !isNone[FuncInfo](live) {
-        return live
-    }
     return PackageFuncSig(path, name, argCount)
 }
 
 func StdlibPackageMemberNames(path string) []string {
-    live := LivePackageMemberNames(path)
-    if len(live) > 0 {
-        return live
-    }
     return PackageMemberNames(path)
 }
 
 func StdlibGeneratedMemberType(path string, name string) string {
-    live := LivePackageMemberType(path, name)
-    if !(live == "") {
-        return live
-    }
-    return PackageMemberType(path, name)
+    return NormalizeInteropTypeName(PackageMemberType(path, name))
 }
 
 func StdlibGeneratedMethodNames(receiverType string) []string {
-    live := LiveAnyMethodNames(receiverType)
-    if len(live) > 0 {
-        return live
-    }
     return MethodNames(receiverType)
 }
 
 func StdlibStructFieldNames(typeName string) []string {
-    live := LiveAnyStructFieldNames(typeName)
-    if len(live) > 0 {
-        return live
-    }
     return GeneratedStructFieldNames(typeName)
 }
 
 func StdlibStructFieldType(typeName string, fieldName string) string {
-    live := LiveAnyStructFieldType(typeName, fieldName)
-    if !(live == "") {
-        return live
-    }
-    return GeneratedStructFieldType(typeName, fieldName)
+    return NormalizeInteropTypeName(GeneratedStructFieldType(typeName, fieldName))
 }
 
 func StdlibInterfaceMethods(interfaceType string) []FuncInfo {
-    live := LiveAnyInterfaceMethods(interfaceType)
-    if len(live) > 0 {
-        return live
-    }
     return InterfaceMethods(interfaceType)
 }
 
 func StdlibNamedUnderlyingType(typeName string) string {
-    live := LiveAnyNamedUnderlyingType(typeName)
-    if !(live == "") {
-        return live
-    }
-    return NamedUnderlyingType(typeName)
+    return NormalizeInteropTypeName(NamedUnderlyingType(typeName))
 }
 
 func StdlibGeneratedMethodPrototype(receiverType string, name string) Option[FuncInfo] {
-    live := LiveAnyMethodPrototype(receiverType, name)
-    if !isNone[FuncInfo](live) {
-        return live
-    }
     return MethodPrototype(receiverType, name)
 }
 
 func StdlibGeneratedMethodSig(receiverType string, name string, argCount int) Option[FuncInfo] {
-    live := LiveAnyMethodSig(receiverType, name, argCount)
-    if !isNone[FuncInfo](live) {
-        return live
-    }
     return MethodSig(receiverType, name, argCount)
 }
 

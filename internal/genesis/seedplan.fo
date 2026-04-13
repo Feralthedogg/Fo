@@ -14,7 +14,13 @@ func SeedTargetDir() string {
 }
 
 func SeedGoModContent() string {
-    return "module github.com/Feralthedogg/Fo\n\ngo 1.25.6\n"
+    return "module github.com/Feralthedogg/Fo\n\n" +
+        "go 1.25.6\n\n" +
+        "require golang.org/x/tools v0.44.0\n\n" +
+        "require (\n" +
+        "\tgolang.org/x/mod v0.35.0 // indirect\n" +
+        "\tgolang.org/x/sync v0.20.0 // indirect\n" +
+        ")\n"
 }
 
 func SeedManifestContent() string {
@@ -30,6 +36,8 @@ func SeedGeneratedPaths() []string {
         "cmd/fohost/main.go",
         "internal/ast/ast.go",
         "internal/checker/checker.go",
+        "internal/checker/stdlibindex_generated.go",
+        "internal/checker/localindex_generated.go",
         "internal/codegen/codegen.go",
         "internal/diagnostic/diagnostic.go",
         "internal/driver/driver.go",
@@ -52,7 +60,9 @@ func SeedHostPaths() []string {
 }
 
 func SeedSupportPaths() []string {
-    return []string{}
+    return []string{
+        "go.sum",
+    }
 }
 
 func SeedStdlibPaths() []string {
@@ -62,11 +72,14 @@ func SeedStdlibPaths() []string {
 func SeedCanonicalPaths() []string {
     return []string{
         "go.mod",
+        "go.sum",
         "SEED.txt",
         "cmd/fo/main.go",
         "cmd/fohost/main.go",
         "internal/ast/ast.go",
         "internal/checker/checker.go",
+        "internal/checker/stdlibindex_generated.go",
+        "internal/checker/localindex_generated.go",
         "internal/codegen/codegen.go",
         "internal/diagnostic/diagnostic.go",
         "internal/driver/driver.go",
@@ -87,10 +100,13 @@ func SeedCanonicalPaths() []string {
 func SeedFilesExpr() Expr {
     return TupleExpr([]Expr{
         FileExpr(TextExpr("go.mod"), TextExpr(SeedGoModContent())),
+        FileExpr(TextExpr("go.sum"), TextExpr("generated")),
         FileExpr(TextExpr("SEED.txt"), SeedManifestExpr()),
         FileExpr(TextExpr("cmd/fo/main.go"), TextExpr("generated")),
         FileExpr(TextExpr("internal/ast/ast.go"), TextExpr("generated")),
         FileExpr(TextExpr("internal/checker/checker.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/checker/stdlibindex_generated.go"), TextExpr("generated")),
+        FileExpr(TextExpr("internal/checker/localindex_generated.go"), TextExpr("generated")),
         FileExpr(TextExpr("internal/codegen/codegen.go"), TextExpr("generated")),
         FileExpr(TextExpr("internal/diagnostic/diagnostic.go"), TextExpr("generated")),
         FileExpr(TextExpr("internal/driver/driver.go"), TextExpr("generated")),

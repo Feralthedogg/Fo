@@ -283,6 +283,15 @@ sub build_cli_core {
     remove_paths($workspace_root, $stage_root);
     ensure_dir($workspace_root, $stage_root);
     ensure_dir("$cache_root/build", "$cache_root/check");
+    copy_file("$root/go.mod", "$workspace_root/go.mod");
+    if (-f "$root/go.sum") {
+      copy_file("$root/go.sum", "$workspace_root/go.sum");
+    }
+    local $ENV{FO_LIVE_PKG_DIR} = $workspace_root;
+    ensure_dir("$stage_root/stdlib/fo");
+    generate_base_package_to($root, "$stage_root/stdlib/fo", $fo_bin);
+    ensure_dir("$workspace_root/stdlib/fo");
+    copy_tree_contents("$stage_root/stdlib/fo", "$workspace_root/stdlib/fo");
 
     my $supports_emit_go = sub {
       my ($bin) = @_;
@@ -310,6 +319,12 @@ sub build_cli_core {
       copy_file($src, $dst);
     };
 
+    my $sync_workspace_go = sub {
+      my ($go_path) = @_;
+      ensure_dir(dirname("$workspace_root/$go_path"));
+      copy_file("$stage_root/$go_path", "$workspace_root/$go_path");
+    };
+
     my $build_file = sub {
       my ($path) = @_;
       my $bin = ($path eq 'cmd/fohost/main.fo' && defined $fohost_bin && -x $fohost_bin) ? $fohost_bin : $fo_bin;
@@ -318,6 +333,7 @@ sub build_cli_core {
       my $cached_go = "$cache_root/build/$key.go";
       if (-f $cached_go) {
         copy_file($cached_go, "$stage_root/$go_path");
+        $sync_workspace_go->($go_path);
         return;
       }
       if ($supports_emit_go->($bin)) {
@@ -329,10 +345,12 @@ sub build_cli_core {
         write_file("$stage_root/$go_path", normalize_generated_go_text($stdout));
         run_cmd('gofmt', '-w', "$stage_root/$go_path");
         copy_file("$stage_root/$go_path", $cached_go);
+        $sync_workspace_go->($go_path);
         return;
       }
       run_cmd($bin, 'build', $path);
       $legacy_sync_generated_file->($path);
+      $sync_workspace_go->($go_path);
       copy_file("$stage_root/$go_path", $cached_go);
     };
 
@@ -371,21 +389,17 @@ sub build_cli_core {
     if (-f "$root/internal/checker/stdlibindex_generated.go") {
       ensure_dir("$stage_root/internal/checker");
       copy_file("$root/internal/checker/stdlibindex_generated.go", "$stage_root/internal/checker/stdlibindex_generated.go");
+      ensure_dir("$workspace_root/internal/checker");
+      copy_file("$root/internal/checker/stdlibindex_generated.go", "$workspace_root/internal/checker/stdlibindex_generated.go");
     }
-    if (-f "$root/internal/checker/livebridge.go") {
+    if (-f "$root/internal/checker/localindex_generated.go") {
       ensure_dir("$stage_root/internal/checker");
-      copy_file("$root/internal/checker/livebridge.go", "$stage_root/internal/checker/livebridge.go");
+      copy_file("$root/internal/checker/localindex_generated.go", "$stage_root/internal/checker/localindex_generated.go");
+      ensure_dir("$workspace_root/internal/checker");
+      copy_file("$root/internal/checker/localindex_generated.go", "$workspace_root/internal/checker/localindex_generated.go");
     }
-    if (-f "$root/internal/checker/livepackages.go") {
-      ensure_dir("$stage_root/internal/checker");
-      copy_file("$root/internal/checker/livepackages.go", "$stage_root/internal/checker/livepackages.go");
-    }
-
     remove_paths("$root/cmd/fohost/main.go");
-    ensure_dir("$stage_root/stdlib/fo");
-    generate_base_package_to($root, "$stage_root/stdlib/fo", $fo_bin);
 
-    remove_paths($workspace_root);
     ensure_dir($workspace_root);
     copy_file("$root/go.mod", "$workspace_root/go.mod");
     if (-f "$root/go.sum") {
@@ -466,7 +480,6 @@ sub build_selfhosted_cli {
   if (!-x $fo_bin) {
     die "missing self-hosted compiler at $fo_bin\n";
   }
-  run_cmd({ quiet => 1 }, 'bash', "$root/scripts/generate-stdlib-symbol-index.sh");
   with_temp_build_roots($root, sub {
     print "[1/2] Re-transpiling Fo CLI core with self-hosted compiler\n";
     build_cli_core($root, $fo_bin);
@@ -1634,8 +1647,7 @@ sub materialize_genesis_seed {
     "internal/ast/ast.go",
     "internal/checker/checker.go",
     "internal/checker/stdlibindex_generated.go",
-    "internal/checker/livebridge.go",
-    "internal/checker/livepackages.go",
+    "internal/checker/localindex_generated.go",
     "internal/codegen/codegen.go",
     "internal/diagnostic/diagnostic.go",
     "internal/driver/driver.go",
@@ -1703,6 +1715,8 @@ sub promote_selfhosted_cli {
   print "[2/2] Promoting self-hosted CLI to build/fo\n";
   ensure_dir("$root/build");
   copy_file("$root/build/fo-selfhosted", "$root/build/fo");
+  chmod 0755, "$root/build/fo"
+    or die "failed to chmod $root/build/fo: $!\n";
   print "Promoted self-hosted CLI: $root/build/fo\n";
 }
 
