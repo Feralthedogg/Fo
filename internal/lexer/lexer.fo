@@ -564,5 +564,19 @@ func SliceText(src string, start int, end int) string {
     if end > len(src) {
         return SliceText(src, start, len(src))
     }
-    return src[start:end]
+    return TakeTextPrefix(DropTextPrefix(src, start), end - start)
+}
+
+func DropTextPrefix(src string, count int) string {
+    if count <= 0 || src == "" {
+        return src
+    }
+    return DropTextPrefix(src[1:], count - 1)
+}
+
+func TakeTextPrefix(src string, count int) string {
+    if count <= 0 || src == "" {
+        return ""
+    }
+    return string(src[0]) + TakeTextPrefix(src[1:], count - 1)
 }

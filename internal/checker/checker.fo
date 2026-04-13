@@ -1612,7 +1612,21 @@ func SliceString(value string, start int, end int) string {
     if end > len(value) {
         return SliceString(value, start, len(value))
     }
-    return value[start:end]
+    return TakeStringPrefix(DropStringPrefix(value, start), end - start)
+}
+
+func DropStringPrefix(value string, count int) string {
+    if count <= 0 || value == "" {
+        return value
+    }
+    return DropStringPrefix(value[1:], count - 1)
+}
+
+func TakeStringPrefix(value string, count int) string {
+    if count <= 0 || value == "" {
+        return ""
+    }
+    return string(value[0]) + TakeStringPrefix(value[1:], count - 1)
 }
 
 func FuncTypeParamTypeNames(typeName string) []string {
@@ -1979,7 +1993,7 @@ func TrimSlicePrefix(typeName string) string {
     if len(typeName) <= 2 {
         return ""
     }
-    return typeName[2:len(typeName)]
+    return SliceString(typeName, 2, len(typeName))
 }
 
 func ParseTupleTypeNames(typeName string) []string {
@@ -2009,7 +2023,7 @@ func TrimTupleEnvelope(typeName string) string {
     if len(typeName) <= 2 {
         return ""
     }
-    return typeName[1 : len(typeName)-1]
+    return SliceString(typeName, 1, len(typeName)-1)
 }
 
 func ParseTupleTypeNamesLoop(items []string, idx int, acc []string) []string {
@@ -2739,7 +2753,7 @@ func PrefixString(value string, limit int) string {
     if limit >= len(value) {
         return value
     }
-    return value[0:limit]
+    return SliceString(value, 0, limit)
 }
 
 func CanonicalStructTypeName(typeName string) string {
